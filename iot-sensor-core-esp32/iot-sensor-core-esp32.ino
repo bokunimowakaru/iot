@@ -30,6 +30,13 @@ RTC_DATA_ATTR boolean	UDP_EN=true;
 RTC_DATA_ATTR boolean	TEMP_EN=true;
 RTC_DATA_ATTR boolean	HALL_EN=false;
 RTC_DATA_ATTR byte		ADC_EN=0;
+RTC_DATA_ATTR byte		BTN_EN=0;				// 1:ON(L) 2:PingPong
+RTC_DATA_ATTR boolean	PIR_EN=false;
+RTC_DATA_ATTR boolean	AD_LUM_EN=false;
+RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
+RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
+RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
+RTC_DATA_ATTR boolean	I2C_ACCUM_EN=false;
 
 IPAddress IP;									// IPアドレス
 IPAddress IP_BC;								// ブロードキャストIPアドレス

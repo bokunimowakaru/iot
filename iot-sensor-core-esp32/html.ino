@@ -1,6 +1,9 @@
 #include <WiFiClient.h>
 #include <WebServer.h>
 #define html_title "IoT Sensor Core ESP32"
+#define HTML_INDEX_LEN_MAX	4500
+#define HTML_MISC_LEN_MAX	1024
+#define HTML_RES_LEN_MAX	128
 
 /* extern RTC_DATA_ATTR
 RTC_DATA_ATTR char SSID_STA[16] = "";
@@ -22,6 +25,14 @@ RTC_DATA_ATTR boolean	UDP_EN=true;
 RTC_DATA_ATTR boolean	TEMP_EN=true;
 RTC_DATA_ATTR boolean	HALL_EN=false;
 RTC_DATA_ATTR byte		ADC_EN=0;
+RTC_DATA_ATTR byte		BTN_EN=0;
+RTC_DATA_ATTR boolean	PIR_EN=false;
+RTC_DATA_ATTR boolean	AD_LUM_EN=false;
+RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
+RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
+RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
+RTC_DATA_ATTR boolean	I2C_ACCUM_EN=false;
+
 */
 
 WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
@@ -30,12 +41,12 @@ uint32_t html_ip=0;
 char html_ip_s[16];
 
 void html_index(){
-	char res_s[128]="待機中";
+	char s[HTML_INDEX_LEN_MAX];
+	char res_s[HTML_RES_LEN_MAX]="待機中";
 	char checked[2][18]={"","checked=\"checked\""};
 	boolean sleep_b[5];
 	int sleep_vals[5]={0,1,15,30,60};
 	int adc_vals[6]={0,32,33,34,35,39};
-	char s[4096];
 	int i;
 	
 	Serial.println("HTML index");
@@ -53,11 +64,17 @@ void html_index(){
 				}else{
 					S.toCharArray(SSID_STA,16);
 					P.toCharArray(PASS_STA,32);
-					snprintf(res_s, 128,"SSIDを[%s]に設定しました(Wi-Fi再起動後に有効)。",SSID_STA);
+					snprintf(res_s, HTML_RES_LEN_MAX,"SSIDを[%s]に設定しました(Wi-Fi再起動後に有効)。",SSID_STA);
 					Serial.print(" SSID=");
 					Serial.print(SSID_STA);
 					Serial.print(" PASS=");
 					Serial.println(PASS_STA);
+					if(WIFI_AP_MODE & 2 != 2){
+						WIFI_AP_MODE &= 2;
+						snprintf(res_s, HTML_RES_LEN_MAX,"Wi-Fiモード(STA)とSSIDを設定しました(Wi-Fi再起動後に有効)。");
+						Serial.print(" WIFI_AP_MODE=");
+						Serial.println(WIFI_AP_MODE);
+					}
 				}
 			}
 		}
@@ -69,7 +86,7 @@ void html_index(){
 		if( i >= 1 && i <= 3 ){
 			char mode_s[3][7]={"AP","STA","AP+STA"};
 			WIFI_AP_MODE = i;
-			snprintf(res_s, 128,"Wi-Fiモードを[%s]に設定しました(Wi-Fi再起動後に有効)。",mode_s[i-1]);
+			snprintf(res_s, HTML_RES_LEN_MAX,"Wi-Fiモードを[%s]に設定しました(Wi-Fi再起動後に有効)。",mode_s[i-1]);
 			Serial.print(" WIFI_AP_MODE=");
 			Serial.println(WIFI_AP_MODE);
 		}else strcpy(res_s,"エラー：Wi-Fiモードの設定値が範囲外です。");
@@ -81,7 +98,7 @@ void html_index(){
 		for(i=0; i<5; i++){
 			if( sleep_i == sleep_vals[i]){
 				SLEEP_SEC = sleep_vals[i] * 60 - 5;
-				snprintf(res_s, 128,"間欠動作間隔を[%d]分に設定しました。スリープ中は操作できません。",sleep_i);
+				snprintf(res_s, HTML_RES_LEN_MAX,"間欠動作間隔を[%d]分に設定しました。スリープ中は操作できません。",sleep_i);
 				Serial.print(" SLEEP_SEC=");
 				Serial.println(SLEEP_SEC);
 				break;
@@ -117,14 +134,66 @@ void html_index(){
 		Serial.print(" ADC_EN=");
 		Serial.println(ADC_EN);
 	}
+	if(server.hasArg("BTN_EN")){
+		String S = server.arg("BTN_EN");
+		i = S.toInt();
+		if( i >= 0 && i <= 2) BTN_EN=i;
+		Serial.print(" BTN_EN=");
+		Serial.println(BTN_EN);
+	}
+	if(server.hasArg("PIR_EN")){
+		String S = server.arg("PIR_EN");
+		i = S.toInt();
+		if( i==0 ) PIR_EN=false;
+		if( i==1 ) PIR_EN=true;
+		Serial.print(" PIR_EN=");
+		Serial.println(PIR_EN);
+	}
+	if(server.hasArg("AD_LUM_EN")){
+		String S = server.arg("AD_LUM_EN");
+		i = S.toInt();
+		if( i==0 ) AD_LUM_EN=false;
+		if( i==1 ) AD_LUM_EN=true;
+		Serial.print(" AD_LUM_EN=");
+		Serial.println(AD_LUM_EN);
+	}
+	if(server.hasArg("AD_TEMP_EN")){
+		String S = server.arg("AD_TEMP_EN");
+		i = S.toInt();
+		if( i >= 0 && i <= 2) AD_TEMP_EN=i;
+		Serial.print(" AD_TEMP_EN=");
+		Serial.println(AD_TEMP_EN);
+	}
+	if(server.hasArg("I2C_HUM_EN")){
+		String S = server.arg("I2C_HUM_EN");
+		i = S.toInt();
+		if( i >= 0 && i <= 2) I2C_HUM_EN=i;
+		Serial.print(" I2C_HUM_EN=");
+		Serial.println(I2C_HUM_EN);
+	}
+	if(server.hasArg("I2C_ENV_EN")){
+		String S = server.arg("I2C_ENV_EN");
+		i = S.toInt();
+		if( i >= 0 && i <= 2) I2C_ENV_EN=i;
+		Serial.print(" I2C_ENV_EN=");
+		Serial.println(I2C_ENV_EN);
+	}
+	if(server.hasArg("I2C_ACCUM_EN")){
+		String S = server.arg("I2C_ACCUM_EN");
+		i = S.toInt();
+		if( i==0 ) I2C_ACCUM_EN=false;
+		if( i==1 ) I2C_ACCUM_EN=true;
+		Serial.print(" I2C_ACCUM_EN=");
+		Serial.println(I2C_ACCUM_EN);
+	}
 	if(server.hasArg("SENSORS")){
 		String S = sensors_get();
 		strcpy(res_s,"センサ取得値=");
 		int len=strlen(res_s);
-		S.toCharArray(&res_s[len],128-len);
+		S.toCharArray(&res_s[len],HTML_RES_LEN_MAX-len);
 	}
 	
-	snprintf(s, 4096,
+	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
 				<title>%s</title>\
@@ -156,7 +225,8 @@ void html_index(){
 					<p>Wi-Fi再起動　\
 					<input type=\"submit\" name=\"BOOT\" value=\"実行\" size=\"4\">\
 					</p>\
-					<p>AP:本機がAPとして動作, STA:他のAPへ接続(インターネット可)。</p>\
+					<p>Wi-Fiモードを[STA]にすると無線LANが切断されます(操作不可になる)</p>\
+					<p>[AP]:本機がAPとして動作, [STA]:他のAPへ接続, [AP+STA]:両方</p>\
 				</form>\
 				<hr>\
 				<h3>スリープ設定</h3>\
@@ -169,7 +239,7 @@ void html_index(){
 					<input type=\"radio\" name=\"SLEEP\" value=\"60\" %s>60分\
 					<input type=\"submit\" value=\"設定\" size=\"4\">\
 					</p>\
-					<p>[OFF]以外に設定するとスリープ中は操作できません。</p>\
+					<p>[OFF]以外に設定するとスリープ中(殆どの時間)は操作できません。</p>\
 				</form>\
 				<hr>\
 				<h3>センサ設定</h3>\
@@ -189,6 +259,38 @@ void html_index(){
 					<input type=\"radio\" name=\"ADC_EN\" value=\"34\" %s>IO34\
 					<input type=\"radio\" name=\"ADC_EN\" value=\"35\" %s>IO35\
 					<input type=\"radio\" name=\"ADC_EN\" value=\"39\" %s>IO39\
+					</p>\
+					<p>押しボタン　\
+					<input type=\"radio\" name=\"BTN_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"BTN_EN\" value=\"1\" %s>ON\
+					<input type=\"radio\" name=\"BTN_EN\" value=\"2\" %s>PingPong\
+					</p>\
+					<p>人感センサ　\
+					<input type=\"radio\" name=\"PIR_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"PIR_EN\" value=\"1\" %s>ON\
+					</p>\
+					<p>照度センサ　\
+					<input type=\"radio\" name=\"AD_LUM_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"AD_LUM_EN\" value=\"1\" %s>NJL7502L\
+					</p>\
+					<p>温度センサ　\
+					<input type=\"radio\" name=\"AD_TEMP_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"AD_TEMP_EN\" value=\"1\" %s>LM61\
+					<input type=\"radio\" name=\"AD_TEMP_EN\" value=\"2\" %s>MCP9700\
+					</p>\
+					<p>温湿度センサ　\
+					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"1\" %s>SHT31\
+					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"2\" %s>Si7021\
+					</p>\
+					<p>環境センサ　\
+					<input type=\"radio\" name=\"I2C_ENV_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"I2C_ENV_EN\" value=\"1\" %s>BME280\
+					<input type=\"radio\" name=\"I2C_ENV_EN\" value=\"2\" %s>BMP280\
+					</p>\
+					<p>加速度センサ　\
+					<input type=\"radio\" name=\"I2C_ACCUM_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"I2C_ACCUM_EN\" value=\"1\" %s>ADXL345\
 					</p>\
 					<p>設定を送信　\
 					<input type=\"submit\" name=\"SENSORS\" value=\"設定\" size=\"4\">\
@@ -212,19 +314,27 @@ void html_index(){
 				checked[!TEMP_EN], checked[TEMP_EN], 
 				checked[!HALL_EN], checked[HALL_EN], 
 				checked[ADC_EN==0], checked[ADC_EN==32], checked[ADC_EN==33], checked[ADC_EN==34], checked[ADC_EN==35], checked[ADC_EN==39],
+				checked[BTN_EN==0], checked[BTN_EN==1], checked[BTN_EN==2],
+				checked[PIR_EN==0], checked[PIR_EN==1],
+				checked[AD_LUM_EN==0], checked[AD_LUM_EN==1],
+				checked[AD_TEMP_EN==0], checked[AD_TEMP_EN==1], checked[AD_TEMP_EN==2],
+				checked[I2C_HUM_EN==0], checked[I2C_HUM_EN==1], checked[I2C_HUM_EN==2],
+				checked[I2C_ENV_EN==0], checked[I2C_ENV_EN==1], checked[I2C_ENV_EN==2],
+				checked[I2C_ACCUM_EN==0], checked[I2C_ACCUM_EN==1],
 			html_ip_s
 	);
 	server.send(200, "text/html", s);
 	Serial.print("done, ");
 	Serial.print(strlen(s));
 	Serial.println(" bytes");
+	if(HTML_INDEX_LEN_MAX - 1 <= strlen(s)) Serial.println("ERROR: Prevented Buffer Overrun");
 }
 
 void html_reboot(){
-	char s[1024];
+	char s[HTML_MISC_LEN_MAX];
 	
 	Serial.println("HTML reboot");
-	snprintf(s, 1024,
+	snprintf(s, HTML_MISC_LEN_MAX,
 		"<html>\
 			<head>\
 				<title>Wi-Fi 再起動中</title>\
@@ -242,6 +352,7 @@ void html_reboot(){
 	Serial.print("done, ");
 	Serial.print(strlen(s));
 	Serial.println(" bytes");
+	if(HTML_MISC_LEN_MAX - 1 <= strlen(s)) Serial.println("ERROR: Prevented Buffer Overrun");
 	delay(110);
 	server.close();
 	TimerWakeUp_setSleepTime(2);
