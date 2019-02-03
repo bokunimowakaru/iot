@@ -87,6 +87,14 @@ void html_index(){
 		Serial.print(" TEMP_EN=");
 		Serial.println(TEMP_EN);
 	}
+	if(server.hasArg("TEMP_ADJ")){
+		i = server.arg("TEMP_ADJ").toInt();
+		if( i >= -100 && i <= 100 ){
+			TEMP_ADJ = i;
+			Serial.print(" TEMP_ADJ=");
+			Serial.println(TEMP_ADJ);
+		}
+	}
 	if(server.hasArg("HALL_EN")){
 		i = server.arg("HALL_EN").toInt();
 		if( i==0 ) HALL_EN=false;
@@ -386,11 +394,9 @@ void html_wifi(){
 
 void html_sensors(){
 	char s[HTML_INDEX_LEN_MAX];
-	char TEMP_ADJ_s[5];
 	int i;
 	
 	Serial.println("HTML sensors");
-	snprintf(TEMP_ADJ_s,5,"%d",(int)TEMP_ADJ);
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
@@ -403,7 +409,7 @@ void html_sensors(){
 					<p>内蔵温度センサ　\
 					<input type=\"radio\" name=\"TEMP_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"TEMP_EN\" value=\"1\" %s>ON\
-					補正値=<input type=\"text\" name=\"TEMP_ADJ\" value=\"%s\" size=\"5\">℃\
+					補正値=<input type=\"text\" name=\"TEMP_ADJ\" value=\"%d\" size=\"5\">℃\
 					</p>\
 					<p>内蔵磁気センサ　\
 					<input type=\"radio\" name=\"HALL_EN\" value=\"0\" %s>OFF\
@@ -458,7 +464,7 @@ void html_sensors(){
 			</body>\
 		</html>", html_title,
 			html_title,
-				html_checked[!TEMP_EN], html_checked[TEMP_EN], TEMP_ADJ_s, 
+				html_checked[!TEMP_EN], html_checked[TEMP_EN], TEMP_ADJ, 
 				html_checked[!HALL_EN], html_checked[HALL_EN], 
 				html_checked[ADC_EN==0], html_checked[ADC_EN==32], html_checked[ADC_EN==33], html_checked[ADC_EN==34], html_checked[ADC_EN==35], html_checked[ADC_EN==39],
 				html_checked[BTN_EN==0], html_checked[BTN_EN==1], html_checked[BTN_EN==2],
