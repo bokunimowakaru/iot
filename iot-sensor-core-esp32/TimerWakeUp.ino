@@ -29,7 +29,7 @@ RTC_DATA_ATTR int bootCount = 0;
 Method to print the reason by which ESP32
 has been awaken from sleep
 */
-void TimerWakeUp_print_wakeup_reason(){
+byte TimerWakeUp_print_wakeup_reason(){
   esp_sleep_wakeup_cause_t wakeup_reason;
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
@@ -43,6 +43,7 @@ void TimerWakeUp_print_wakeup_reason(){
     case 5  : Serial.println("Wakeup caused by ULP program"); break;
     default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
   }
+  return wakeup_reason;
 }
 
 void TimerWakeUp_setSleepTime(int time_sec){
@@ -52,20 +53,27 @@ void TimerWakeUp_setSleepTime(int time_sec){
 }
 
 void TimerWakeUp_setExternalInput(gpio_num_t gpio, int level){
+  /* @param mask  bit mask of GPIO numbers which will cause wakeup. Only GPIOs
+   *              which are have RTC functionality can be used in this bit map:
+   *              0,2,4,12-15,25-27,32-39.
+  */
   esp_sleep_enable_ext0_wakeup(gpio,level);
   Serial.println("Wakeup ESP32 when IO" + String(gpio) + " = " + String(level));
 }
 
-void TimerWakeUp_init(){
+byte TimerWakeUp_init(){
   ++bootCount;	//Increment boot number and print it every reboot
   Serial.println("Boot number: " + String(bootCount));
-  TimerWakeUp_print_wakeup_reason();  //Print the wakeup reason for ESP32
+  return TimerWakeUp_print_wakeup_reason();  //Print the wakeup reason for ESP32
 }
 
 void TimerWakeUp_sleep(){
   Serial.println("Going to sleep now");
   delay(100);
   Serial.flush(); 
+  // タッチパッド起動を有効にしていなくても動作してしまう不具合対策
+  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TOUCHPAD);
+  Serial.println("Disabled wakeup touchpad, please ignore above \"E () sleep: Incorrect\"");
   esp_deep_sleep_start();
 }
 

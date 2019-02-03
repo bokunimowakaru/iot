@@ -1,5 +1,5 @@
 float mvAnalogIn(uint8_t PIN){
-    return mvAnalogIn(PIN, 0.0);            // “®ìÅ¬“dˆ³ 0.0 ` 0.1(V)’ö“x
+    return mvAnalogIn(PIN, 0.0);            // å‹•ä½œæœ€å°é›»åœ§ 0.0 ï½ 0.1(V)ç¨‹åº¦
 //  return mvAnalogIn(PIN, 1.075584e-1);
 }
 
@@ -40,5 +40,5 @@ float mvAnalogIn(uint8_t PIN, float offset){
 }
 
 void mvAnalogIn_init(uint8_t PIN){
-    pinMode(PIN,INPUT);                 // ƒAƒiƒƒO“ü—Í‚Ìİ’è
+    pinMode(PIN,INPUT);                 // ã‚¢ãƒŠãƒ­ã‚°å…¥åŠ›ã®è¨­å®š
 }

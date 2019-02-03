@@ -8,26 +8,28 @@ IoT Sensor Core for ESP32
 #include <ESPmDNS.h>
 #include "Ambient.h"							// Ambient接続用 ライブラリ
 
-const char SSID_AP[]="iot-core-esp32";
-const char PASS_AP[]="password";
-
-RTC_DATA_ATTR char SSID_STA[16] = "";
-RTC_DATA_ATTR char PASS_STA[32] = "";
-RTC_DATA_ATTR byte PIN_LED		= 2;			// GPIO 2(24番ピン)にLEDを接続
-RTC_DATA_ATTR byte PIN_SW		= 0;			// GPIO 0(25番ピン)にスイッチを接続
-RTC_DATA_ATTR byte WIFI_AP_MODE	= 1;			// Wi-Fi APモード ※2:STAモード
-RTC_DATA_ATTR int  SLEEP_SEC	= 0;			// スリープ間隔
-RTC_DATA_ATTR int  TIMEOUT		= 10000;		// タイムアウト 10秒
-RTC_DATA_ATTR int  PORT			= 1024; 		// ポート番号
-RTC_DATA_ATTR char DEVICE[9]	= "esp32_1,";	// デバイス名(5文字+"_"+番号+",")
-RTC_DATA_ATTR int  AmbientChannelId = 0; 		// チャネル名(整数) 0=無効
-RTC_DATA_ATTR char AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
+// ユーザ設定
+RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
+RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
+RTC_DATA_ATTR char 		SSID_STA[16] = "";		// STAモードのSSID(お手持ちのAPのSSID)
+RTC_DATA_ATTR char 		PASS_STA[32] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
+RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチ/PIRを接続
+RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
+RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
+RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 0;	// 送信間隔(非スリープ時)
+RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
+RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
+RTC_DATA_ATTR char		DEVICE[9]	= "esp32_1,";	// デバイス名(5文字+"_"+番号+",")
+RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
+RTC_DATA_ATTR int		AmbientChannelId = 0; 	// チャネル名(整数) 0=無効
+RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
 
 // デバイス有効化
 RTC_DATA_ATTR boolean	LCD_EN=false;
 RTC_DATA_ATTR boolean	NTP_EN=false;
-RTC_DATA_ATTR boolean	UDP_EN=true;
 RTC_DATA_ATTR boolean	TEMP_EN=true;
+RTC_DATA_ATTR int8_t	TEMP_ADJ=0;
 RTC_DATA_ATTR boolean	HALL_EN=false;
 RTC_DATA_ATTR byte		ADC_EN=0;
 RTC_DATA_ATTR byte		BTN_EN=0;				// 1:ON(L) 2:PingPong
@@ -44,6 +46,8 @@ Ambient ambient;								// クラウドサーバ Ambient用
 WiFiClient ambClient;							// Ambient接続用のTCPクライアント
 
 unsigned long TIME=0;							// 1970年からmillis()＝0までの秒数
+unsigned long TIME_NEXT=0;						// 次回の送信時刻(ミリ秒)
+boolean TIME_NEXT_b=false;						// 桁あふれフラグ
 
 boolean setupWifiAp(){
 	delay(1000);								// 切換え・設定待ち時間
@@ -52,7 +56,7 @@ boolean setupWifiAp(){
 		IPAddress(192,168,0,1), 					// 本機のゲートウェイアドレス
 		IPAddress(255,255,255,0)				// ネットマスク
 	);
-	WiFi.softAP(SSID_AP);						// ソフトウェアAPの起動
+	WiFi.softAP(SSID_AP,PASS_AP);				// ソフトウェアAPの起動
 
 	Serial.print("SoftAP  IP = "); Serial.println(WiFi.softAPIP());
 	Serial.println("Software AP started");
@@ -84,11 +88,11 @@ boolean setupWifiSta(){
 	return true;
 }
 
-void sendUdp(){
+void sendUdp(String &payload){
 	WiFiUDP udp;								// UDP通信用のインスタンスを定義
-	udp.beginPacket(IP_BC, PORT);				// UDP送信先を設定
+	udp.beginPacket(IP_BC, UDP_PORT);			// UDP送信先を設定
 	udp.print(DEVICE);						 	// デバイス名を送信
-	udp.println(sensors_get());					// センサ値
+	udp.println(payload);						// センサ値
 	udp.endPacket();							// UDP送信の終了(実際に送信する)
 	udp.flush();
 	udp.stop();
@@ -98,7 +102,20 @@ void setup(){
 	pinMode(PIN_LED,OUTPUT);					// LEDを接続したポートを出力に
 	if(LCD_EN)lcdSetup();						// 液晶の初期化
 	Serial.begin(115200);
-	TimerWakeUp_init();
+	Serial.println("--------");
+	int wake = TimerWakeUp_init();
+	if(BTN_EN > 0){
+		if(wake == 1 || wake == 2) sensors_btnPush(true);
+		if(wake == 3){
+			pinMode(PIN_SW,INPUT_PULLUP);
+			if(digitalRead(PIN_SW)) sleep();
+		}
+	}
+	if(PIR_EN) sensors_pirPush(true);
+	
+	if(TimerWakeUp_init() > 0){
+	}
+//	payload = String(sensors_get());
 	Serial.println("-------- IoT Sensor Core ESP32 by Wataru KUNINO --------");
 	Serial.print("Wi-Fi Mode = ");
 	if(WIFI_AP_MODE>=0 && WIFI_AP_MODE<=3){
@@ -106,7 +123,9 @@ void setup(){
 		Serial.println( mode_s[WIFI_AP_MODE] );
 	}else Serial.println( WIFI_AP_MODE );
 	Serial.println("SSID_AP    = " + String(SSID_AP) );
-	Serial.println("SSID_STA   = " + String(SSID_STA) );
+	Serial.println("PASS_AP    = " + String(PASS_AP) );
+	if(strlen(SSID_STA)>0)Serial.println("SSID_STA   = " + String(SSID_STA) );
+	if(strlen(PASS_STA)>0)Serial.println("PASS_STA   = ********");
 	
 	delay(10);									// ESP32に必要な待ち時間
 	switch(WIFI_AP_MODE){
@@ -156,27 +175,64 @@ void setup(){
 	
 	// HTTP サーバ
 	if( (WIFI_AP_MODE & 1) == 1 ){				// WiFi_AP 動作時
-		Serial.println("MDNS responder started");
-		MDNS.begin("iot");
+		MDNS_EN=MDNS.begin("iot");
+		if(MDNS_EN) Serial.println("MDNS responder started");
 	}
-	html_init(IP);
+	html_init(IP,"iot");
 	Serial.print("WebServ IP = ");
 	Serial.println( IP );
 	Serial.print("     BC IP = ");
 	Serial.println( IP_BC );
-	Serial.println(" URL(mDNS) = http://iot.local/");
+	if(MDNS_EN)Serial.println(" URL(mDNS) = http://iot.local/");
 	Serial.print("   URL(IP) = http://");
 	Serial.print(IP);
 	Serial.println("/");
-	if(UDP_EN) sendUdp();
+	if(UDP_PORT>0){
+		String payload = String(sensors_get());
+		if(payload.length() > 0) sendUdp(payload);
+	}
 }
 
 void loop(){
 	html_handleClient();
+	sensors_btnRead();
+	sleep();
+	
+	unsigned long time=millis();            // ミリ秒の取得
+	if(time<100){
+		TIME_NEXT_b = false;
+		if(NTP_EN){
+			Serial.println("NTP client started");
+			TIME=getNtp();					// NTP時刻を取得
+			TIME-=millis()/1000;			// カウント済み内部タイマー事前考慮
+		}
+		while( millis() < 100 ) delay(10);	// 待ち時間処理(最大100ms)
+	}
+	if(time > TIME_NEXT && !TIME_NEXT_b){
+		if(UDP_PORT>0){
+			String payload = String(sensors_get());
+			if(payload.length() > 0) sendUdp(payload);
+		}
+		TIME_NEXT = millis() + (unsigned long)SEND_INT_SEC * 1000;
+		if( TIME_NEXT < (unsigned long)SEND_INT_SEC * 1000 ) TIME_NEXT_b = true;
+	}
+}
+
+void sleep(){
 	if( ((WIFI_AP_MODE & 2) == 2) && (SLEEP_SEC > 0) ){		// WiFi_STA 動作時
 		if( millis() < TIMEOUT ) return;
 		digitalWrite(PIN_LED,LOW);
+		if(BTN_EN>0){
+			pinMode(PIN_SW,INPUT_PULLUP);
+			while(!digitalRead(PIN_SW)){
+				digitalWrite(PIN_LED,!digitalRead(PIN_LED));
+				delay(50);
+			}
+			digitalWrite(PIN_LED,LOW);
+			TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
+		}
 		TimerWakeUp_setSleepTime(SLEEP_SEC);
 		TimerWakeUp_sleep();
 	}
+	return;
 }
