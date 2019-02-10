@@ -3,7 +3,6 @@
 # UDPを送信する
 # Copyright (c) 2018-2019 Wataru KUNINO
 
-from __future__ import print_function
 import sys
 import socket
 
