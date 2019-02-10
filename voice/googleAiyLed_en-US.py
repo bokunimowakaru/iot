@@ -10,6 +10,7 @@ from aiy.cloudspeech import CloudSpeechClient               # AIY音声認識用
 from aiy.board import Board,Led                             # AIYキット用ライブラリ
 from aiy.voice import tts
 import socket                                               # UDP送信用ライブラリ
+import subprocess
 
 device = 'voice_1'                                          # UDP送信用のデバイス名
 port = 1024                                                 # UDPポート番号
@@ -51,6 +52,9 @@ while True:
     if 'HELLO' in voice.upper() or 'HEY' in voice.upper():  # 音声「HELLO」を認識したとき
         tts.say(talk[0],lang='en-US')
         talk_n=1
+    if 'shut down' in voice
+        tts.say('shuting down your raspberry pi, see you again.',lang='en-US')
+        subprocess.call('sudo shutdown now', shell=True)
     if udp == None:                                         # 変数udpがNodeのとき
         continue                                            # whileループの先頭に戻る
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # ソケットを作成
