@@ -39,6 +39,34 @@ boolean sensors_pirPrev_b = false;				// 人感センサ；前回の値を記録
 boolean sensors_pirPush_b = false;				// 人感センサ；強制押下
 String sensors_S="";							// センサ名
 
+#define sensors_devices_n 10
+const char sensors_devices[sensors_devices_n][6]={
+	"temp0",	// 内蔵温度センサ
+	"hall0",	// 内蔵ホールセンサ
+	"adcnv",	// ADコンバータ
+	"btn_s",	// 押しボタン
+	"pir_s",	// 人感センサ
+	"illum",	// 照度センサ
+	"temp.",	// 温度センサ
+	"humid",	// 温湿度センサ
+	"envir",	// 温湿度＋気圧センサ（温度,湿度,気圧）
+	"accem"		// 加速度センサ
+};
+/*
+	"rd_sw",	// ドア開閉スイッチ
+	"press",	// 気圧センサ
+	"e_co2",	// ガスセンサ
+	"timer",	// 時刻送信機
+	"ir_in",	// 赤外線リモコン信号レシーバ(信号長,16進数データ)
+	"ir_rc",	// 赤外線リモコン信号トランスミッタ
+	"cam_a",	// カメラHTTPサーバのURI
+	"sound",	// オーディオHTTPサーバのURI
+	"adash",	// Wi-Fiセンサ
+	"atalk",
+	"voice",
+	"alarm",
+*/
+
 void sensors_btnPrev(boolean in){
 	sensors_btnPrev_b = in;
 }
