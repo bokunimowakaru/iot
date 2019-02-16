@@ -109,6 +109,8 @@ boolean sentToAmbient(String &payload){
 	if(AmbientChannelId == 0) return false;
 	if(WiFi.status() != WL_CONNECTED) return false;
 	if(payload.length() == 0) return false;
+
+	ambient.begin(AmbientChannelId, AmbientWriteKey, &ambClient);
 	int Sp=0;
 	char s[16];
 	for(int num = 1; num <= 8; num++){
@@ -120,7 +122,9 @@ boolean sentToAmbient(String &payload){
 		if( Sp <= 0 ) break;
 		if( Sp >= payload.length() ) break;
 	}
-	return ambient.send();
+	boolean ret = ambient.send();
+	if( ambClient.available() ) ambClient.stop();
+	return ret;
 }
 
 String sendSensorValues(){
@@ -202,10 +206,6 @@ void setup(){
 			Serial.println("NTP client started");
 			TIME=getNtp();						// NTP時刻を取得
 			TIME-=millis()/1000;				// カウント済み内部タイマー事前考慮
-		}
-		if(AmbientChannelId > 0){				// Ambient 開始
-			Serial.println("Ambient started");
-			ambient.begin(AmbientChannelId, AmbientWriteKey, &ambClient);
 		}
 	}
 	
