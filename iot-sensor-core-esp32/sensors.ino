@@ -99,6 +99,11 @@ boolean sensors_csv(String &S, boolean csv_b){
 	return true;
 }
 
+String sensors_deviceName(int index){
+	if(index >= sensors_devices_n || index < 0) return "";
+	return String(sensors_devices[index]);
+}
+
 String sensors_name(){
 	return sensors_S;
 }
@@ -187,7 +192,7 @@ String sensors_sendUdp(const char *device, String payload){		// main/sendUdp
 		udp.endPacket();							// UDP送信の終了(実際に送信する)
 		udp.flush();
 		udp.stop();
-		Serial.println("/udp/" + html_ipAdrToString(IP_BC) +"/" + String(UDP_PORT) + "/" + S);
+		Serial.println("udp://" + html_ipAdrToString(IP_BC) +":" + String(UDP_PORT) + " \"" + S + "\"");
 		delay(10);
 		return S;
 	}

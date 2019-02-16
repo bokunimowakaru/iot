@@ -99,7 +99,7 @@ String sendUdp(String &payload){
 		udp.endPacket();							// UDP送信の終了(実際に送信する)
 		udp.flush();
 		udp.stop();
-		Serial.println("/udp/" + html_ipAdrToString(IP_BC) +"/" + String(UDP_PORT) + "/" + S);
+		Serial.println("udp://" + html_ipAdrToString(IP_BC) +":" + String(UDP_PORT) + " \"" + S + "\"");
 		delay(10);
 		return S;
 	} else return "";
@@ -115,7 +115,16 @@ boolean sentToAmbient(String &payload){
 	char s[16];
 	for(int num = 1; num <= 8; num++){
 		float val = payload.substring(Sp).toFloat();
-		Serial.println("/ambient {\"d" + String(num) + "\":\"" + val + "\"}");
+		Serial.println("http://ambidata.io/ POST {\"d"
+			+ String(num)
+			+ "\":"
+			+ String(val)
+			+ "} // {\"device"
+			+ String(num)
+			+ "\":\""
+			+ String(sensors_deviceName(num-1))
+			+ "\"}"
+		);
 		dtostrf(val,-15,3,s);
 		ambient.set(num,s);
 		Sp = payload.indexOf(",", Sp) + 1;
