@@ -18,7 +18,8 @@ RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
 RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 0;	// 送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
-RTC_DATA_ATTR char		DEVICE[9]	= "esp32_1,";	// デバイス名(5文字+"_"+番号+",")
+RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
+RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
 RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
 RTC_DATA_ATTR uint16_t	AmbientChannelId = 0; 		// チャネル名(整数) 0=無効
 RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
@@ -57,6 +58,17 @@ String html_PIN_ASSIGNED_S[38] = {
 	"","","","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","","IO21","USBシリアル(TxD)","USBシリアル(RxD)","IO22","IO23","GND"};
 	
 	/* Null = ピンの無いもの、PINOUTと同値 = ピンアサインの無いもの */
+
+boolean html_check_overrun(int len){
+	Serial.print("done html, ");
+	Serial.print(len);
+	Serial.println(" bytes");
+	if(HTML_INDEX_LEN_MAX - 1 <= len){
+		Serial.println("ERROR: Prevented Buffer Overrun");
+		return false;
+	}
+	return true;
+}
 
 void html_index(){
 	char s[HTML_INDEX_LEN_MAX];
@@ -162,6 +174,19 @@ void html_index(){
 	}
 	sensors_name().toCharArray(sensors_s,HTML_RES_LEN_MAX);
 	
+	if(server.hasArg("DEVICE_NUM")){
+		i = server.arg("DEVICE_NUM").toInt();
+		if( i >= 0 && i <= 9 ){
+			char c = (char)((int)'0'+i);
+			if( DEVICE_NUM != c ){
+				snprintf(res_s, HTML_RES_LEN_MAX,"デバイス番号を[%c]に設定しました",c);
+				DEVICE_NUM = c;
+				Serial.print(" DEVICE_NUM=");
+				Serial.println(DEVICE_NUM);
+			}
+		}
+	}
+	
 	if(server.hasArg("UDP_PORT")){
 		i = server.arg("UDP_PORT").toInt();
 		if( i >= 0 && i <= 65535 && UDP_PORT != i){
@@ -172,7 +197,7 @@ void html_index(){
 			Serial.println(UDP_PORT);
 		}
 	}
-
+	
 	if(server.hasArg("AmbientChannelId")){
 		int i = server.arg("AmbientChannelId").toInt();
 		if( i != AmbientChannelId){
@@ -229,15 +254,16 @@ void html_index(){
 				<h4><a href=\"sensors\">センサ設定</a></h4>\
 				<h4><a href=\"sendto\">データ送信設定</a></h4>\
 				<hr>\
+				<h3>電源</h3>\
+				<h4><a href=\"reboot\">再起動</a></h4>\
+				<h4><a href=\"sleep\">OFF（スリープ）</a></h4>\
+				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
 		</html>", html_title, html_title, res_s, sensors_s, html_ip_s, html_ip_s
 	);
 	server.send(200, "text/html", s);
-	Serial.print("done, ");
-	Serial.print(strlen(s));
-	Serial.println(" bytes");
-	if(HTML_INDEX_LEN_MAX - 1 <= strlen(s)) Serial.println("ERROR: Prevented Buffer Overrun");
+	html_check_overrun(strlen(s));
 }
 
 void html_wifi(){
@@ -386,10 +412,7 @@ void html_wifi(){
 			html_checked[sleep_b[0]], html_checked[sleep_b[1]], html_checked[sleep_b[2]], html_checked[sleep_b[3]], html_checked[sleep_b[4]]
 	);
 	server.send(200, "text/html", s);
-	Serial.print("done, ");
-	Serial.print(strlen(s));
-	Serial.println(" bytes");
-	if(HTML_INDEX_LEN_MAX - 1 <= strlen(s)) Serial.println("ERROR: Prevented Buffer Overrun");
+	html_check_overrun(strlen(s));
 }
 
 void html_sensors(){
@@ -476,10 +499,7 @@ void html_sensors(){
 				html_checked[I2C_ACCUM_EN==0], html_checked[I2C_ACCUM_EN==1]
 	);
 	server.send(200, "text/html", s);
-	Serial.print("done, ");
-	Serial.print(strlen(s));
-	Serial.println(" bytes");
-	if(HTML_INDEX_LEN_MAX - 1 <= strlen(s)) Serial.println("ERROR: Prevented Buffer Overrun");
+	html_check_overrun(strlen(s));
 }
 
 void html_sendto(){
@@ -499,6 +519,13 @@ void html_sendto(){
 					<input type=\"radio\" name=\"UDP_PORT\" value=\"1024\" %s>1024\
 					<input type=\"radio\" name=\"UDP_PORT\" value=\"3054\" %s>3054\
 					<input type=\"radio\" name=\"UDP_PORT\" value=\"49152\" %s>49152\
+					</p>\
+					<p>デバイス番号　\
+					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"1\" %s>1\
+					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"2\" %s>2\
+					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"3\" %s>3\
+					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"4\" %s>4\
+					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"5\" %s>5\
 					</p>\
 					<h3>Ambient 送信設定</h3>\
 					ID=<input type=\"text\" name=\"AmbientChannelId\" value=\"%d\" size=\"5\"> (0:OFF)\
@@ -521,18 +548,16 @@ void html_sendto(){
 		</html>", html_title,
 			html_title,
 			html_checked[UDP_PORT==0], html_checked[UDP_PORT==1024], html_checked[UDP_PORT==3054], html_checked[UDP_PORT==49152],
+			html_checked[DEVICE_NUM=='1'], html_checked[DEVICE_NUM=='2'], html_checked[DEVICE_NUM=='3'], html_checked[DEVICE_NUM=='4'], html_checked[DEVICE_NUM=='5'],
 			AmbientChannelId, AmbientWriteKey,
 			html_checked[SEND_INT_SEC==0], html_checked[SEND_INT_SEC==5], html_checked[SEND_INT_SEC==15], html_checked[SEND_INT_SEC==30], html_checked[SEND_INT_SEC==60]
 	);
 	server.send(200, "text/html", s);
-	Serial.print("done, ");
-	Serial.print(strlen(s));
-	Serial.println(" bytes");
-	if(HTML_INDEX_LEN_MAX - 1 <= strlen(s)) Serial.println("ERROR: Prevented Buffer Overrun");
+	html_check_overrun(strlen(s));
 }
 
 void html_reboot(){
-	char s[HTML_MISC_LEN_MAX];
+	char s[HTML_INDEX_LEN_MAX];
 	
 	Serial.println("HTML reboot");
 	snprintf(s, HTML_MISC_LEN_MAX,
@@ -544,19 +569,47 @@ void html_reboot(){
 			</head>\
 			<body>\
 				<h1>Wi-Fi 再起動中</h1>\
-				<p>しばらくおまちください。</p>\
+				<p>しばらくおまちください(約10秒)。</p>\
 				<p>STAモードに切り替えたときは、LAN側からアクセスしてください。</p>\
 			</body>\
 		</html>", html_ip_s
 	);
 	server.send(200, "text/html", s);
-	Serial.print("done, ");
-	Serial.print(strlen(s));
-	Serial.println(" bytes");
-	if(HTML_MISC_LEN_MAX - 1 <= strlen(s)) Serial.println("ERROR: Prevented Buffer Overrun");
+	html_check_overrun(strlen(s));
 	delay(110);
 	server.close();
 	TimerWakeUp_setSleepTime(2);
+	TimerWakeUp_sleep();
+}
+
+void html_sleep(){
+	char s[HTML_INDEX_LEN_MAX];
+	
+	Serial.println("HTML sleep");
+	snprintf(s, HTML_MISC_LEN_MAX,
+		"<html>\
+			<head>\
+				<title>Wi-Fi 電源OFF</title>\
+				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+			</head>\
+			<body>\
+				<h1>Wi-Fi ディープ・スリープへ移行中です。</h1>\
+				<p>IO %d ピンをLowレベルに設定(BOOTボタン押下)すると復帰します。</p>\
+				<p>復帰後のアクセス先＝<a href=\"http://%s/\">http://%s/</a></p>\
+			</body>\
+		</html>", PIN_SW, html_ip_s, html_ip_s
+	);
+	server.send(200, "text/html", s);
+	html_check_overrun(strlen(s));
+	delay(110);
+	server.close();
+	pinMode(PIN_SW,INPUT_PULLUP);
+	while(!digitalRead(PIN_SW)){
+		digitalWrite(PIN_LED,!digitalRead(PIN_LED));
+		delay(50);
+	}
+	digitalWrite(PIN_LED,LOW);
+	TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
 	TimerWakeUp_sleep();
 }
 
@@ -586,9 +639,7 @@ void html_demo(){
 		</html>", hr, min % 60, sec % 60
 	);
 	server.send(200, "text/html", s);
-	Serial.print("done, ");
-	Serial.print(strlen(s));
-	Serial.println(" bytes");
+	html_check_overrun(strlen(s));
 }
 
 void drawGraph() {
@@ -623,6 +674,14 @@ void html_404(){
 	server.send(404, "text/plain", message);
 }
 
+String html_ipAdrToString(uint32_t ip){
+	String S = String(ip & 255) + ".";
+	      S += String(ip>>8 & 255) + ".";
+	      S += String(ip>>16 & 255) + ".";
+	      S += String(ip>>24 & 255);
+	return S;
+}
+
 void html_init(uint32_t ip, const char *domainName_local){
 	html_ip=ip;
 	if(MDNS_EN){
@@ -642,6 +701,7 @@ void html_init(uint32_t ip, const char *domainName_local){
 	server.on("/sensors", html_sensors);
 	server.on("/sendto", html_sendto);
 	server.on("/reboot", html_reboot);
+	server.on("/sleep", html_sleep);
 //	server.on("/text", html_text);
 //	server.on("/demo", html_demo);
 //	server.on("/test.svg", drawGraph);

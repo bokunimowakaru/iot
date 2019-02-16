@@ -11,7 +11,8 @@ RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
 RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 0;	// 送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
-RTC_DATA_ATTR char		DEVICE[9]	= "esp32_1,";	// デバイス名(5文字+"_"+番号+",")
+RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
+RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
 RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
 RTC_DATA_ATTR uint16_t	AmbientChannelId = 0; 		// チャネル名(整数) 0=無効
 RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
@@ -41,16 +42,16 @@ String sensors_S="";							// センサ名
 
 #define sensors_devices_n 10
 const char sensors_devices[sensors_devices_n][6]={
-	"temp0",	// 内蔵温度センサ
-	"hall0",	// 内蔵ホールセンサ
-	"adcnv",	// ADコンバータ
-	"btn_s",	// 押しボタン
-	"pir_s",	// 人感センサ
-	"illum",	// 照度センサ
-	"temp.",	// 温度センサ
-	"humid",	// 温湿度センサ
-	"envir",	// 温湿度＋気圧センサ（温度,湿度,気圧）
-	"accem"		// 加速度センサ
+	"temp0",	// 0 内蔵温度センサ
+	"hall0",	// 1 内蔵ホールセンサ
+	"adcnv",	// 2 ADコンバータ
+	"btn_s",	// 3 押しボタン
+	"pir_s",	// 4 人感センサ
+	"illum",	// 5 照度センサ
+	"temp.",	// 6 温度センサ
+	"humid",	// 7 温湿度センサ
+	"envir",	// 8 温湿度＋気圧センサ（温度,湿度,気圧）
+	"accem"		// 9 加速度センサ
 };
 /*
 	"rd_sw",	// ドア開閉スイッチ
@@ -115,6 +116,7 @@ String sensors_get(){
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload += String(temp);
+		sensors_sendUdp(sensors_devices[0], String(temp));
 		sensors_S += "温度(℃)";
 	}
 	if(HALL_EN){
@@ -127,6 +129,7 @@ String sensors_get(){
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload +=  String(hall);
+		sensors_sendUdp(sensors_devices[1], String(hall));
 		sensors_S += "磁気";
 	}
 	if(ADC_EN){
@@ -138,6 +141,7 @@ String sensors_get(){
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload += String(adc);
+		sensors_sendUdp(sensors_devices[2], String(adc));
 		sensors_S += "ADC";
 	}
 	if(BTN_EN>0){
@@ -158,16 +162,34 @@ String sensors_get(){
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload += String(btn);
+		sensors_sendUdp(sensors_devices[3], String(btn));
 		sensors_S += "ボタン";
 	}
 	return payload;
 }
 
-void sensors_sendUdp(String payload){
+String sensors_sendUdp(String payload){
 	WiFiUDP udp;								// UDP通信用のインスタンスを定義
 	udp.beginPacket(IP_BC, UDP_PORT);			// UDP送信先を設定
 	udp.println(payload);						// センサ値
 	udp.endPacket();							// UDP送信の終了(実際に送信する)
 	udp.flush();
 	udp.stop();
+	return payload;
+}
+
+String sensors_sendUdp(const char *device, String payload){		// main/sendUdp
+	if(UDP_PORT > 0 && payload.length() > 0){
+		String S = String(device) + "_" + String(DEVICE_NUM) + "," + payload;
+		WiFiUDP udp;								// UDP通信用のインスタンスを定義
+		udp.beginPacket(IP_BC, UDP_PORT);			// UDP送信先を設定
+		udp.println(S);								// センサ値
+		udp.endPacket();							// UDP送信の終了(実際に送信する)
+		udp.flush();
+		udp.stop();
+		Serial.println("/udp/" + html_ipAdrToString(IP_BC) +"/" + String(UDP_PORT) + "/" + S);
+		delay(10);
+		return S;
+	}
+	return "";
 }

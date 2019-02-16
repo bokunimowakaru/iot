@@ -17,10 +17,11 @@ RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチ/PIRを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
-RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 0;	// 送信間隔(非スリープ時)
+RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 5;	// 自動送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
-RTC_DATA_ATTR char		DEVICE[9]	= "esp32_1,";	// デバイス名(5文字+"_"+番号+",")
+RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
+RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
 RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
 RTC_DATA_ATTR int		AmbientChannelId = 0; 	// チャネル名(整数) 0=無効
 RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
@@ -52,8 +53,8 @@ boolean TIME_NEXT_b=false;						// 桁あふれフラグ
 boolean setupWifiAp(){
 	delay(1000);								// 切換え・設定待ち時間
 	WiFi.softAPConfig(
-		IPAddress(192,168,0,1), 				// AP側の固定IPアドレス
-		IPAddress(192,168,0,1), 					// 本機のゲートウェイアドレス
+		IPAddress(192,168,254,1), 				// AP側の固定IPアドレス
+		IPAddress(192,168,254,1), 				// 本機のゲートウェイアドレス
 		IPAddress(255,255,255,0)				// ネットマスク
 	);
 	WiFi.softAP(SSID_AP,PASS_AP);				// ソフトウェアAPの起動
@@ -88,14 +89,49 @@ boolean setupWifiSta(){
 	return true;
 }
 
-void sendUdp(String &payload){
-	WiFiUDP udp;								// UDP通信用のインスタンスを定義
-	udp.beginPacket(IP_BC, UDP_PORT);			// UDP送信先を設定
-	udp.print(DEVICE);						 	// デバイス名を送信
-	udp.println(payload);						// センサ値
-	udp.endPacket();							// UDP送信の終了(実際に送信する)
-	udp.flush();
-	udp.stop();
+String sendUdp(String &payload){
+	if(UDP_PORT > 0 && payload.length() > 0){
+		String S = String(DEVICE) + "_" + String(DEVICE_NUM) + "," + payload;
+		WiFiUDP udp;								// UDP通信用のインスタンスを定義
+		udp.beginPacket(IP_BC, UDP_PORT);			// UDP送信先を設定
+		DEVICE[5]='\0';								// 終端
+		udp.println(S);						 		// 送信
+		udp.endPacket();							// UDP送信の終了(実際に送信する)
+		udp.flush();
+		udp.stop();
+		Serial.println("/udp/" + html_ipAdrToString(IP_BC) +"/" + String(UDP_PORT) + "/" + S);
+		delay(10);
+		return S;
+	} else return "";
+}
+
+boolean sentToAmbient(String &payload){
+	if(AmbientChannelId == 0) return false;
+	if(WiFi.status() != WL_CONNECTED) return false;
+	if(payload.length() == 0) return false;
+	int Sp=0;
+	char s[16];
+	for(int num = 1; num <= 8; num++){
+		float val = payload.substring(Sp).toFloat();
+		Serial.println("/ambient {\"d" + String(num) + "\":\"" + val + "\"}");
+		dtostrf(val,-15,3,s);
+		ambient.set(num,s);
+		Sp = payload.indexOf(",", Sp) + 1;
+		if( Sp <= 0 ) break;
+		if( Sp >= payload.length() ) break;
+	}
+	return ambient.send();
+}
+
+String sendSensorValues(){
+	String payload = String(sensors_get());
+	if( payload.length() ){
+		Serial.println("Done: send UDP to LAN");
+		if( sentToAmbient(payload) ){
+			Serial.println("Done: send to Ambient");
+		}
+	}
+	return payload;
 }
 
 void setup(){
@@ -115,7 +151,7 @@ void setup(){
 	
 	if(TimerWakeUp_init() > 0){
 	}
-//	payload = String(sensors_get());
+	
 	Serial.println("-------- IoT Sensor Core ESP32 by Wataru KUNINO --------");
 	Serial.print("Wi-Fi Mode = ");
 	if(WIFI_AP_MODE>=0 && WIFI_AP_MODE<=3){
@@ -146,7 +182,7 @@ void setup(){
 			setupWifiAp();
 			setupWifiSta();
 			IP = WiFi.softAPIP();
-			IP_BC = (uint32_t)IP | IPAddress(0,0,0,255);
+			IP_BC = (uint32_t)(WiFi.localIP()) | IPAddress(0,0,0,255);
 			break;
 		default: // WIFI_OFF
 			WiFi.mode(WIFI_OFF);
@@ -187,10 +223,7 @@ void setup(){
 	Serial.print("   URL(IP) = http://");
 	Serial.print(IP);
 	Serial.println("/");
-	if(UDP_PORT>0){
-		String payload = String(sensors_get());
-		if(payload.length() > 0) sendUdp(payload);
-	}
+	sendSensorValues();
 }
 
 void loop(){
@@ -209,12 +242,15 @@ void loop(){
 		while( millis() < 100 ) delay(10);	// 待ち時間処理(最大100ms)
 	}
 	if(time > TIME_NEXT && !TIME_NEXT_b){
-		if(UDP_PORT>0){
-			String payload = String(sensors_get());
-			if(payload.length() > 0) sendUdp(payload);
+		Serial.println("MCU Clock_s= " + String(time/1000));
+		sendSensorValues();
+		if(SEND_INT_SEC){
+			TIME_NEXT = millis() + (unsigned long)SEND_INT_SEC * 1000;
+			if( TIME_NEXT < (unsigned long)SEND_INT_SEC * 1000 ) TIME_NEXT_b = true;
+		}else{
+			TIME_NEXT = millis() + 5000ul;
+			if( TIME_NEXT < 5000ul ) TIME_NEXT_b = true;
 		}
-		TIME_NEXT = millis() + (unsigned long)SEND_INT_SEC * 1000;
-		if( TIME_NEXT < (unsigned long)SEND_INT_SEC * 1000 ) TIME_NEXT_b = true;
 	}
 }
 
