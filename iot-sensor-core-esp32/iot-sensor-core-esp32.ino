@@ -14,7 +14,8 @@ RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[16] = "";		// STAモードのSSID(お手持ちのAPのSSID)
 RTC_DATA_ATTR char 		PASS_STA[32] = "";		// STAモードのPASS(お手持ちのAPのPASS)
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
-RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチ/PIRを接続
+RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
+RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
 RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 5;	// 自動送信間隔(非スリープ時)
@@ -275,6 +276,15 @@ void sleep(){
 			}
 			digitalWrite(PIN_LED,LOW);
 			TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
+		}
+		if(PIR_EN){
+			pinMode(PIN_PIR,INPUT_PULLUP);
+			while(!digitalRead(PIN_PIR)){
+				digitalWrite(PIN_LED,!digitalRead(PIN_LED));
+				delay(50);
+			}
+			digitalWrite(PIN_LED,LOW);
+			TimerWakeUp_setExternalInput((gpio_num_t)PIN_PIR, HIGH);
 		}
 		TimerWakeUp_setSleepTime(SLEEP_SEC);
 		TimerWakeUp_sleep();

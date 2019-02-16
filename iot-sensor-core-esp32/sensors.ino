@@ -1,5 +1,6 @@
 /* extern RTC_DATA_ATTR
 // ユーザ設定
+// ユーザ設定
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[16] = "";		// STAモードのSSID(お手持ちのAPのSSID)
@@ -8,13 +9,13 @@ RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチ/PIRを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
-RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 0;	// 送信間隔(非スリープ時)
+RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 5;	// 自動送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
 RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
 RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
 RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
-RTC_DATA_ATTR uint16_t	AmbientChannelId = 0; 		// チャネル名(整数) 0=無効
+RTC_DATA_ATTR int		AmbientChannelId = 0; 	// チャネル名(整数) 0=無効
 RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
 
 // デバイス有効化
@@ -169,6 +170,28 @@ String sensors_get(){
 		payload += String(btn);
 		sensors_sendUdp(sensors_devices[3], String(btn));
 		sensors_S += "ボタン";
+	}
+	
+	if(	PIR_EN &&
+		html_pin_set("IO14","PIR_GND") &&
+		html_pin_set("IO" + String(PIN_PIR),"PIR_IN") &&
+		html_pin_set("IO26","PIR_VIN")
+	){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+		pinMode(PIN_PIR,INPUT_PULLUP);
+		pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+		int pir = digitalRead(PIN_PIR);
+		Serial.print("pir        = ");
+		Serial.println(pir);
+		sensors_csv(payload,csv_b);
+		sensors_csv(sensors_S,csv_b);
+		csv_b = true;
+		payload += String(pir);
+		sensors_sendUdp(sensors_devices[4], String(pir));
+		sensors_S += "人感";
+	}else{
+		html_pin_reset("IO14","PIR_GND");
+		html_pin_reset("IO" + String(PIN_PIR),"PIR_IN");
+		html_pin_reset("IO26","PIR_VIN");
 	}
 	return payload;
 }

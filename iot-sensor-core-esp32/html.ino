@@ -55,9 +55,38 @@ const String html_PINOUT_S[38] = {
 
 String html_PIN_ASSIGNED_S[38] = {
 	"電池(-)","電池(+)","リセットボタン","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","","IO13","","","",
-	"","","","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","","IO21","USBシリアル(TxD)","USBシリアル(RxD)","IO22","IO23","GND"};
+	"","","","IO15","IO2","ボタン","IO4","IO16","IO17","IO5","IO18","IO19","","IO21","USBシリアル(TxD)","USBシリアル(RxD)","IO22","IO23","GND"};
 	
 	/* Null = ピンの無いもの、PINOUTと同値 = ピンアサインの無いもの */
+
+boolean html_pin_set(String pin, String name){
+	for(int i=0; i< 38;i++){
+		if( pin.equals(html_PINOUT_S[i]) ){
+			if( html_PIN_ASSIGNED_S[i].equals(html_PINOUT_S[i]) ){
+				html_PIN_ASSIGNED_S[i] = name;
+				return true;
+			}
+			if( html_PIN_ASSIGNED_S[i].equals(name) ){
+				return true;
+			}
+			return false;
+		}
+	}
+	return false;
+}
+
+boolean html_pin_reset(String pin, String name){
+	for(int i=0; i< 38;i++){
+		if( pin.equals(html_PINOUT_S[i]) ){
+			if( html_PIN_ASSIGNED_S[i].equals(name) ){
+				html_PIN_ASSIGNED_S[i] = html_PINOUT_S[i];
+				return true;
+			}
+			return false;
+		}
+	}
+	return false;
+}
 
 boolean html_check_overrun(int len){
 	Serial.print("done html, ");
@@ -444,7 +473,6 @@ void html_sensors(){
 					<input type=\"radio\" name=\"ADC_EN\" value=\"33\" %s>IO33\
 					<input type=\"radio\" name=\"ADC_EN\" value=\"34\" %s>IO34\
 					<input type=\"radio\" name=\"ADC_EN\" value=\"35\" %s>IO35\
-					<input type=\"radio\" name=\"ADC_EN\" value=\"39\" %s>IO39\
 					</p>\
 					<p>押しボタン　\
 					<input type=\"radio\" name=\"BTN_EN\" value=\"0\" %s>OFF\
@@ -489,7 +517,7 @@ void html_sensors(){
 			html_title,
 				html_checked[!TEMP_EN], html_checked[TEMP_EN], TEMP_ADJ, 
 				html_checked[!HALL_EN], html_checked[HALL_EN], 
-				html_checked[ADC_EN==0], html_checked[ADC_EN==32], html_checked[ADC_EN==33], html_checked[ADC_EN==34], html_checked[ADC_EN==35], html_checked[ADC_EN==39],
+				html_checked[ADC_EN==0], html_checked[ADC_EN==32], html_checked[ADC_EN==33], html_checked[ADC_EN==34], html_checked[ADC_EN==35],
 				html_checked[BTN_EN==0], html_checked[BTN_EN==1], html_checked[BTN_EN==2],
 				html_checked[PIR_EN==0], html_checked[PIR_EN==1],
 				html_checked[AD_LUM_EN==0], html_checked[AD_LUM_EN==1],
