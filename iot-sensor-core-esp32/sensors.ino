@@ -227,7 +227,7 @@ String sensors_get(){
 			temp /= 10.;                            // 温度(相対値)へ変換
 			temp += (float)TEMP_ADJ - 50.;             // 温度(相対値)へ変換
 		}
-		String temp_S = String((int)temp) + "." + String(((int)fabs(temp *10) % 10) );
+		String temp_S = String((int)temp) + "." + dtoStrf(temp,1);
 		Serial.print("temp.      = ");
 		Serial.println(temp_S);
 		sensors_sendUdp(sensors_devices[6], temp_S);
