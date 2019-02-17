@@ -190,7 +190,7 @@ void html_index(){
 		if( i==1 &&
 			html_pin_set("IO32","照度_GND") &&
 			html_pin_set("IO" + String(PIN_LUM),"照度_IN") &&
-			html_pin_set("IO25","照度_VDD")
+			html_pin_set("IO25","照度_+V")
 		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
 			pinMode(PIN_PIR,INPUT_PULLDOWN);
 			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
@@ -198,7 +198,7 @@ void html_index(){
 		}else{
 			html_pin_reset("IO32","照度_GND");
 			html_pin_reset("IO" + String(PIN_LUM),"照度_IN");
-			html_pin_set("IO25","照度_VDD");
+			html_pin_reset("IO25","照度_+V");
 			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"照度センサの設定に失敗しました。");
 			AD_LUM_EN=false;
 		}
@@ -210,7 +210,7 @@ void html_index(){
 		if( i >= 1 && i <= 2 &&
 			html_pin_set("IO32","温度_GND") &&
 			html_pin_set("IO" + String(PIN_TEMP),"温度_IN") &&
-			html_pin_set("IO25","温度_VDD")
+			html_pin_set("IO25","温度_+V")
 		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
 			pinMode(PIN_TEMP,INPUT);
 			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
@@ -218,7 +218,7 @@ void html_index(){
 		}else{
 			html_pin_reset("IO32","温度_GND");
 			html_pin_reset("IO" + String(PIN_TEMP),"温度_IN");
-			html_pin_reset("IO25","温度_VDD");
+			html_pin_reset("IO25","温度_+V");
 			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"温度センサの設定に失敗しました。");
 			AD_TEMP_EN=0;
 		}
@@ -232,7 +232,7 @@ void html_index(){
 				if( html_pin_set("IO13","SHT31_ADR") &&
 					html_pin_set("IO12","SHT31_I2C_SCL") &&
 					html_pin_set("IO14","SHT31_I2C_SDA") &&
-					html_pin_set("IO27","SHT31_VDD")
+					html_pin_set("IO27","SHT31_+V")
 				){	pinMode(13,OUTPUT);	digitalWrite(13,HIGH);
 					pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
 					i2c_sht31_Setup(14,12);
@@ -241,12 +241,28 @@ void html_index(){
 					html_pin_reset("IO13","SHT31_ADR");
 					html_pin_reset("IO12","SHT31_I2C_SCL");
 					html_pin_reset("IO14","SHT31_I2C_SDA");
-					html_pin_reset("IO27","SHT31_VDD");
-					if(i) snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
+					html_pin_reset("IO27","SHT31_+V");
+					snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
 					I2C_HUM_EN=0;
 				}
 			}
 			if( i == 2){
+				if( html_pin_set("IO14","Si7021_GND") &&
+					html_pin_set("IO12","Si7021_I2C_SCL") &&
+					html_pin_set("IO13","Si7021_I2C_SDA") &&
+					html_pin_set("IO27","Si7021_+V")
+				){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+					pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
+					i2c_sht31_Setup(13,12);
+					I2C_HUM_EN=2;
+				}else{
+					html_pin_set("IO14","Si7021_GND");
+					html_pin_set("IO12","Si7021_I2C_SCL");
+					html_pin_set("IO13","Si7021_I2C_SDA");
+					html_pin_set("IO27","Si7021_+V");
+					snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
+					I2C_HUM_EN=0;
+				}
 			}
 		}
 		Serial.print(" I2C_HUM_EN=");
@@ -271,7 +287,6 @@ void html_index(){
 		int len=strlen(res_s);
 		String payload = String(sensors_get());
 		payload.toCharArray(&res_s[len],HTML_RES_LEN_MAX-len);
-		if(UDP_PORT>0) sendUdp(payload);
 	}
 	sensors_name().toCharArray(sensors_s,HTML_RES_LEN_MAX);
 	

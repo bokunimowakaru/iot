@@ -243,17 +243,23 @@ String sensors_get(){
 			temp = i2c_sht31_getTemp();
 			hum = i2c_sht31_getHum();
 		}
-		if(temp >= -100 && hum >= 0 ){
-			String hum_S = dtoStrf(temp,1) + ", " + dtoStrf(hum,0);
-			sensors_sendUdp(sensors_devices[7], hum_S);
-			sensors_csv(payload,csv_b);
-			sensors_csv(sensors_S,csv_b);
-			csv_b = true;
-			payload +=  String(hum_S);
-			sensors_S += "温度(℃)";
-			sensors_csv(sensors_S,csv_b);
-			sensors_S += "湿度(％)";
+		if( I2C_HUM_EN == 2){
+			temp = i2c_si7021_getTemp();
+			hum = i2c_si7021_getHum();
 		}
+		String hum_S = dtoStrf(temp,1) + ", " + dtoStrf(hum,0);
+		Serial.print("humid      = ");
+		Serial.println(hum_S);
+		if(temp >= -100 && hum >= 0 ){
+			sensors_sendUdp(sensors_devices[7], hum_S);
+		}else hum_S = "0, 0";
+		sensors_csv(payload,csv_b);
+		sensors_csv(sensors_S,csv_b);
+		csv_b = true;
+		payload +=  String(hum_S);
+		sensors_S += "温度(℃)";
+		sensors_csv(sensors_S,csv_b);
+		sensors_S += "湿度(％)";
 	}
 	
 	sensors_sendUdp(DEVICE, payload);
