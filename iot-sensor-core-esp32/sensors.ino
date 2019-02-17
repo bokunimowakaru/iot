@@ -227,7 +227,7 @@ String sensors_get(){
 			temp /= 10.;                            // 温度(相対値)へ変換
 			temp += (float)TEMP_ADJ - 50.;             // 温度(相対値)へ変換
 		}
-		String temp_S = String((int)temp) + "." + dtoStrf(temp,1);
+		String temp_S = dtoStrf(temp,1);
 		Serial.print("temp.      = ");
 		Serial.println(temp_S);
 		sensors_sendUdp(sensors_devices[6], temp_S);
@@ -236,6 +236,24 @@ String sensors_get(){
 		csv_b = true;
 		payload +=  String(temp_S);
 		sensors_S += "温度(℃)";
+	}
+	if(I2C_HUM_EN>0){		// 1:SHT31, 2:Si7021
+		float temp = -999, hum = -999;
+		if( I2C_HUM_EN == 1){
+			temp = i2c_sht31_getTemp();
+			hum = i2c_sht31_getHum();
+		}
+		if(temp >= -100 && hum >= 0 ){
+			String hum_S = dtoStrf(temp,1) + ", " + dtoStrf(hum,0);
+			sensors_sendUdp(sensors_devices[7], hum_S);
+			sensors_csv(payload,csv_b);
+			sensors_csv(sensors_S,csv_b);
+			csv_b = true;
+			payload +=  String(hum_S);
+			sensors_S += "温度(℃)";
+			sensors_csv(sensors_S,csv_b);
+			sensors_S += "湿度(％)";
+		}
 	}
 	
 	sensors_sendUdp(DEVICE, payload);

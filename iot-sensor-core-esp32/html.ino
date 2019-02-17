@@ -227,7 +227,28 @@ void html_index(){
 	}
 	if(server.hasArg("I2C_HUM_EN")){
 		i = server.arg("I2C_HUM_EN").toInt();
-		if( i >= 0 && i <= 2) I2C_HUM_EN=i;
+		if( i >= 1 && i <=2 ){
+			if( i == 1){
+				if( html_pin_set("IO13","SHT31_ADR") &&
+					html_pin_set("IO12","SHT31_I2C_SCL") &&
+					html_pin_set("IO14","SHT31_I2C_SDA") &&
+					html_pin_set("IO27","SHT31_VDD")
+				){	pinMode(13,OUTPUT);	digitalWrite(13,HIGH);
+					pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
+					i2c_sht31_Setup(14,12);
+					I2C_HUM_EN=1;
+				}else{
+					html_pin_reset("IO13","SHT31_ADR");
+					html_pin_reset("IO12","SHT31_I2C_SCL");
+					html_pin_reset("IO14","SHT31_I2C_SDA");
+					html_pin_reset("IO27","SHT31_VDD");
+					if(i) snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
+					I2C_HUM_EN=0;
+				}
+			}
+			if( i == 2){
+			}
+		}
 		Serial.print(" I2C_HUM_EN=");
 		Serial.println(I2C_HUM_EN);
 	}
