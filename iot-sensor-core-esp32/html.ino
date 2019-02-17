@@ -12,16 +12,19 @@ RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[16] = "";		// STAモードのSSID(お手持ちのAPのSSID)
 RTC_DATA_ATTR char 		PASS_STA[32] = "";		// STAモードのPASS(お手持ちのAPのPASS)
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
-RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチ/PIRを接続
+RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
+RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
+RTC_DATA_ATTR byte 		PIN_LUM		= 35;		// GPIO 35に照度センサを接続
+RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
-RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 0;	// 送信間隔(非スリープ時)
+RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 60;	// 自動送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
 RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
 RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
 RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
-RTC_DATA_ATTR uint16_t	AmbientChannelId = 0; 		// チャネル名(整数) 0=無効
+RTC_DATA_ATTR int		AmbientChannelId = 0; 	// チャネル名(整数) 0=無効
 RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
 
 // デバイス有効化
@@ -46,15 +49,14 @@ WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
 uint32_t	html_ip=0;
 char 		html_ip_s[16];
 const char	html_checked[2][18]={"","checked=\"checked\""};
-const byte	html_adc_vals[6]={0,32,33,34,35,39};
-const byte	html_sleep_vals[5]={0,1,15,30,60};
+const byte	html_adc_vals[5]={0,32,33,34,35};
 
 const String html_PINOUT_S[38] = {
 	"GND","3V3","EN","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","SD2","SD3","CMD",
 	"CLK","SDD","SD1","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","NC","IO21","RXD0","TXD0","IO22","IO23","GND"};
 
 String html_PIN_ASSIGNED_S[38] = {
-	"電池(-)","電池(+)","リセットボタン","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","","IO13","","","",
+	"電池(-)","電池(+)","リセットボタン","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","","","",
 	"","","","IO15","IO2","ボタン","IO4","IO16","IO17","IO5","IO18","IO19","","IO21","USBシリアル(TxD)","USBシリアル(RxD)","IO22","IO23","GND"};
 	
 	/* Null = ピンの無いもの、PINOUTと同値 = ピンアサインの無いもの */
@@ -107,18 +109,16 @@ void html_index(){
 	
 	Serial.println("HTML index");
 	
-	if(server.hasArg("SLEEP")){
-		int sleep_i = server.arg("SLEEP").toInt();
-		for(i=0; i<5; i++){
-			if( sleep_i == html_sleep_vals[i]){
-				SLEEP_SEC = (uint16_t)(html_sleep_vals[i] * 60 - 5);
-				snprintf(res_s, HTML_RES_LEN_MAX,"間欠動作間隔を[%d]分に設定しました。スリープ中は操作できません。",sleep_i);
-				Serial.print(" SLEEP_SEC=");
-				Serial.println(SLEEP_SEC);
-				break;
-			}
+	if(server.hasArg("SLEEP_SEC")){
+		int sleep_i = server.arg("SLEEP_SEC").toInt();
+		if(sleep_i >=0 && sleep_i <= 65535 && sleep_i != SLEEP_SEC){
+			SLEEP_SEC = sleep_i;
+			if(SLEEP_SEC == 65535 )	snprintf(res_s, HTML_RES_LEN_MAX,"スリープを[ON]に設定しました。ボタンや人感センサを設定していないと起動しません。");
+			else if(SLEEP_SEC == 0)	snprintf(res_s, HTML_RES_LEN_MAX,"スリープを[OFF]に設定しました。電力を多く消費するのでUSB等から給電してください。");
+			else					snprintf(res_s, HTML_RES_LEN_MAX,"間欠動作間隔を[%d]分[%d]秒に設定しました。スリープ中は操作できません。",(sleep_i+5)/60,(sleep_i+5)%60);
+			Serial.print(" SLEEP_SEC=");
+			Serial.println(SLEEP_SEC);
 		}
-		if(i==5) strcpy(res_s,"エラー：間欠動作間隔が範囲外です。");
 	}
 	
 	if(server.hasArg("TEMP_EN")){
@@ -145,7 +145,17 @@ void html_index(){
 	}
 	if(server.hasArg("ADC_EN")){
 		int adc = server.arg("ADC_EN").toInt();
-		for(i=0;i<6;i++) if(adc == html_adc_vals[i]) ADC_EN=adc;
+		for(i=1;i<5;i++){
+			if(adc == html_adc_vals[i]){
+				if(html_pin_set("IO" + String(adc),"アナログ_IN")){
+					ADC_EN=adc;
+					mvAnalogIn_init(ADC_EN);
+				}
+			}else{
+				html_pin_reset("IO" + String(html_adc_vals[i]),"アナログ_IN");
+			}
+		}
+		if(i==5) ADC_EN=0;
 		Serial.print(" ADC_EN=");
 		Serial.println(ADC_EN);
 	}
@@ -157,21 +167,61 @@ void html_index(){
 	}
 	if(server.hasArg("PIR_EN")){
 		i = server.arg("PIR_EN").toInt();
-		if( i==0 ) PIR_EN=false;
-		if( i==1 ) PIR_EN=true;
+		if( i==1 &&
+			html_pin_set("IO14","人感_GND") &&
+			html_pin_set("IO" + String(PIN_PIR),"人感_IN") &&
+			html_pin_set("IO26","人感_VDD")
+		){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+			pinMode(PIN_PIR,INPUT);
+			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+			PIR_EN=true;
+		}else{
+			html_pin_reset("IO14","人感_GND");
+			html_pin_reset("IO" + String(PIN_PIR),"人感_IN");
+			html_pin_reset("IO26","人感_VIN");
+			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"人感センサの設定に失敗しました。");
+			PIR_EN=false;
+		}
 		Serial.print(" PIR_EN=");
 		Serial.println(PIR_EN);
 	}
 	if(server.hasArg("AD_LUM_EN")){
 		i = server.arg("AD_LUM_EN").toInt();
-		if( i==0 ) AD_LUM_EN=false;
-		if( i==1 ) AD_LUM_EN=true;
+		if( i==1 &&
+			html_pin_set("IO32","照度_GND") &&
+			html_pin_set("IO" + String(PIN_LUM),"照度_IN") &&
+			html_pin_set("IO25","照度_VDD")
+		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
+			pinMode(PIN_PIR,INPUT_PULLDOWN);
+			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
+			AD_LUM_EN=true;
+		}else{
+			html_pin_reset("IO32","照度_GND");
+			html_pin_reset("IO" + String(PIN_LUM),"照度_IN");
+			html_pin_set("IO25","照度_VDD");
+			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"照度センサの設定に失敗しました。");
+			AD_LUM_EN=false;
+		}
 		Serial.print(" AD_LUM_EN=");
 		Serial.println(AD_LUM_EN);
 	}
 	if(server.hasArg("AD_TEMP_EN")){
 		i = server.arg("AD_TEMP_EN").toInt();
-		if( i >= 0 && i <= 2) AD_TEMP_EN=i;
+		if( i >= 1 && i <= 2 &&
+			html_pin_set("IO32","温度_GND") &&
+			html_pin_set("IO" + String(PIN_TEMP),"温度_IN") &&
+			html_pin_set("IO25","温度_VDD")
+		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
+			pinMode(PIN_TEMP,INPUT);
+			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
+			AD_TEMP_EN=i;
+		}else{
+			html_pin_reset("IO32","温度_GND");
+			html_pin_reset("IO" + String(PIN_TEMP),"温度_IN");
+			html_pin_reset("IO25","温度_VDD");
+			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"温度センサの設定に失敗しました。");
+			AD_TEMP_EN=0;
+		}
 		Serial.print(" AD_TEMP_EN=");
 		Serial.println(AD_TEMP_EN);
 	}
@@ -194,6 +244,7 @@ void html_index(){
 		Serial.print(" I2C_ACCUM_EN=");
 		Serial.println(I2C_ACCUM_EN);
 	}
+	
 	if(server.hasArg("SENSORS")){
 		strcpy(res_s,"センサ取得値=");
 		int len=strlen(res_s);
@@ -253,7 +304,7 @@ void html_index(){
 		if( SEND_INT_SEC != i){
 			SEND_INT_SEC = i;
 			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"自動送信間隔(動作時)を[%d]に設定しました",i);
-			else snprintf(res_s, HTML_RES_LEN_MAX,"自動送信を[OFF]に設定しました");
+			else  snprintf(res_s, HTML_RES_LEN_MAX,"自動送信を[OFF]に設定しました");
 			Serial.print(" SEND_INT_SEC=");
 			Serial.println(SEND_INT_SEC);
 		}
@@ -282,6 +333,7 @@ void html_index(){
 				<h4><a href=\"wifi\">Wi-Fi 設定</a></h4>\
 				<h4><a href=\"sensors\">センサ設定</a></h4>\
 				<h4><a href=\"sendto\">データ送信設定</a></h4>\
+				<h4><a href=\"pinout\">ピン配列表</a></h4>\
 				<hr>\
 				<h3>電源</h3>\
 				<h4><a href=\"reboot\">再起動</a></h4>\
@@ -298,14 +350,9 @@ void html_index(){
 void html_wifi(){
 	char s[HTML_INDEX_LEN_MAX];
 	char res_s[HTML_RES_LEN_MAX]="";
-	boolean sleep_b[5];
 	int i;
 	
 	Serial.println("HTML Wi-Fi");
-	for(i=0;i<5;i++){
-		if( (SLEEP_SEC + 5) / 60 == html_sleep_vals[i] ) sleep_b[i]=true;
-		else sleep_b[i]=false;
-	}
 	
 	if(server.hasArg("SSID")){
 		String S = server.arg("SSID");
@@ -418,11 +465,14 @@ void html_wifi(){
 				<hr>\
 				<h3>スリープ設定</h3>\
 				<form method=\"GET\" action=\"/\">\
-					<input type=\"radio\" name=\"SLEEP\" value=\"0\" %s>OFF\
-					<input type=\"radio\" name=\"SLEEP\" value=\"1\" %s>1分\
-					<input type=\"radio\" name=\"SLEEP\" value=\"15\" %s>15分\
-					<input type=\"radio\" name=\"SLEEP\" value=\"30\" %s>30分\
-					<input type=\"radio\" name=\"SLEEP\" value=\"60\" %s>60分\
+					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"25\" %s>30秒\
+					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"55\" %s>1分\
+					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"175\" %s>3分\
+					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"595\" %s>10分\
+					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"1795\" %s>30分\
+					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"3595\" %s>60分\
+					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"65535\" %s>∞\
 					<input type=\"submit\" value=\"設定\" size=\"4\">\
 					<p>[OFF]以外に設定するとスリープ中(殆どの時間)は操作できません。</p>\
 				</form>\
@@ -438,7 +488,8 @@ void html_wifi(){
 			html_checked[WIFI_AP_MODE==1], html_checked[WIFI_AP_MODE==2], html_checked[WIFI_AP_MODE==3],
 			SSID_AP, PASS_AP,
 			SSID_STA,
-			html_checked[sleep_b[0]], html_checked[sleep_b[1]], html_checked[sleep_b[2]], html_checked[sleep_b[3]], html_checked[sleep_b[4]]
+			html_checked[SLEEP_SEC==0], html_checked[SLEEP_SEC==25], html_checked[SLEEP_SEC==55], html_checked[SLEEP_SEC==175],
+			html_checked[SLEEP_SEC==595], html_checked[SLEEP_SEC==1795], html_checked[SLEEP_SEC==3595], html_checked[SLEEP_SEC==65535]
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -559,13 +610,13 @@ void html_sendto(){
 					ID=<input type=\"text\" name=\"AmbientChannelId\" value=\"%d\" size=\"5\"> (0:OFF)\
 					WriteKey=<input type=\"text\" name=\"AmbientWriteKey\" value=\"%s\" size=\"18\">\
 					<p><a href=\"http://ambidata.io/\">http://ambidata.io/</a></p>\
-					<h3>自動送信間隔(動作時)</h3>\
+					<h3>自動送信間隔(常時動作時※)</h3>\
 					<input type=\"radio\" name=\"SEND_INT_SEC\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"SEND_INT_SEC\" value=\"5\" %s>5秒\
 					<input type=\"radio\" name=\"SEND_INT_SEC\" value=\"15\" %s>15秒\
 					<input type=\"radio\" name=\"SEND_INT_SEC\" value=\"30\" %s>30秒\
 					<input type=\"radio\" name=\"SEND_INT_SEC\" value=\"60\" %s>60秒\
-					<p>スリープ中は上記の設定に関わらず、スリープ間隔で送信します。</p>\
+					<p>※スリープ中は本設定に関わらず、[Wi-Fi 設定]の[スリープ間隔]で送信します。</p>\
 					<p>Ambientへの送信間隔は30秒以上を推奨します(1日3000サンプルまで)。</p>\
 					<h3>送信設定の実行</h3>\
 					<input type=\"submit\" value=\"設定\" size=\"4\">\
@@ -639,6 +690,49 @@ void html_sleep(){
 	digitalWrite(PIN_LED,LOW);
 	TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
 	TimerWakeUp_sleep();
+}
+
+void html_pinout(){
+	char s[HTML_INDEX_LEN_MAX];
+	char buf_s[128];
+	int i;
+	
+	Serial.println("HTML pinout");
+	snprintf(s, HTML_INDEX_LEN_MAX,
+		"<html>\
+			<head>\
+				<title>%s ピン配列表</title>\
+				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+			</head>\
+			<body>\
+				<h1>%s ピン配列表</h1>\
+				<table><tr><th>番号</th><th>ピン名</th><th>接続先</th></tr>\
+		", html_title, html_title
+	);
+				
+	for(i=0;i<38;i++){
+		Serial.print(" pin " + String(i) + " (" + html_PINOUT_S[i] + ") : " + html_PIN_ASSIGNED_S[i]);
+		String S = "";
+		if( html_PIN_ASSIGNED_S[i].length() == 0 ) S += "Null";
+		else if( !(html_PIN_ASSIGNED_S[i].equals(html_PINOUT_S[i])) ) S += " ←接続";
+		Serial.println(S);
+		
+		String("<tr><td>" + String(i)
+			+ "</td><td>" + html_PINOUT_S[i]
+			+ "</td><td>" + html_PIN_ASSIGNED_S[i] + S
+			+ "</td></tr>"
+		).toCharArray(buf_s, 128);
+		strncat(s,buf_s, HTML_INDEX_LEN_MAX - strlen(s) - 1);
+	}
+	strncat(s,
+		"		</table>\
+				<hr>\
+				<h4><a href =\"/\">戻る</a></h4>\
+			</body>\
+		</html>", HTML_INDEX_LEN_MAX - strlen(s) - 1
+	);
+	server.send(200, "text/html", s);
+	html_check_overrun(strlen(s));
 }
 
 void html_text(){
@@ -727,6 +821,7 @@ void html_init(uint32_t ip, const char *domainName_local){
 	server.on("/", html_index);
 	server.on("/wifi", html_wifi);
 	server.on("/sensors", html_sensors);
+	server.on("/pinout", html_pinout);
 	server.on("/sendto", html_sendto);
 	server.on("/reboot", html_reboot);
 	server.on("/sleep", html_sleep);

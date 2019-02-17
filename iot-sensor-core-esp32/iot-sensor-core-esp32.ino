@@ -16,9 +16,11 @@ RTC_DATA_ATTR char 		PASS_STA[32] = "";		// STAモードのPASS(お手持ちのA
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
 RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
+RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
+RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
-RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 5;	// 自動送信間隔(非スリープ時)
+RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 60;	// 自動送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
 RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
@@ -120,11 +122,7 @@ boolean sentToAmbient(String &payload){
 			+ String(num)
 			+ "\":"
 			+ String(val)
-			+ "} // {\"device"
-			+ String(num)
-			+ "\":\""
-			+ String(sensors_deviceName(num-1))
-			+ "\"}"
+			+ "}"
 		);
 		dtostrf(val,-15,3,s);
 		ambient.set(num,s);
@@ -138,6 +136,7 @@ boolean sentToAmbient(String &payload){
 }
 
 String sendSensorValues(){
+	Serial.println("Start: send Sensor Values");
 	String payload = String(sensors_get());
 	if( payload.length() ){
 		Serial.println("Done: send UDP to LAN");
@@ -155,14 +154,21 @@ void setup(){
 	Serial.println("--------");
 	int wake = TimerWakeUp_init();
 	if(BTN_EN > 0){
+		pinMode(PIN_SW,INPUT_PULLUP);
 		if(wake == 1 || wake == 2) sensors_btnPush(true);
-		if(wake == 3){
-			pinMode(PIN_SW,INPUT_PULLUP);
+		if(wake == 3 || wake == 4){
 			if(digitalRead(PIN_SW)) sleep();
 		}
 	}
-	if(PIR_EN) sensors_pirPush(true);
-	
+	if(PIR_EN){
+		pinMode(PIN_PIR,INPUT_PULLUP);
+		pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+		pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+		if(wake == 1 || wake == 2) sensors_pirPush(true);
+		if(wake == 3 || wake == 4){
+			if(!digitalRead(PIN_PIR)) sleep();
+		}
+	}
 	if(TimerWakeUp_init() > 0){
 	}
 	
@@ -234,11 +240,13 @@ void setup(){
 	Serial.print(IP);
 	Serial.println("/");
 	sendSensorValues();
+	TIME_NEXT = millis() + (unsigned long)SEND_INT_SEC * 1000;
 }
 
 void loop(){
 	html_handleClient();
 	sensors_btnRead();
+	sensors_pirRead();
 	sleep();
 	
 	unsigned long time=millis();            // ミリ秒の取得
@@ -278,8 +286,10 @@ void sleep(){
 			TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
 		}
 		if(PIR_EN){
-			pinMode(PIN_PIR,INPUT_PULLUP);
-			while(!digitalRead(PIN_PIR)){
+			pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+			pinMode(PIN_PIR,INPUT);
+			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+			while(digitalRead(PIN_PIR)){
 				digitalWrite(PIN_LED,!digitalRead(PIN_LED));
 				delay(50);
 			}

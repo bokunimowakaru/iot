@@ -1,15 +1,17 @@
 /* extern RTC_DATA_ATTR
 // ユーザ設定
-// ユーザ設定
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[16] = "";		// STAモードのSSID(お手持ちのAPのSSID)
 RTC_DATA_ATTR char 		PASS_STA[32] = "";		// STAモードのPASS(お手持ちのAPのPASS)
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
-RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチ/PIRを接続
+RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
+RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
+RTC_DATA_ATTR byte 		PIN_LUM		= 35;		// GPIO 35に照度センサを接続
+RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
-RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 5;	// 自動送信間隔(非スリープ時)
+RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 60;	// 自動送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
 RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
@@ -78,11 +80,12 @@ void sensors_btnPush(boolean in){
 }
 
 boolean sensors_btnRead(){
-	boolean btn = (boolean)!digitalRead(PIN_SW);
-	if( sensors_btnPrev_b != btn){
-		sensors_btnPush_b = btn;
-		sensors_get();
-		return true;
+	if(BTN_EN>0){
+		boolean btn = (boolean)!digitalRead(PIN_SW);
+		if( sensors_btnPrev_b != btn){
+			sensors_get();
+			return true;
+		}
 	}
 	return false;
 }
@@ -93,6 +96,17 @@ void sensors_pirPrev(boolean in){
 
 void sensors_pirPush(boolean in){
 	sensors_pirPush_b = in;
+}
+
+boolean sensors_pirRead(){
+	if(PIR_EN){
+		boolean pir = (boolean)digitalRead(PIN_PIR);
+		if( sensors_pirPrev_b != pir){
+			sensors_get();
+			return true;
+		}
+	}
+	return false;
 }
 
 boolean sensors_csv(String &S, boolean csv_b){
@@ -118,11 +132,11 @@ String sensors_get(){
 		int temp = (int)temperatureRead() + (int)TEMP_ADJ - 35;
 		Serial.print("temperature= ");
 		Serial.println(temp);
+		sensors_sendUdp(sensors_devices[0], String(temp));
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload += String(temp);
-		sensors_sendUdp(sensors_devices[0], String(temp));
 		sensors_S += "温度(℃)";
 	}
 	if(HALL_EN){
@@ -131,23 +145,22 @@ String sensors_get(){
 		hall /= 50;
 		Serial.print("hall       = ");
 		Serial.println(hall);
+		sensors_sendUdp(sensors_devices[1], String(hall));
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload +=  String(hall);
-		sensors_sendUdp(sensors_devices[1], String(hall));
 		sensors_S += "磁気";
 	}
 	if(ADC_EN){
-		mvAnalogIn_init(ADC_EN);
 		int adc = (int)mvAnalogIn(ADC_EN);
 		Serial.print("adc        = ");
 		Serial.println(adc);
+		sensors_sendUdp(sensors_devices[2], String(adc));
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload += String(adc);
-		sensors_sendUdp(sensors_devices[2], String(adc));
 		sensors_S += "ADC";
 	}
 	if(BTN_EN>0){
@@ -157,42 +170,75 @@ String sensors_get(){
 		boolean btn_b = (boolean)btn;
 		Serial.print("btn        = ");
 		Serial.println(btn);
-		if(BTN_EN==2){
-			if(sensors_btnPrev_b != btn_b){
+		if(sensors_btnPrev_b != btn_b || sensors_btnPush_b){
+			if(BTN_EN==2){
 				if( btn_b ) sensors_sendUdp("Ping");
 				else        sensors_sendUdp("Pong");
+			}else{
+				sensors_sendUdp(sensors_devices[3], String(btn));
 			}
 		}
+		sensors_btnPush_b = false;
 		sensors_btnPrev_b = btn_b;
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload += String(btn);
-		sensors_sendUdp(sensors_devices[3], String(btn));
 		sensors_S += "ボタン";
 	}
-	
-	if(	PIR_EN &&
-		html_pin_set("IO14","PIR_GND") &&
-		html_pin_set("IO" + String(PIN_PIR),"PIR_IN") &&
-		html_pin_set("IO26","PIR_VIN")
-	){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
-		pinMode(PIN_PIR,INPUT_PULLUP);
-		pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+	if(PIR_EN){
 		int pir = digitalRead(PIN_PIR);
+		if( sensors_pirPush_b ) pir =1;
+		boolean pir_b = (boolean)pir;
 		Serial.print("pir        = ");
 		Serial.println(pir);
+		if(sensors_pirPrev_b != pir_b || sensors_pirPush_b){
+			sensors_sendUdp(sensors_devices[4], String(pir));
+		}
+		sensors_pirPush_b = false;
+		sensors_pirPrev_b = pir_b;
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload += String(pir);
-		sensors_sendUdp(sensors_devices[4], String(pir));
 		sensors_S += "人感";
-	}else{
-		html_pin_reset("IO14","PIR_GND");
-		html_pin_reset("IO" + String(PIN_PIR),"PIR_IN");
-		html_pin_reset("IO26","PIR_VIN");
 	}
+	if(AD_LUM_EN){
+		float lum = (float)analogRead(PIN_LUM) / 4096. * 3100 ;  // 直読み値
+		lum *= 100. / 33.;                      // 照度(lx)へ変換
+		int lum_i = (int)lum;
+		Serial.print("illum      = ");
+		Serial.println(lum_i);
+		sensors_sendUdp(sensors_devices[5], String(lum_i));
+		sensors_csv(payload,csv_b);
+		sensors_csv(sensors_S,csv_b);
+		csv_b = true;
+		payload +=  String(lum_i);
+		sensors_S += "照度(lx)";
+	}
+	if(AD_TEMP_EN>0){
+		float temp = mvAnalogIn(PIN_TEMP);
+		if( AD_TEMP_EN == 1){		// 1:LM61, 2:MCP9700
+			// V = 600 + 10*temp -> (temp-600)/10
+			temp /= 10.;                            // 温度(相対値)へ変換
+			temp += (float)TEMP_ADJ - 60.;             // 温度(相対値)へ変換
+		}else{
+			// V = 500 + 10*temp -> (temp-500)/10
+			temp /= 10.;                            // 温度(相対値)へ変換
+			temp += (float)TEMP_ADJ - 50.;             // 温度(相対値)へ変換
+		}
+		String temp_S = String((int)temp) + "." + String(((int)fabs(temp *10) % 10) );
+		Serial.print("temp.      = ");
+		Serial.println(temp_S);
+		sensors_sendUdp(sensors_devices[6], temp_S);
+		sensors_csv(payload,csv_b);
+		sensors_csv(sensors_S,csv_b);
+		csv_b = true;
+		payload +=  String(temp_S);
+		sensors_S += "温度(℃)";
+	}
+	
+	sensors_sendUdp(DEVICE, payload);
 	return payload;
 }
 
