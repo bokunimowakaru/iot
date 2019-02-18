@@ -49,46 +49,6 @@ WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
 uint32_t	html_ip=0;
 char 		html_ip_s[16];
 const char	html_checked[2][18]={"","checked=\"checked\""};
-const byte	html_adc_vals[5]={0,32,33,34,35};
-
-const String html_PINOUT_S[38] = {
-	"GND","3V3","EN","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","SD2","SD3","CMD",
-	"CLK","SDD","SD1","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","NC","IO21","RXD0","TXD0","IO22","IO23","GND"};
-
-String html_PIN_ASSIGNED_S[38] = {
-	"電池(-)","電池(+)","リセットボタン","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","","","",
-	"","","","IO15","IO2","ボタン","IO4","IO16","IO17","IO5","IO18","IO19","","IO21","USBシリアル(TxD)","USBシリアル(RxD)","IO22","IO23","GND"};
-	
-	/* Null = ピンの無いもの、PINOUTと同値 = ピンアサインの無いもの */
-
-boolean html_pin_set(String pin, String name){
-	for(int i=0; i< 38;i++){
-		if( pin.equals(html_PINOUT_S[i]) ){
-			if( html_PIN_ASSIGNED_S[i].equals(html_PINOUT_S[i]) ){
-				html_PIN_ASSIGNED_S[i] = name;
-				return true;
-			}
-			if( html_PIN_ASSIGNED_S[i].equals(name) ){
-				return true;
-			}
-			return false;
-		}
-	}
-	return false;
-}
-
-boolean html_pin_reset(String pin, String name){
-	for(int i=0; i< 38;i++){
-		if( pin.equals(html_PINOUT_S[i]) ){
-			if( html_PIN_ASSIGNED_S[i].equals(name) ){
-				html_PIN_ASSIGNED_S[i] = html_PINOUT_S[i];
-				return true;
-			}
-			return false;
-		}
-	}
-	return false;
-}
 
 boolean html_check_overrun(int len){
 	Serial.print("done html, ");
@@ -122,9 +82,7 @@ void html_index(){
 	}
 	
 	if(server.hasArg("TEMP_EN")){
-		i = server.arg("TEMP_EN").toInt();
-		if( i==0 ) TEMP_EN=false;
-		if( i==1 ) TEMP_EN=true;
+		sensors_init_TEMP( server.arg("TEMP_EN").toInt() );
 		Serial.print(" TEMP_EN=");
 		Serial.println(TEMP_EN);
 	}
@@ -137,133 +95,46 @@ void html_index(){
 		}
 	}
 	if(server.hasArg("HALL_EN")){
-		i = server.arg("HALL_EN").toInt();
-		if( i==0 ) HALL_EN=false;
-		if( i==1 ) HALL_EN=true;
+		sensors_init_HALL( server.arg("HALL_EN").toInt() );
 		Serial.print(" HALL_EN=");
 		Serial.println(HALL_EN);
 	}
 	if(server.hasArg("ADC_EN")){
-		int adc = server.arg("ADC_EN").toInt();
-		for(i=1;i<5;i++){
-			if(adc == html_adc_vals[i]){
-				if(html_pin_set("IO" + String(adc),"アナログ_IN")){
-					ADC_EN=adc;
-					mvAnalogIn_init(ADC_EN);
-				}
-			}else{
-				html_pin_reset("IO" + String(html_adc_vals[i]),"アナログ_IN");
-			}
+		if( !sensors_init_ADC( server.arg("ADC_EN").toInt()) ){
+			snprintf(res_s, HTML_RES_LEN_MAX,"ADCの設定に失敗しました。");
 		}
-		if(i==5) ADC_EN=0;
 		Serial.print(" ADC_EN=");
 		Serial.println(ADC_EN);
 	}
 	if(server.hasArg("BTN_EN")){
-		i = server.arg("BTN_EN").toInt();
-		if( i >= 0 && i <= 2) BTN_EN=i;
+		sensors_init_BTN( server.arg("BTN_EN").toInt() );
 		Serial.print(" BTN_EN=");
 		Serial.println(BTN_EN);
 	}
 	if(server.hasArg("PIR_EN")){
-		i = server.arg("PIR_EN").toInt();
-		if( i==1 &&
-			html_pin_set("IO14","人感_GND") &&
-			html_pin_set("IO" + String(PIN_PIR),"人感_IN") &&
-			html_pin_set("IO26","人感_VDD")
-		){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
-			pinMode(PIN_PIR,INPUT);
-			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
-			PIR_EN=true;
-		}else{
-			html_pin_reset("IO14","人感_GND");
-			html_pin_reset("IO" + String(PIN_PIR),"人感_IN");
-			html_pin_reset("IO26","人感_VIN");
-			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"人感センサの設定に失敗しました。");
-			PIR_EN=false;
+		if( !sensors_init_PIR( server.arg("PIR_EN").toInt()) ){
+			snprintf(res_s, HTML_RES_LEN_MAX,"人感センサの設定に失敗しました。");
 		}
 		Serial.print(" PIR_EN=");
 		Serial.println(PIR_EN);
 	}
 	if(server.hasArg("AD_LUM_EN")){
-		i = server.arg("AD_LUM_EN").toInt();
-		if( i==1 &&
-			html_pin_set("IO32","照度_GND") &&
-			html_pin_set("IO" + String(PIN_LUM),"照度_IN") &&
-			html_pin_set("IO25","照度_+V")
-		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
-			pinMode(PIN_PIR,INPUT_PULLDOWN);
-			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
-			AD_LUM_EN=true;
-		}else{
-			html_pin_reset("IO32","照度_GND");
-			html_pin_reset("IO" + String(PIN_LUM),"照度_IN");
-			html_pin_reset("IO25","照度_+V");
-			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"照度センサの設定に失敗しました。");
-			AD_LUM_EN=false;
+		if( !sensors_init_AD_LUM( server.arg("AD_LUM_EN").toInt()) ){
+			snprintf(res_s, HTML_RES_LEN_MAX,"照度センサの設定に失敗しました。");
 		}
 		Serial.print(" AD_LUM_EN=");
 		Serial.println(AD_LUM_EN);
 	}
 	if(server.hasArg("AD_TEMP_EN")){
-		i = server.arg("AD_TEMP_EN").toInt();
-		if( i >= 1 && i <= 2 &&
-			html_pin_set("IO32","温度_GND") &&
-			html_pin_set("IO" + String(PIN_TEMP),"温度_IN") &&
-			html_pin_set("IO25","温度_+V")
-		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
-			pinMode(PIN_TEMP,INPUT);
-			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
-			AD_TEMP_EN=i;
-		}else{
-			html_pin_reset("IO32","温度_GND");
-			html_pin_reset("IO" + String(PIN_TEMP),"温度_IN");
-			html_pin_reset("IO25","温度_+V");
-			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"温度センサの設定に失敗しました。");
-			AD_TEMP_EN=0;
+		if( !sensors_init_AD_TEMP(server.arg("AD_TEMP_EN").toInt()) ){
+			snprintf(res_s, HTML_RES_LEN_MAX,"温度センサの設定に失敗しました。");
 		}
 		Serial.print(" AD_TEMP_EN=");
 		Serial.println(AD_TEMP_EN);
 	}
 	if(server.hasArg("I2C_HUM_EN")){
-		i = server.arg("I2C_HUM_EN").toInt();
-		if( i >= 1 && i <=2 ){
-			if( i == 1){
-				if( html_pin_set("IO13","SHT31_ADR") &&
-					html_pin_set("IO12","SHT31_I2C_SCL") &&
-					html_pin_set("IO14","SHT31_I2C_SDA") &&
-					html_pin_set("IO27","SHT31_+V")
-				){	pinMode(13,OUTPUT);	digitalWrite(13,HIGH);
-					pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
-					i2c_sht31_Setup(14,12);
-					I2C_HUM_EN=1;
-				}else{
-					html_pin_reset("IO13","SHT31_ADR");
-					html_pin_reset("IO12","SHT31_I2C_SCL");
-					html_pin_reset("IO14","SHT31_I2C_SDA");
-					html_pin_reset("IO27","SHT31_+V");
-					snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
-					I2C_HUM_EN=0;
-				}
-			}
-			if( i == 2){
-				if( html_pin_set("IO14","Si7021_GND") &&
-					html_pin_set("IO12","Si7021_I2C_SCL") &&
-					html_pin_set("IO13","Si7021_I2C_SDA") &&
-					html_pin_set("IO27","Si7021_+V")
-				){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
-					pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
-					i2c_sht31_Setup(13,12);
-					I2C_HUM_EN=2;
-				}else{
-					html_pin_set("IO14","Si7021_GND");
-					html_pin_set("IO12","Si7021_I2C_SCL");
-					html_pin_set("IO13","Si7021_I2C_SDA");
-					html_pin_set("IO27","Si7021_+V");
-					snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
-					I2C_HUM_EN=0;
-				}
-			}
+		if( !server.arg("I2C_HUM_EN").toInt() ){
+			snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
 		}
 		Serial.print(" I2C_HUM_EN=");
 		Serial.println(I2C_HUM_EN);
@@ -747,15 +618,15 @@ void html_pinout(){
 	);
 				
 	for(i=0;i<38;i++){
-		Serial.print(" pin " + String(i) + " (" + html_PINOUT_S[i] + ") : " + html_PIN_ASSIGNED_S[i]);
+		Serial.print(" pin " + String(i) + " (" + sensors_pinout_S(i) + ") : " + sensors_pin_assigned_S(i));
 		String S = "";
-		if( html_PIN_ASSIGNED_S[i].length() == 0 ) S += "Null";
-		else if( !(html_PIN_ASSIGNED_S[i].equals(html_PINOUT_S[i])) ) S += " ←接続";
+		if( sensors_pin_assigned_S(i).length() == 0 ) S += "Null";
+		else if( !(sensors_pin_assigned_S(i).equals(sensors_pinout_S(i))) ) S += " ←接続";
 		Serial.println(S);
 		
 		String("<tr><td>" + String(i)
-			+ "</td><td>" + html_PINOUT_S[i]
-			+ "</td><td>" + html_PIN_ASSIGNED_S[i] + S
+			+ "</td><td>" + sensors_pinout_S(i)
+			+ "</td><td>" + sensors_pin_assigned_S(i) + S
 			+ "</td></tr>"
 		).toCharArray(buf_s, 128);
 		strncat(s,buf_s, HTML_INDEX_LEN_MAX - strlen(s) - 1);

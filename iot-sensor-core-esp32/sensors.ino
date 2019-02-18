@@ -43,7 +43,10 @@ boolean sensors_pirPrev_b = false;				// 人感センサ；前回の値を記録
 boolean sensors_pirPush_b = false;				// 人感センサ；強制押下
 String sensors_S="";							// センサ名
 
+const byte	sensors_adc_pin[5]={0,32,33,34,35};
+
 #define sensors_devices_n 10
+boolean sensors_devices_inited[sensors_devices_n];
 const char sensors_devices[sensors_devices_n][6]={
 	"temp0",	// 0 内蔵温度センサ
 	"hall0",	// 1 内蔵ホールセンサ
@@ -70,6 +73,61 @@ const char sensors_devices[sensors_devices_n][6]={
 	"voice",
 	"alarm",
 */
+
+
+const String html_PINOUT_S[38] = {
+	"GND","3V3","EN","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","SD2","SD3","CMD",
+	"CLK","SDD","SD1","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","NC","IO21","RXD0","TXD0","IO22","IO23","GND"};
+
+String html_PIN_ASSIGNED_S[38] = {
+	"電池(-)","電池(+)","リセットボタン","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","","","",
+	"","","","IO15","IO2","ボタン","IO4","IO16","IO17","IO5","IO18","IO19","","IO21","USBシリアル(TxD)","USBシリアル(RxD)","IO22","IO23","GND"};
+	
+	/* Null = ピンの無いもの、PINOUTと同値 = ピンアサインの無いもの */
+
+const byte sensors_adcPins(int i){
+	if( i<0 || i>4 ) return 0;
+	return sensors_adc_pin[i];
+}
+
+const String sensors_pinout_S(int i){
+	if( i<0 || i>37 ) return "";
+	return html_PINOUT_S[i];
+}
+
+String sensors_pin_assigned_S(int i){
+	if( i<0 || i>37 ) return "";
+	return html_PIN_ASSIGNED_S[i];
+}
+
+boolean html_pin_set(String pin, String name){
+	for(int i=0; i< 38;i++){
+		if( pin.equals(html_PINOUT_S[i]) ){
+			if( html_PIN_ASSIGNED_S[i].equals(html_PINOUT_S[i]) ){
+				html_PIN_ASSIGNED_S[i] = name;
+				return true;
+			}
+			if( html_PIN_ASSIGNED_S[i].equals(name) ){
+				return true;
+			}
+			return false;
+		}
+	}
+	return false;
+}
+
+boolean html_pin_reset(String pin, String name){
+	for(int i=0; i< 38;i++){
+		if( pin.equals(html_PINOUT_S[i]) ){
+			if( html_PIN_ASSIGNED_S[i].equals(name) ){
+				html_PIN_ASSIGNED_S[i] = html_PINOUT_S[i];
+				return true;
+			}
+			return false;
+		}
+	}
+	return false;
+}
 
 void sensors_btnPrev(boolean in){
 	sensors_btnPrev_b = in;
@@ -121,6 +179,192 @@ String sensors_deviceName(int index){
 
 String sensors_name(){
 	return sensors_S;
+}
+
+void sensors_init(){
+	for(int i=0;i<sensors_devices_n;i++)sensors_devices_inited[i]=false;
+//	if(LCD_EN)			sensors_init_LCD();
+	if(TEMP_EN)			sensors_init_TEMP(1);
+	if(HALL_EN)			sensors_init_HALL(1);
+	if(ADC_EN)			sensors_init_ADC(ADC_EN);
+	if(BTN_EN)			sensors_init_BTN(BTN_EN);
+	if(PIR_EN)			sensors_init_PIR(1);
+	if(AD_LUM_EN)		sensors_init_AD_LUM(1);
+	if(AD_TEMP_EN)		sensors_init_AD_TEMP(AD_TEMP_EN);
+	if(I2C_HUM_EN)		sensors_init_I2C_HUM(I2C_HUM_EN);
+	if(I2C_ENV_EN)		sensors_init_I2C_ENV(I2C_ENV_EN);
+	if(I2C_ACCUM_EN)	sensors_init_I2C_ACCUM(1);
+}
+
+boolean sensors_init_LCD(int enable){
+	if( enable > 0 ) LCD_EN=true;
+	else LCD_EN=false;
+	return true;
+}
+
+boolean sensors_init_TEMP(int enable){
+	if( enable > 0 ) TEMP_EN=true;
+	else TEMP_EN=false;
+	return true;
+}
+
+boolean sensors_init_HALL(int enable){
+	if( enable > 0 ) HALL_EN=true;
+	else HALL_EN=false;
+	return true;
+}
+
+boolean sensors_init_ADC(int pin){
+	boolean ret = true;		// ピン干渉なし
+	int i;
+	for(i=1;i<5;i++){
+		if(pin == sensors_adc_pin[i]){
+			if(html_pin_set("IO" + String(pin),"アナログ_IN")){
+				ADC_EN=pin;
+				mvAnalogIn_init(ADC_EN);
+			}else{
+				html_pin_reset("IO" + String(sensors_adc_pin[i]),"アナログ_IN");
+				ret = false;		// ピン干渉
+			}
+		}else html_pin_reset("IO" + String(sensors_adc_pin[i]),"アナログ_IN");
+	}
+	if( i==5 ) ADC_EN=0;		// pin ==0も含む
+	return ret;
+}
+
+boolean sensors_init_BTN(int mode){
+	// このピンの割り当て変更はしない
+	if( mode >= 0 && mode <= 2) BTN_EN=mode;
+	else BTN_EN=1;
+	return true;
+}
+
+boolean sensors_init_PIR(int enable){
+	boolean ret = true;		// ピン干渉なし
+	if( enable > 0 ){
+		if(	html_pin_set("IO14","人感_GND") &&
+			html_pin_set("IO" + String(PIN_PIR),"人感_IN") &&
+			html_pin_set("IO26","人感_VDD")
+		){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+			pinMode(PIN_PIR,INPUT);
+			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+			PIR_EN=true;
+		}else{
+			ret = false;		// ピン干渉
+			PIR_EN=false;
+		}
+	}else PIR_EN=false;
+	
+	if(!PIR_EN){
+		html_pin_reset("IO14","人感_GND");
+		html_pin_reset("IO" + String(PIN_PIR),"人感_IN");
+		html_pin_reset("IO26","人感_VIN");
+	}
+	return ret;
+}
+
+boolean sensors_init_AD_LUM(int enable){
+	boolean ret = true;		// ピン干渉なし
+	if( enable > 0 ){
+		if(	html_pin_set("IO32","照度_GND") &&
+			html_pin_set("IO" + String(PIN_LUM),"照度_IN") &&
+			html_pin_set("IO25","照度_+V")
+		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
+			pinMode(PIN_PIR,INPUT_PULLDOWN);
+			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
+			AD_LUM_EN=true;
+		}else{
+			ret = false;		// ピン干渉
+			AD_LUM_EN=false;
+		}
+	}else AD_LUM_EN=false;
+	
+	if(!AD_LUM_EN){
+		html_pin_reset("IO32","照度_GND");
+		html_pin_reset("IO" + String(PIN_LUM),"照度_IN");
+		html_pin_reset("IO25","照度_+V");
+	}
+	return ret;
+}
+
+boolean sensors_init_AD_TEMP(int mode){
+	boolean ret = true;		// ピン干渉なし
+	if( mode >= 1 && mode <= 2 ){
+		if(	html_pin_set("IO32","温度_GND") &&
+			html_pin_set("IO" + String(PIN_TEMP),"温度_IN") &&
+			html_pin_set("IO25","温度_+V")
+		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
+			pinMode(PIN_TEMP,INPUT);
+			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
+			AD_TEMP_EN=mode;
+		}else{
+			ret = false;		// ピン干渉
+			AD_TEMP_EN=0;
+		}
+	}
+	if(!AD_TEMP_EN){
+		html_pin_reset("IO32","温度_GND");
+		html_pin_reset("IO" + String(PIN_TEMP),"温度_IN");
+		html_pin_reset("IO25","温度_+V");
+		AD_TEMP_EN=0;
+	}
+	return ret;
+}
+
+boolean sensors_init_I2C_HUM(int mode){
+	boolean ret = true;		// ピン干渉なし
+	if( mode >= 1 && mode <=2 ){
+		if( mode == 1){
+			if( html_pin_set("IO13","SHT31_ADR") &&
+				html_pin_set("IO12","SHT31_I2C_SCL") &&
+				html_pin_set("IO14","SHT31_I2C_SDA") &&
+				html_pin_set("IO27","SHT31_+V")
+			){	pinMode(13,OUTPUT);	digitalWrite(13,HIGH);
+				pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
+				i2c_sht31_Setup(14,12);
+				I2C_HUM_EN=1;
+			}else{
+				ret = true;
+				I2C_HUM_EN=0;
+			}
+		}
+		if( mode == 2){
+			if( html_pin_set("IO14","Si7021_GND") &&
+				html_pin_set("IO12","Si7021_I2C_SCL") &&
+				html_pin_set("IO13","Si7021_I2C_SDA") &&
+				html_pin_set("IO27","Si7021_+V")
+			){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+				pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
+				i2c_sht31_Setup(13,12);
+				I2C_HUM_EN=2;
+			}else{
+				ret = true;
+				I2C_HUM_EN=0;
+			}
+		}
+	}
+	if(I2C_HUM_EN != 1){
+		html_pin_reset("IO13","SHT31_ADR");
+		html_pin_reset("IO12","SHT31_I2C_SCL");
+		html_pin_reset("IO14","SHT31_I2C_SDA");
+		html_pin_reset("IO27","SHT31_+V");
+	}
+	if(I2C_HUM_EN != 2){
+		html_pin_set("IO14","Si7021_GND");
+		html_pin_set("IO12","Si7021_I2C_SCL");
+		html_pin_set("IO13","Si7021_I2C_SDA");
+		html_pin_set("IO27","Si7021_+V");
+	}
+	return ret;
+}
+
+boolean sensors_init_I2C_ENV(int mode){
+	boolean ret = true;		// ピン干渉なし
+	return ret;
+}
+boolean sensors_init_I2C_ACCUM(int enable){
+	boolean ret = true;		// ピン干渉なし
+	return ret;
 }
 
 String sensors_get(){

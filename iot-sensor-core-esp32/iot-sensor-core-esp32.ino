@@ -149,6 +149,7 @@ String sendSensorValues(){
 
 void setup(){
 	pinMode(PIN_LED,OUTPUT);					// LEDを接続したポートを出力に
+	sensors_init();
 	if(LCD_EN)lcdSetup();						// 液晶の初期化
 	Serial.begin(115200);
 	Serial.println("--------");
