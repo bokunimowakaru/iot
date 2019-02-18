@@ -75,11 +75,11 @@ const char sensors_devices[sensors_devices_n][6]={
 */
 
 
-const String html_PINOUT_S[38] = {
+const String sensors_PINOUT_S[38] = {
 	"GND","3V3","EN","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","SD2","SD3","CMD",
 	"CLK","SDD","SD1","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","NC","IO21","RXD0","TXD0","IO22","IO23","GND"};
 
-String html_PIN_ASSIGNED_S[38] = {
+String sensors_PIN_ASSIGNED_S[38] = {
 	"電池(-)","電池(+)","リセットボタン","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","","","",
 	"","","","IO15","IO2","ボタン","IO4","IO16","IO17","IO5","IO18","IO19","","IO21","USBシリアル(TxD)","USBシリアル(RxD)","IO22","IO23","GND"};
 	
@@ -92,22 +92,22 @@ const byte sensors_adcPins(int i){
 
 const String sensors_pinout_S(int i){
 	if( i<0 || i>37 ) return "";
-	return html_PINOUT_S[i];
+	return sensors_PINOUT_S[i];
 }
 
 String sensors_pin_assigned_S(int i){
 	if( i<0 || i>37 ) return "";
-	return html_PIN_ASSIGNED_S[i];
+	return sensors_PIN_ASSIGNED_S[i];
 }
 
-boolean html_pin_set(String pin, String name){
+boolean sensors_pin_set(String pin, String name){
 	for(int i=0; i< 38;i++){
-		if( pin.equals(html_PINOUT_S[i]) ){
-			if( html_PIN_ASSIGNED_S[i].equals(html_PINOUT_S[i]) ){
-				html_PIN_ASSIGNED_S[i] = name;
+		if( pin.equals(sensors_PINOUT_S[i]) ){
+			if( sensors_PIN_ASSIGNED_S[i].equals(sensors_PINOUT_S[i]) ){
+				sensors_PIN_ASSIGNED_S[i] = name;
 				return true;
 			}
-			if( html_PIN_ASSIGNED_S[i].equals(name) ){
+			if( sensors_PIN_ASSIGNED_S[i].equals(name) ){
 				return true;
 			}
 			return false;
@@ -116,11 +116,11 @@ boolean html_pin_set(String pin, String name){
 	return false;
 }
 
-boolean html_pin_reset(String pin, String name){
+boolean sensors_pin_reset(String pin, String name){
 	for(int i=0; i< 38;i++){
-		if( pin.equals(html_PINOUT_S[i]) ){
-			if( html_PIN_ASSIGNED_S[i].equals(name) ){
-				html_PIN_ASSIGNED_S[i] = html_PINOUT_S[i];
+		if( pin.equals(sensors_PINOUT_S[i]) ){
+			if( sensors_PIN_ASSIGNED_S[i].equals(name) ){
+				sensors_PIN_ASSIGNED_S[i] = sensors_PINOUT_S[i];
 				return true;
 			}
 			return false;
@@ -219,14 +219,14 @@ boolean sensors_init_ADC(int pin){
 	int i;
 	for(i=1;i<5;i++){
 		if(pin == sensors_adc_pin[i]){
-			if(html_pin_set("IO" + String(pin),"アナログ_IN")){
+			if(sensors_pin_set("IO" + String(pin),"アナログ_IN")){
 				ADC_EN=pin;
 				mvAnalogIn_init(ADC_EN);
 			}else{
-				html_pin_reset("IO" + String(sensors_adc_pin[i]),"アナログ_IN");
+				sensors_pin_reset("IO" + String(sensors_adc_pin[i]),"アナログ_IN");
 				ret = false;		// ピン干渉
 			}
-		}else html_pin_reset("IO" + String(sensors_adc_pin[i]),"アナログ_IN");
+		}else sensors_pin_reset("IO" + String(sensors_adc_pin[i]),"アナログ_IN");
 	}
 	if( i==5 ) ADC_EN=0;		// pin ==0も含む
 	return ret;
@@ -242,9 +242,9 @@ boolean sensors_init_BTN(int mode){
 boolean sensors_init_PIR(int enable){
 	boolean ret = true;		// ピン干渉なし
 	if( enable > 0 ){
-		if(	html_pin_set("IO14","人感_GND") &&
-			html_pin_set("IO" + String(PIN_PIR),"人感_IN") &&
-			html_pin_set("IO26","人感_VDD")
+		if(	sensors_pin_set("IO14","人感_GND") &&
+			sensors_pin_set("IO" + String(PIN_PIR),"人感_IN") &&
+			sensors_pin_set("IO26","人感_VDD")
 		){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
 			pinMode(PIN_PIR,INPUT);
 			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
@@ -256,9 +256,9 @@ boolean sensors_init_PIR(int enable){
 	}else PIR_EN=false;
 	
 	if(!PIR_EN){
-		html_pin_reset("IO14","人感_GND");
-		html_pin_reset("IO" + String(PIN_PIR),"人感_IN");
-		html_pin_reset("IO26","人感_VIN");
+		sensors_pin_reset("IO14","人感_GND");
+		sensors_pin_reset("IO" + String(PIN_PIR),"人感_IN");
+		sensors_pin_reset("IO26","人感_VIN");
 	}
 	return ret;
 }
@@ -266,9 +266,9 @@ boolean sensors_init_PIR(int enable){
 boolean sensors_init_AD_LUM(int enable){
 	boolean ret = true;		// ピン干渉なし
 	if( enable > 0 ){
-		if(	html_pin_set("IO32","照度_GND") &&
-			html_pin_set("IO" + String(PIN_LUM),"照度_IN") &&
-			html_pin_set("IO25","照度_+V")
+		if(	sensors_pin_set("IO32","照度_GND") &&
+			sensors_pin_set("IO" + String(PIN_LUM),"照度_IN") &&
+			sensors_pin_set("IO25","照度_+V")
 		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
 			pinMode(PIN_PIR,INPUT_PULLDOWN);
 			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
@@ -280,9 +280,9 @@ boolean sensors_init_AD_LUM(int enable){
 	}else AD_LUM_EN=false;
 	
 	if(!AD_LUM_EN){
-		html_pin_reset("IO32","照度_GND");
-		html_pin_reset("IO" + String(PIN_LUM),"照度_IN");
-		html_pin_reset("IO25","照度_+V");
+		sensors_pin_reset("IO32","照度_GND");
+		sensors_pin_reset("IO" + String(PIN_LUM),"照度_IN");
+		sensors_pin_reset("IO25","照度_+V");
 	}
 	return ret;
 }
@@ -290,9 +290,9 @@ boolean sensors_init_AD_LUM(int enable){
 boolean sensors_init_AD_TEMP(int mode){
 	boolean ret = true;		// ピン干渉なし
 	if( mode >= 1 && mode <= 2 ){
-		if(	html_pin_set("IO32","温度_GND") &&
-			html_pin_set("IO" + String(PIN_TEMP),"温度_IN") &&
-			html_pin_set("IO25","温度_+V")
+		if(	sensors_pin_set("IO32","温度_GND") &&
+			sensors_pin_set("IO" + String(PIN_TEMP),"温度_IN") &&
+			sensors_pin_set("IO25","温度_+V")
 		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
 			pinMode(PIN_TEMP,INPUT);
 			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
@@ -303,9 +303,9 @@ boolean sensors_init_AD_TEMP(int mode){
 		}
 	}
 	if(!AD_TEMP_EN){
-		html_pin_reset("IO32","温度_GND");
-		html_pin_reset("IO" + String(PIN_TEMP),"温度_IN");
-		html_pin_reset("IO25","温度_+V");
+		sensors_pin_reset("IO32","温度_GND");
+		sensors_pin_reset("IO" + String(PIN_TEMP),"温度_IN");
+		sensors_pin_reset("IO25","温度_+V");
 		AD_TEMP_EN=0;
 	}
 	return ret;
@@ -315,10 +315,10 @@ boolean sensors_init_I2C_HUM(int mode){
 	boolean ret = true;		// ピン干渉なし
 	if( mode >= 1 && mode <=2 ){
 		if( mode == 1){
-			if( html_pin_set("IO13","SHT31_ADR") &&
-				html_pin_set("IO12","SHT31_I2C_SCL") &&
-				html_pin_set("IO14","SHT31_I2C_SDA") &&
-				html_pin_set("IO27","SHT31_+V")
+			if( sensors_pin_set("IO13","SHT31_ADR") &&
+				sensors_pin_set("IO12","SHT31_I2C_SCL") &&
+				sensors_pin_set("IO14","SHT31_I2C_SDA") &&
+				sensors_pin_set("IO27","SHT31_+V")
 			){	pinMode(13,OUTPUT);	digitalWrite(13,HIGH);
 				pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
 				i2c_sht31_Setup(14,12);
@@ -329,10 +329,10 @@ boolean sensors_init_I2C_HUM(int mode){
 			}
 		}
 		if( mode == 2){
-			if( html_pin_set("IO14","Si7021_GND") &&
-				html_pin_set("IO12","Si7021_I2C_SCL") &&
-				html_pin_set("IO13","Si7021_I2C_SDA") &&
-				html_pin_set("IO27","Si7021_+V")
+			if( sensors_pin_set("IO14","Si7021_GND") &&
+				sensors_pin_set("IO12","Si7021_I2C_SCL") &&
+				sensors_pin_set("IO13","Si7021_I2C_SDA") &&
+				sensors_pin_set("IO27","Si7021_+V")
 			){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
 				pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
 				i2c_sht31_Setup(13,12);
@@ -344,16 +344,16 @@ boolean sensors_init_I2C_HUM(int mode){
 		}
 	}
 	if(I2C_HUM_EN != 1){
-		html_pin_reset("IO13","SHT31_ADR");
-		html_pin_reset("IO12","SHT31_I2C_SCL");
-		html_pin_reset("IO14","SHT31_I2C_SDA");
-		html_pin_reset("IO27","SHT31_+V");
+		sensors_pin_reset("IO13","SHT31_ADR");
+		sensors_pin_reset("IO12","SHT31_I2C_SCL");
+		sensors_pin_reset("IO14","SHT31_I2C_SDA");
+		sensors_pin_reset("IO27","SHT31_+V");
 	}
 	if(I2C_HUM_EN != 2){
-		html_pin_set("IO14","Si7021_GND");
-		html_pin_set("IO12","Si7021_I2C_SCL");
-		html_pin_set("IO13","Si7021_I2C_SDA");
-		html_pin_set("IO27","Si7021_+V");
+		sensors_pin_set("IO14","Si7021_GND");
+		sensors_pin_set("IO12","Si7021_I2C_SCL");
+		sensors_pin_set("IO13","Si7021_I2C_SDA");
+		sensors_pin_set("IO27","Si7021_+V");
 	}
 	return ret;
 }
