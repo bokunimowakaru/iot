@@ -215,6 +215,16 @@ void html_index(){
 		}
 	}
 	
+	if(server.hasArg("UDP_MODE")){
+		i = server.arg("UDP_MODE").toInt();
+		if( i >= 0 && i <= 3 && UDP_MODE != i){
+			UDP_MODE = i;
+			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"UDP送信モードを変更しました");
+			Serial.print(" UDP_MODE=");
+			Serial.println(UDP_MODE);
+		}
+	}
+	
 	if(server.hasArg("AmbientChannelId")){
 		int i = server.arg("AmbientChannelId").toInt();
 		if( i != AmbientChannelId){
@@ -382,7 +392,7 @@ void html_wifi(){
 				<hr>\
 				<h3>Wi-Fi AP 設定</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
-					<p>本機へ Wi-Fi AP(アクセスポイント)へ接続するための設定です。</p>\
+					<p>本機 Wi-Fi AP(アクセスポイント)へ接続するための設定です。</p>\
 					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"15\">\
 					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"15\">\
 					<input type=\"submit\" value=\"設定\">\
@@ -579,7 +589,7 @@ void html_sendto(){
 					<p>※スリープ中は本設定に関わらず、[Wi-Fi 設定]の[スリープ間隔]で送信します。</p>\
 					<p>Ambientへの送信間隔は30秒以上を推奨します(1日3000サンプルまで)。</p>\
 					<h3>送信設定の実行</h3>\
-					<input type=\"submit\" value=\"設定\">\
+					<input type=\"submit\" name=\"SENSORS\" value=\"設定\">\
 				</form>\
 				<hr>\
 				<p>by bokunimo.net</p>\
@@ -767,6 +777,7 @@ void drawGraph() {
 	}
 	out += "</g>\n</svg>\n";
 	server.send(200, "image/svg+xml", out);
+	html_check_overrun(out.length());
 }
 
 void html_404(){
@@ -776,7 +787,8 @@ void html_404(){
 	
 	String message = "File Not Found\n\n";
 	message += "URI: ";
-	message += server.uri();
+	String uri_S = server.uri();
+	message += uri_S;
 	message += "\nMethod: ";
 	message += (server.method() == HTTP_GET) ? "GET" : "POST";
 	message += "\nArguments: ";
@@ -786,6 +798,12 @@ void html_404(){
 		message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
 	}
 	server.send(404, "text/plain", message);
+	if( uri_S.indexOf("favicon") >= 0 ){
+		Serial.println("Requested favicon");
+	}else{
+		Serial.println(message);
+	}
+	html_check_overrun(message.length());
 }
 
 String html_ipAdrToString(uint32_t ip){
