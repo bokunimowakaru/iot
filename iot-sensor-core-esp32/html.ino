@@ -281,12 +281,13 @@ void html_index(){
 				<h3>設定</h3>\
 				<h4><a href=\"wifi\">Wi-Fi 設定</a></h4>\
 				<h4><a href=\"sensors\">センサ設定</a></h4>\
-				<h4><a href=\"sendto\">データ送信設定</a></h4>\
 				<h4><a href=\"pinout\">ピン配列表</a></h4>\
+				<h4><a href=\"sendto\">データ送信設定</a></h4>\
 				<hr>\
 				<h3>電源</h3>\
-				<h4><a href=\"reboot\">再起動</a></h4>\
-				<h4><a href=\"sleep\">OFF（スリープ・設定は保持）</a></h4>\
+				<h4><a href=\"reboot\">Wi-Fi 再起動</a>（Wi-FiとGPIO を再設定）</h4>\
+				<h4><a href=\"gpio_init\">GPIO 再起動</a>（GPIO のみ再設定）</h4>\
+				<h4><a href=\"sleep\">ESP32 OFF</a>（設定を保持したままスリープ）</h4>\
 				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
@@ -478,7 +479,7 @@ void html_sensors(){
 					<input type=\"radio\" name=\"HALL_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"HALL_EN\" value=\"1\" %s>ON\
 					</p>\
-					<p>ADCセンサ　\
+					<p>ADC　\
 					<input type=\"radio\" name=\"ADC_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"ADC_EN\" value=\"32\" %s>IO32\
 					<input type=\"radio\" name=\"ADC_EN\" value=\"33\" %s>IO33\
@@ -692,6 +693,25 @@ void html_reboot(){
 	TimerWakeUp_sleep();
 }
 
+void html_gpio_init(){
+	Serial.println("HTML gpio_init ---------------------------------");
+	server.send(200, "text/html",
+		"<html>\
+			<head>\
+				<title>GPIO 再起動中</title>\
+				<meta http-equiv=\"refresh\" content=\"3;/?SENSORS=GET\">\
+				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
+			</head>\
+			<body>\
+				<h1>GPIO 再起動中</h1>\
+				<p>おまちください(約3秒)。</p>\
+			</body>\
+		</html>");
+	sensors_init();
+	Serial.print("done html");
+}
+
 void html_sleep(){
 	char s[HTML_INDEX_LEN_MAX];
 	
@@ -835,6 +855,7 @@ void html_init(uint32_t ip, const char *domainName_local){
 	server.on("/pinout", html_pinout);
 	server.on("/sendto", html_sendto);
 	server.on("/reboot", html_reboot);
+	server.on("/gpio_init", html_gpio_init);
 	server.on("/sleep", html_sleep);
 //	server.on("/text", html_text);
 //	server.on("/demo", html_demo);
