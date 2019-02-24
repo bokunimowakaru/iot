@@ -11,7 +11,7 @@ RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
 RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
-RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:TTGO T-Koala
+RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
 RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
@@ -24,6 +24,7 @@ RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
 RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 60;	// 自動送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
+RTC_DATA_ATTR byte		UDP_MODE	= 1;		// 0:OFF, 1:個々, 2:全値, 3:両方
 RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
 RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
 RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
@@ -43,7 +44,7 @@ RTC_DATA_ATTR boolean	AD_LUM_EN=false;
 RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
 RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
 RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
-RTC_DATA_ATTR boolean	I2C_ACCUM_EN=false;
+RTC_DATA_ATTR boolean	I2C_ACCEM_EN=false;
 */
 
 WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
@@ -169,14 +170,14 @@ void html_index(){
 		Serial.print(" I2C_ENV_EN=");
 		Serial.println(I2C_ENV_EN);
 	}
-	if(server.hasArg("I2C_ACCUM_EN")){
-		i = server.arg("I2C_ACCUM_EN").toInt();
-		if( i > 0 && i != I2C_ACCUM_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています。");
-		if( !sensors_init_I2C_ACCUM(i) ){
+	if(server.hasArg("I2C_ACCEM_EN")){
+		i = server.arg("I2C_ACCEM_EN").toInt();
+		if( i > 0 && i != I2C_ACCEM_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています。");
+		if( !sensors_init_I2C_ACCEM(i) ){
 			snprintf(res_s, HTML_RES_LEN_MAX,"I2C加速度センサの設定に失敗しました。");
 		}
-		Serial.print(" I2C_ACCUM_EN=");
-		Serial.println(I2C_ACCUM_EN);
+		Serial.print(" I2C_ACCEM_EN=");
+		Serial.println(I2C_ACCEM_EN);
 	}
 	
 	if(server.hasArg("SENSORS")){
@@ -513,8 +514,8 @@ void html_sensors(){
 					<input type=\"radio\" name=\"I2C_ENV_EN\" value=\"2\" %s>BMP280\
 					</p>\
 					<p>加速度センサ　\
-					<input type=\"radio\" name=\"I2C_ACCUM_EN\" value=\"0\" %s>OFF\
-					<input type=\"radio\" name=\"I2C_ACCUM_EN\" value=\"1\" %s>ADXL345\
+					<input type=\"radio\" name=\"I2C_ACCEM_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"I2C_ACCEM_EN\" value=\"1\" %s>ADXL345\
 					</p>\
 					<p>センサ設定の実行　\
 					<input type=\"submit\" name=\"SENSORS\" value=\"設定\">\
@@ -535,7 +536,7 @@ void html_sensors(){
 				html_checked[AD_TEMP_EN==0], html_checked[AD_TEMP_EN==1], html_checked[AD_TEMP_EN==2],
 				html_checked[I2C_HUM_EN==0], html_checked[I2C_HUM_EN==1], html_checked[I2C_HUM_EN==2],
 				html_checked[I2C_ENV_EN==0], html_checked[I2C_ENV_EN==1], html_checked[I2C_ENV_EN==2],
-				html_checked[I2C_ACCUM_EN==0], html_checked[I2C_ACCUM_EN==1]
+				html_checked[I2C_ACCEM_EN==0], html_checked[I2C_ACCEM_EN==1]
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -571,9 +572,9 @@ void html_sendto(){
 					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"4\" %s>4\
 					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"5\" %s>5\
 					</p>\
-					<p>送信データ種別　\
+					<p>送信単位　\
 					<input type=\"radio\" name=\"UDP_MODE\" value=\"1\" %s>センサ毎\
-					<input type=\"radio\" name=\"UDP_MODE\" value=\"2\" %s>全値\
+					<input type=\"radio\" name=\"UDP_MODE\" value=\"2\" %s>全値一括\
 					<input type=\"radio\" name=\"UDP_MODE\" value=\"3\" %s>両方\
 					</p>\
 					<h3>Ambient 送信設定</h3>\

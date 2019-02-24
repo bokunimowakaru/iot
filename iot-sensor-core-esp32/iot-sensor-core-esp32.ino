@@ -13,7 +13,7 @@ RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
 RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
-RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:TTGO T-Koala
+RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
 RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
@@ -46,7 +46,7 @@ RTC_DATA_ATTR boolean	AD_LUM_EN=false;
 RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
 RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
 RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
-RTC_DATA_ATTR boolean	I2C_ACCUM_EN=false;
+RTC_DATA_ATTR boolean	I2C_ACCEM_EN=false;
 
 IPAddress IP;									// IPアドレス
 IPAddress IP_BC;								// ブロードキャストIPアドレス

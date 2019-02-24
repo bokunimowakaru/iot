@@ -1,4 +1,4 @@
-// ƒXƒŠ[ƒv’†‚ÌGPIOo—ÍÝ’è
+// ã‚¹ãƒªãƒ¼ãƒ—ä¸­ã®GPIOå‡ºåŠ›è¨­å®š
 
 #include "driver/rtc_io.h"
 

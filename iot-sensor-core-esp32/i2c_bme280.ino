@@ -388,5 +388,5 @@ boolean i2c_bme280_Setup(int PIN_SDA, int PIN_SCL){
 }
 
 boolean i2c_bme280_Setup(){
-	return i2c_si7021_Setup(21,22);
+	return i2c_bme280_Setup(21,22);
 }
