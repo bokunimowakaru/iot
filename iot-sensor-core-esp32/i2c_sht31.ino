@@ -57,12 +57,13 @@ float i2c_sht31_getHum(){
 	return ret;
 }
 
-void i2c_sht31_Setup(int PIN_SDA, int PIN_SCL){
+boolean i2c_sht31_Setup(int PIN_SDA, int PIN_SCL){
 	delay(2);					// 1ms以上
-	Wire.begin(PIN_SDA,PIN_SCL); // I2Cインタフェースの使用を開始
+	boolean ret = Wire.begin(PIN_SDA,PIN_SCL); // I2Cインタフェースの使用を開始
 	delay(18);					// 15ms以上
+	return ret;
 }
 
-void i2c_sht31_Setup(){
-	i2c_sht31_Setup(21,22);
+boolean i2c_sht31_Setup(){
+	return i2c_sht31_Setup(21,22);
 }

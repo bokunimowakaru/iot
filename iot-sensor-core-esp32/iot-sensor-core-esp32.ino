@@ -11,11 +11,14 @@ IoT Sensor Core for ESP32
 // ユーザ設定
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
-RTC_DATA_ATTR char 		SSID_STA[16] = "";		// STAモードのSSID(お手持ちのAPのSSID)
-RTC_DATA_ATTR char 		PASS_STA[32] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
+RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
 RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
+RTC_DATA_ATTR byte 		PIN_VDD		= 26;		// GPIO 26をHIGH出力に設定(不可=0,2,15,12)
+RTC_DATA_ATTR byte 		PIN_GND		= 14;		// GPIO 14をLOW出力に設定
 RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
 RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
@@ -23,6 +26,7 @@ RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
 RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 60;	// 自動送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
+RTC_DATA_ATTR byte		UDP_MODE	= 1;		// 0:OFF, 1:個々, 2:全値, 3:両方
 RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
 RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
 RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
@@ -163,8 +167,8 @@ void setup(){
 	}
 	if(PIR_EN){
 		pinMode(PIN_PIR,INPUT_PULLUP);
-		pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
-		pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+		pinMode(PIN_VDD,OUTPUT);	digitalWrite(PIN_VDD,HIGH);
+		pinMode(PIN_GND,OUTPUT);	digitalWrite(PIN_GND,LOW);
 		if(wake == 1 || wake == 2) sensors_pirPush(true);
 		if(wake == 3 || wake == 4){
 			if(!digitalRead(PIN_PIR)) sleep();
@@ -245,12 +249,18 @@ void setup(){
 }
 
 void loop(){
-	html_handleClient();
-	sensors_btnRead();
-	sensors_pirRead();
-	sleep();
-	
+	const String Line="------------------------";
 	unsigned long time=millis();            // ミリ秒の取得
+	
+	html_handleClient();
+											udp://192.168.254.255:1024 "esp32_2,26, 0"
+	if( sensors_btnRead() ) Serial.println("Trigged by Button ------" + Line);
+	if( sensors_pirRead() ) Serial.println("Trigged by PIR Sensor --" + Line);
+	
+	if( ((WIFI_AP_MODE & 2) == 2) && (SLEEP_SEC > 0) ){		// WiFi_STA 動作時
+		if( time > TIMEOUT ) sleep();
+	}
+	
 	if(time<100){
 		TIME_NEXT_b = false;
 		if(NTP_EN){
@@ -261,6 +271,7 @@ void loop(){
 		while( millis() < 100 ) delay(10);	// 待ち時間処理(最大100ms)
 	}
 	if(time > TIME_NEXT && !TIME_NEXT_b){
+		Serial.println("Trigged by Timer -------" + Line);
 		Serial.println("MCU Clock_s= " + String(time/1000));
 		sendSensorValues();
 		if(SEND_INT_SEC){
@@ -274,31 +285,30 @@ void loop(){
 }
 
 void sleep(){
-	if( ((WIFI_AP_MODE & 2) == 2) && (SLEEP_SEC > 0) ){		// WiFi_STA 動作時
-		if( millis() < TIMEOUT ) return;
-		digitalWrite(PIN_LED,LOW);
-		if(BTN_EN>0){
-			pinMode(PIN_SW,INPUT_PULLUP);
-			while(!digitalRead(PIN_SW)){
-				digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-				delay(50);
-			}
-			digitalWrite(PIN_LED,LOW);
-			TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
-		}
-		if(PIR_EN){
-			pinMode(14,OUTPUT);	digitalWrite(14,LOW);
-			pinMode(PIN_PIR,INPUT);
-			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
-			while(digitalRead(PIN_PIR)){
-				digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-				delay(50);
-			}
-			digitalWrite(PIN_LED,LOW);
-			TimerWakeUp_setExternalInput((gpio_num_t)PIN_PIR, HIGH);
-		}
-		TimerWakeUp_setSleepTime(SLEEP_SEC);
-		TimerWakeUp_sleep();
+	boolean led;
+	Serial.println("Shutting down");
+	pinMode(PIN_SW,INPUT_PULLUP);
+	
+	if(I2C_ENV_EN > 0) i2c_bme280_stop();
+	while(!digitalRead(PIN_SW)){
+		digitalWrite(PIN_LED,!digitalRead(PIN_LED));
+		delay(50);
 	}
+	digitalWrite(PIN_LED,LOW);
+	TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
+	if(PIR_EN){
+		pinMode(PIN_PIR,INPUT);
+		while(digitalRead(PIN_PIR)){
+			digitalWrite(PIN_LED,!digitalRead(PIN_LED));
+			delay(50);
+		}
+		TimerWakeUp_setExternalInput((gpio_num_t)PIN_PIR, HIGH);
+		rtc_io_setPin(PIN_GND,0);
+		rtc_io_setPin(PIN_VDD,1);
+		rtc_io_on();
+	}
+	if(SLEEP_SEC > 0) TimerWakeUp_setSleepTime(SLEEP_SEC);
+	digitalWrite(PIN_LED,LOW);
+	TimerWakeUp_sleep();
 	return;
 }

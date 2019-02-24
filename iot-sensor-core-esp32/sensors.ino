@@ -2,12 +2,15 @@
 // ユーザ設定
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
-RTC_DATA_ATTR char 		SSID_STA[16] = "";		// STAモードのSSID(お手持ちのAPのSSID)
-RTC_DATA_ATTR char 		PASS_STA[32] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
+RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
 RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
-RTC_DATA_ATTR byte 		PIN_LUM		= 35;		// GPIO 35に照度センサを接続
+RTC_DATA_ATTR byte 		PIN_VDD		= 26;		// GPIO 26をHIGH出力に設定(不可=0,2,15,12)
+RTC_DATA_ATTR byte 		PIN_GND		= 14;		// GPIO 14をLOW出力に設定
+RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
 RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
@@ -34,9 +37,9 @@ RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
 RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
 RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
 RTC_DATA_ATTR boolean	I2C_ACCUM_EN=false;
-
 */
 
+boolean sensors_WireBegin = false;				// Wire.beginの実行有無
 boolean sensors_btnPrev_b = false;				// ボタン；前回の値を記録
 boolean sensors_btnPush_b = false;				// ボタン；強制押下
 boolean sensors_pirPrev_b = false;				// 人感センサ；前回の値を記録
@@ -45,7 +48,7 @@ String sensors_S="";							// センサ名
 
 const byte	sensors_adc_pin[5]={0,32,33,34,35};
 
-#define sensors_devices_n 10
+#define sensors_devices_n 11
 boolean sensors_devices_inited[sensors_devices_n];
 const char sensors_devices[sensors_devices_n][6]={
 	"temp0",	// 0 内蔵温度センサ
@@ -56,8 +59,9 @@ const char sensors_devices[sensors_devices_n][6]={
 	"illum",	// 5 照度センサ
 	"temp.",	// 6 温度センサ
 	"humid",	// 7 温湿度センサ
-	"envir",	// 8 温湿度＋気圧センサ（温度,湿度,気圧）
-	"accem"		// 9 加速度センサ
+	"press",	// 8 気圧センサ（温度,気圧）
+	"envir",	// 9 温湿度＋気圧センサ（温度,湿度,気圧）
+	"accem"		// 10 加速度センサ
 };
 /*
 	"rd_sw",	// ドア開閉スイッチ
@@ -74,25 +78,97 @@ const char sensors_devices[sensors_devices_n][6]={
 	"alarm",
 */
 
+#define sensors_BOARD_TYPES_NUM 3
 
-const String sensors_PINOUT_S[38] = {
+String sensors_PINOUT_S[38];
+int sensors_PINOUT_PINS = 38;
+int sensors_PINOUT_PINS_LOW = 19;
+
+const String sensors_PINOUT_S_AE_ESP[38] = {
 	"GND","3V3","EN","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","SD2","SD3","CMD",
-	"CLK","SDD","SD1","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","NC","IO21","RXD0","TXD0","IO22","IO23","GND"};
+	"CLK","SD0","SD1","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","NC","IO21","RXD0","TXD0","IO22","IO23","GND"};
+const String sensors_PINOUT_S_DevKitC[38] = {
+	"3V3","EN","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","SD2","SD3","CMD","5V",
+	"CLK","SD0","SD1","IO15","IO2","IO0","IO4","IO16","IO17","IO5","IO18","IO19","GND","IO21","RXD0","TXD0","IO22","IO23","GND"};
+const String sensors_PINOUT_S_TTGO_Koala[36] = {
+	"3V3","EN","SVP","SVN","IO32","IO33","IO34","IO35","IO25","IO26","IO27","IO14","IO12","IO13","5V","BAT",
+	"IO15","IO2","GND","IO0","IO4","IO16","IO17","3V3","IO5","IO18","IO23","IO19","GND","GND","IO21","IO22","3V3","RXD0","TXD0","GND"};
 
-String sensors_PIN_ASSIGNED_S[38] = {
-	"電池(-)","電池(+)","リセットボタン","SVP","SVN","IO34","IO35","IO32","IO33","IO25","IO26","IO27","IO14","IO12","GND","IO13","","","",
-	"","","","IO15","IO2","ボタン","IO4","IO16","IO17","IO5","IO18","IO19","","IO21","USBシリアル(TxD)","USBシリアル(RxD)","IO22","IO23","GND"};
-	
-	/* Null = ピンの無いもの、PINOUTと同値 = ピンアサインの無いもの */
+String sensors_PIN_ASSIGNED_S[38];
+
+/*
+DoIt	DevC	AE-ESP	TTGO	メモ
+IO36 i	IO36 i	IO36 i	IO36i
+IO39 i	IO39 i	IO39 i	IO39i
+IO34 i	IO34 i	IO34 i	IO32	ADC、TTGO以外は入力専用
+IO35 i	IO35 i	IO35 i	IO33	ADC、TTGO以外は入力専用
+IO32	IO32	IO32	IO34 i	ADC
+IO33	IO33	IO33	IO35 i	ADC
+IO25	IO25	IO25	IO25	共通
+IO26	IO26	IO26	IO26	共通
+IO27	IO27	IO27	IO27	共通
+IO14	IO14	IO14	IO14	共通
+IO12	IO12	IO12	IO12	共通
+IO13	GND		GND		IO13	GND
+GND		IO13	IO13	5V
+--------------------------------------
+IO23	IO23	IO23
+IO22	IO22	IO22
+TXD		TXD		TXD
+RXD		RXD		RXD
+IO21	IO21	IO21
+		GND		NC
+IO19	IO19	IO19
+IO18	IO18	IO18
+IO5		IO5		IO5
+IO17	IO17	IO17
+IO16	IO16	IO16
+IO4		IO4		IO4
+		IO0		IO0
+IO2		IO2		IO2
+IO15	IO15	IO15
+GND		
+3V3		
+*/
+
+/*
+     @note There are more enumerations like that
+     up to GPIO39, excluding GPIO20, GPIO24 and GPIO28..31.
+     
+     They are not shown here to reduce redundant information.
+     @note GPIO34..39 are input mode only. 
+*/
+
+const char *sensors_boardName(int i){
+	switch(i){
+		case 0:	return "ESP32-WROOM-32";
+		case 1:	return "DevKitC";
+		case 2:	return "TTGO T-Koala";
+		default:break;
+	}
+	return "AE-ESP-WROOM-32";
+}
+
+int sensors_board_types_num(){
+	return sensors_BOARD_TYPES_NUM;
+}
 
 const byte sensors_adcPins(int i){
 	if( i<0 || i>4 ) return 0;
 	return sensors_adc_pin[i];
 }
 
-const String sensors_pinout_S(int i){
+String sensors_pinout_S(int i){
 	if( i<0 || i>37 ) return "";
 	return sensors_PINOUT_S[i];
+}
+
+int sensors_pinout_pins(){
+	return sensors_PINOUT_PINS;
+}
+
+int sensors_pinout_pins_low(){
+	return sensors_PINOUT_PINS_LOW;
 }
 
 String sensors_pin_assigned_S(int i){
@@ -101,7 +177,7 @@ String sensors_pin_assigned_S(int i){
 }
 
 boolean sensors_pin_set(String pin, String name){
-	for(int i=0; i< 38;i++){
+	for(int i=0; i< sensors_PINOUT_PINS;i++){
 		if( pin.equals(sensors_PINOUT_S[i]) ){
 			if( sensors_PIN_ASSIGNED_S[i].equals(sensors_PINOUT_S[i]) ){
 				sensors_PIN_ASSIGNED_S[i] = name;
@@ -117,7 +193,7 @@ boolean sensors_pin_set(String pin, String name){
 }
 
 boolean sensors_pin_reset(String pin, String name){
-	for(int i=0; i< 38;i++){
+	for(int i=0; i< sensors_PINOUT_PINS;i++){
 		if( pin.equals(sensors_PINOUT_S[i]) ){
 			if( sensors_PIN_ASSIGNED_S[i].equals(name) ){
 				sensors_PIN_ASSIGNED_S[i] = sensors_PINOUT_S[i];
@@ -127,6 +203,10 @@ boolean sensors_pin_reset(String pin, String name){
 		}
 	}
 	return false;
+}
+
+boolean sensors_wireBegin(){
+	return sensors_WireBegin;
 }
 
 void sensors_btnPrev(boolean in){
@@ -142,6 +222,7 @@ boolean sensors_btnRead(){
 		boolean btn = (boolean)!digitalRead(PIN_SW);
 		if( sensors_btnPrev_b != btn){
 			sensors_get();
+			delay(10);
 			return true;
 		}
 	}
@@ -161,6 +242,7 @@ boolean sensors_pirRead(){
 		boolean pir = (boolean)digitalRead(PIN_PIR);
 		if( sensors_pirPrev_b != pir){
 			sensors_get();
+			delay(10);
 			return true;
 		}
 	}
@@ -182,7 +264,40 @@ String sensors_name(){
 }
 
 void sensors_init(){
-	for(int i=0;i<sensors_devices_n;i++)sensors_devices_inited[i]=false;
+	sensors_PINOUT_PINS = 38;
+	switch(BOARD_TYPE){
+		case 0:	sensors_PINOUT_PINS = 38;
+				sensors_PINOUT_PINS_LOW = 19;
+				break;
+		case 1:	sensors_PINOUT_PINS = 38;
+				sensors_PINOUT_PINS_LOW = 19;
+				break;
+		case 2:	sensors_PINOUT_PINS = 36;	// 16 pin + 20 pin
+				sensors_PINOUT_PINS_LOW = 16;
+				break;
+		default:sensors_PINOUT_PINS = 38;
+				sensors_PINOUT_PINS_LOW = 19;
+	}
+	for(int i=0;i<sensors_PINOUT_PINS;i++){
+		switch(BOARD_TYPE){
+			case 0:	sensors_PINOUT_S[i] = sensors_PINOUT_S_AE_ESP[i];
+					break;
+			case 1:	sensors_PINOUT_S[i] = sensors_PINOUT_S_DevKitC[i];
+					break;
+			case 2:	sensors_PINOUT_S[i] = sensors_PINOUT_S_TTGO_Koala[i];
+					break;
+			default:sensors_PINOUT_S[i] = sensors_PINOUT_S_AE_ESP[i];
+		}
+		sensors_PIN_ASSIGNED_S[i]=sensors_PINOUT_S[i];
+	}
+	sensors_pin_set("TXD0", "USBシリアル(RxD)");
+	sensors_pin_set("RXD0", "USBシリアル(TxD)");
+	sensors_pin_set("EN", "リセットボタン");
+	sensors_pin_set("IO" + String(PIN_SW),"操作ボタン");
+	sensors_pin_set("IO" + String(PIN_LED),"状態表示LED");
+	
+	for(int i=0;i<sensors_devices_n;i++) sensors_devices_inited[i]=false;
+	
 //	if(LCD_EN)			sensors_init_LCD();
 	if(TEMP_EN)			sensors_init_TEMP(1);
 	if(HALL_EN)			sensors_init_HALL(1);
@@ -242,12 +357,12 @@ boolean sensors_init_BTN(int mode){
 boolean sensors_init_PIR(int enable){
 	boolean ret = true;		// ピン干渉なし
 	if( enable > 0 ){
-		if(	sensors_pin_set("IO14","人感_GND") &&
-			sensors_pin_set("IO" + String(PIN_PIR),"人感_IN") &&
-			sensors_pin_set("IO26","人感_VDD")
-		){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
+		if(	sensors_pin_set("IO" + String(PIN_GND),"人感_GND") &&
+			sensors_pin_set("IO" + String(PIN_PIR),"人感_OUT") &&
+			sensors_pin_set("IO" + String(PIN_VDD),"人感_VIN")
+		){	pinMode(PIN_GND,OUTPUT);	digitalWrite(PIN_GND,LOW);
 			pinMode(PIN_PIR,INPUT);
-			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+			pinMode(PIN_VDD,OUTPUT);	digitalWrite(PIN_VDD,HIGH);
 			PIR_EN=true;
 		}else{
 			ret = false;		// ピン干渉
@@ -256,9 +371,9 @@ boolean sensors_init_PIR(int enable){
 	}else PIR_EN=false;
 	
 	if(!PIR_EN){
-		sensors_pin_reset("IO14","人感_GND");
-		sensors_pin_reset("IO" + String(PIN_PIR),"人感_IN");
-		sensors_pin_reset("IO26","人感_VIN");
+		sensors_pin_reset("IO" + String(PIN_GND),"人感_GND");
+		sensors_pin_reset("IO" + String(PIN_PIR),"人感_OUT");
+		sensors_pin_reset("IO" + String(PIN_VDD),"人感_VIN");
 	}
 	return ret;
 }
@@ -267,7 +382,7 @@ boolean sensors_init_AD_LUM(int enable){
 	boolean ret = true;		// ピン干渉なし
 	if( enable > 0 ){
 		if(	sensors_pin_set("IO32","照度_GND") &&
-			sensors_pin_set("IO" + String(PIN_LUM),"照度_IN") &&
+			sensors_pin_set("IO" + String(PIN_LUM),"照度_VOUT") &&
 			sensors_pin_set("IO25","照度_+V")
 		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
 			pinMode(PIN_PIR,INPUT_PULLDOWN);
@@ -281,7 +396,7 @@ boolean sensors_init_AD_LUM(int enable){
 	
 	if(!AD_LUM_EN){
 		sensors_pin_reset("IO32","照度_GND");
-		sensors_pin_reset("IO" + String(PIN_LUM),"照度_IN");
+		sensors_pin_reset("IO" + String(PIN_LUM),"照度_VOUT");
 		sensors_pin_reset("IO25","照度_+V");
 	}
 	return ret;
@@ -291,7 +406,7 @@ boolean sensors_init_AD_TEMP(int mode){
 	boolean ret = true;		// ピン干渉なし
 	if( mode >= 1 && mode <= 2 ){
 		if(	sensors_pin_set("IO32","温度_GND") &&
-			sensors_pin_set("IO" + String(PIN_TEMP),"温度_IN") &&
+			sensors_pin_set("IO" + String(PIN_TEMP),"温度_VOUT") &&
 			sensors_pin_set("IO25","温度_+V")
 		){	pinMode(32,OUTPUT);	digitalWrite(32,LOW);
 			pinMode(PIN_TEMP,INPUT);
@@ -304,62 +419,116 @@ boolean sensors_init_AD_TEMP(int mode){
 	}
 	if(!AD_TEMP_EN){
 		sensors_pin_reset("IO32","温度_GND");
-		sensors_pin_reset("IO" + String(PIN_TEMP),"温度_IN");
+		sensors_pin_reset("IO" + String(PIN_TEMP),"温度_VOUT");
 		sensors_pin_reset("IO25","温度_+V");
 		AD_TEMP_EN=0;
 	}
 	return ret;
 }
 
+void _sensors_init_I2C_HUM_reset_pin(int mode){
+	if(mode != 1){
+		sensors_pin_reset("IO13","SHT31_GND");
+		sensors_pin_reset("IO12","SHT31_ADR");
+		sensors_pin_reset("IO14","SHT31_SCL");
+		sensors_pin_reset("IO27","SHT31_SDA");
+		sensors_pin_reset("IO26","SHT31_VDD");
+	}
+	if(mode != 2){
+		sensors_pin_reset("IO27","Si7021_GND");
+		sensors_pin_reset("IO14","Si7021_SCL");
+		sensors_pin_reset("IO12","Si7021_SDA");
+		sensors_pin_reset("IO26","Si7021_VIN");
+	}
+}
+
 boolean sensors_init_I2C_HUM(int mode){
 	boolean ret = true;		// ピン干渉なし
-	if( mode >= 1 && mode <=2 ){
-		if( mode == 1){
-			if( sensors_pin_set("IO13","SHT31_ADR") &&
-				sensors_pin_set("IO12","SHT31_I2C_SCL") &&
-				sensors_pin_set("IO14","SHT31_I2C_SDA") &&
-				sensors_pin_set("IO27","SHT31_+V")
-			){	pinMode(13,OUTPUT);	digitalWrite(13,HIGH);
-				pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
-				i2c_sht31_Setup(14,12);
-				I2C_HUM_EN=1;
-			}else{
-				ret = true;
-				I2C_HUM_EN=0;
-			}
-		}
-		if( mode == 2){
-			if( sensors_pin_set("IO14","Si7021_GND") &&
-				sensors_pin_set("IO12","Si7021_I2C_SCL") &&
-				sensors_pin_set("IO13","Si7021_I2C_SDA") &&
-				sensors_pin_set("IO27","Si7021_+V")
-			){	pinMode(14,OUTPUT);	digitalWrite(14,LOW);
-				pinMode(27,OUTPUT);	digitalWrite(27,HIGH);
-				i2c_sht31_Setup(13,12);
-				I2C_HUM_EN=2;
-			}else{
-				ret = true;
-				I2C_HUM_EN=0;
-			}
+	if( mode != I2C_HUM_EN ) _sensors_init_I2C_HUM_reset_pin(mode);
+	if( mode == 0) I2C_HUM_EN=0;
+	if( mode == 1){
+		/*	SHT31	ESP
+			VDD		IO26
+			SDA		IO27
+			SCL		IO14
+			ADR		IO12	High 0x45
+			GND		IO13 or GND
+		*/
+		if( sensors_pin_set("IO13","SHT31_GND") &&
+			sensors_pin_set("IO12","SHT31_ADR") &&
+			sensors_pin_set("IO14","SHT31_SCL") &&
+			sensors_pin_set("IO27","SHT31_SDA") &&
+			sensors_pin_set("IO26","SHT31_VDD")
+		){	pinMode(13,OUTPUT);	digitalWrite(13,LOW);
+			pinMode(12,OUTPUT);	digitalWrite(12,HIGH);
+			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+			if( i2c_sht31_Setup(27,14) ) sensors_WireBegin=true;
+			I2C_HUM_EN=1;
+		}else{
+			ret = false;		// ピン干渉
+			I2C_HUM_EN=0;
 		}
 	}
-	if(I2C_HUM_EN != 1){
-		sensors_pin_reset("IO13","SHT31_ADR");
-		sensors_pin_reset("IO12","SHT31_I2C_SCL");
-		sensors_pin_reset("IO14","SHT31_I2C_SDA");
-		sensors_pin_reset("IO27","SHT31_+V");
+	if( mode == 2){
+		/*	Si7021	ESP
+			VIN		IO26
+			GND		IO27
+			SCL		IO14
+			SDA		IO12
+		*/
+		if( sensors_pin_set("IO27","Si7021_GND") &&
+			sensors_pin_set("IO14","Si7021_SCL") &&
+			sensors_pin_set("IO12","Si7021_SDA") &&
+			sensors_pin_set("IO26","Si7021_VIN")
+		){	pinMode(27,OUTPUT);	digitalWrite(27,LOW);
+			pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+			if( i2c_si7021_Setup(12,14) ) sensors_WireBegin=true;
+			I2C_HUM_EN=2;
+		}else{
+			ret = false;		// ピン干渉
+			I2C_HUM_EN=0;
+		}
 	}
-	if(I2C_HUM_EN != 2){
-		sensors_pin_set("IO14","Si7021_GND");
-		sensors_pin_set("IO12","Si7021_I2C_SCL");
-		sensors_pin_set("IO13","Si7021_I2C_SDA");
-		sensors_pin_set("IO27","Si7021_+V");
-	}
+	_sensors_init_I2C_HUM_reset_pin(I2C_HUM_EN);
 	return ret;
 }
 
 boolean sensors_init_I2C_ENV(int mode){
 	boolean ret = true;		// ピン干渉なし
+	if( mode >= 1 && mode <=2){
+		/*	BME280	ESP
+			VCC		IO25
+			GND		IO26
+			SCL		IO27
+			SDA		IO14
+			CSB		IO12	High
+			SD0		IO13 or GND	ADR=0x76
+		*/
+		if( sensors_pin_set("IO26","BME280_GND") &&
+			sensors_pin_set("IO13","BME280_SD0") &&
+			sensors_pin_set("IO27","BME280_SCL") &&
+			sensors_pin_set("IO14","BME280_SDA") &&
+			sensors_pin_set("IO12","BME280_CSB") &&
+			sensors_pin_set("IO25","BME280_VDD")
+		){	pinMode(26,OUTPUT);	digitalWrite(26,LOW);
+			pinMode(13,OUTPUT);	digitalWrite(13,LOW);
+			pinMode(12,OUTPUT);	digitalWrite(12,HIGH);
+			pinMode(25,OUTPUT);	digitalWrite(25,HIGH);
+			if( i2c_bme280_Setup(14,27) ) sensors_WireBegin=true;
+			I2C_ENV_EN=mode;
+		}else{
+			ret = false;		// ピン干渉
+			I2C_ENV_EN=0;
+		}
+	}
+	if(I2C_ENV_EN != 1 && I2C_ENV_EN !=2 ){
+		sensors_pin_reset("IO26","BME280_GND");
+		sensors_pin_reset("IO13","BME280_SD0");
+		sensors_pin_reset("IO27","BME280_SCL");
+		sensors_pin_reset("IO14","BME280_SDA");
+		sensors_pin_reset("IO12","BME280_CSB");
+		sensors_pin_reset("IO25","BME280_VDD");
+	}
 	return ret;
 }
 boolean sensors_init_I2C_ACCUM(int enable){
@@ -376,7 +545,7 @@ String sensors_get(){
 		int temp = (int)temperatureRead() + (int)TEMP_ADJ - 35;
 		Serial.print("temperature= ");
 		Serial.println(temp);
-		sensors_sendUdp(sensors_devices[0], String(temp));
+		if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[0], String(temp));
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
@@ -389,7 +558,7 @@ String sensors_get(){
 		hall /= 50;
 		Serial.print("hall       = ");
 		Serial.println(hall);
-		sensors_sendUdp(sensors_devices[1], String(hall));
+		if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[1], String(hall));
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
@@ -400,7 +569,7 @@ String sensors_get(){
 		int adc = (int)mvAnalogIn(ADC_EN);
 		Serial.print("adc        = ");
 		Serial.println(adc);
-		sensors_sendUdp(sensors_devices[2], String(adc));
+		if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[2], String(adc));
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
@@ -419,7 +588,7 @@ String sensors_get(){
 				if( btn_b ) sensors_sendUdp("Ping");
 				else        sensors_sendUdp("Pong");
 			}else{
-				sensors_sendUdp(sensors_devices[3], String(btn));
+				if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[3], String(btn));
 			}
 		}
 		sensors_btnPush_b = false;
@@ -437,7 +606,7 @@ String sensors_get(){
 		Serial.print("pir        = ");
 		Serial.println(pir);
 		if(sensors_pirPrev_b != pir_b || sensors_pirPush_b){
-			sensors_sendUdp(sensors_devices[4], String(pir));
+			if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[4], String(pir));
 		}
 		sensors_pirPush_b = false;
 		sensors_pirPrev_b = pir_b;
@@ -453,7 +622,7 @@ String sensors_get(){
 		int lum_i = (int)lum;
 		Serial.print("illum      = ");
 		Serial.println(lum_i);
-		sensors_sendUdp(sensors_devices[5], String(lum_i));
+		if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[5], String(lum_i));
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
@@ -474,7 +643,7 @@ String sensors_get(){
 		String temp_S = dtoStrf(temp,1);
 		Serial.print("temp.      = ");
 		Serial.println(temp_S);
-		sensors_sendUdp(sensors_devices[6], temp_S);
+		if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[6], temp_S);
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
@@ -484,10 +653,12 @@ String sensors_get(){
 	if(I2C_HUM_EN>0){		// 1:SHT31, 2:Si7021
 		float temp = -999, hum = -999;
 		if( I2C_HUM_EN == 1){
+			if( !sensors_WireBegin && i2c_sht31_Setup(27,14) ) sensors_WireBegin=true;
 			temp = i2c_sht31_getTemp();
 			hum = i2c_sht31_getHum();
 		}
 		if( I2C_HUM_EN == 2){
+			if( !sensors_WireBegin && i2c_si7021_Setup(12,14) ) sensors_WireBegin=true;
 			temp = i2c_si7021_getTemp();
 			hum = i2c_si7021_getHum();
 		}
@@ -495,7 +666,7 @@ String sensors_get(){
 		Serial.print("humid      = ");
 		Serial.println(hum_S);
 		if(temp >= -100 && hum >= 0 ){
-			sensors_sendUdp(sensors_devices[7], hum_S);
+			if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[7], hum_S);
 		}else hum_S = "0, 0";
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
@@ -505,8 +676,44 @@ String sensors_get(){
 		sensors_csv(sensors_S,csv_b);
 		sensors_S += "湿度(％)";
 	}
+	if(I2C_ENV_EN>0){		// 1:BME280, 2:BMP280
+		float temp = -999, hum = -999, press = -999;
+		if( !sensors_WireBegin && i2c_sht31_Setup(14,27) ) sensors_WireBegin=true;
+		temp = i2c_bme280_getTemp();
+		press = i2c_bme280_getPress();
+		
+		String env_S = dtoStrf(temp,1);
+		if( I2C_ENV_EN == 1){
+			hum = i2c_bme280_getHum();
+			env_S += ", " + dtoStrf(hum,0);
+			Serial.print("envir      = ");
+		}else{
+			Serial.print("press      = ");
+		}
+		env_S += ", " + dtoStrf(press,0);
+		Serial.println(env_S);
+		
+		sensors_csv(payload,csv_b);
+		sensors_csv(sensors_S,csv_b);
+		csv_b = true;
+		payload +=  String(env_S);
+		sensors_S += "温度(℃)";
+		if( I2C_ENV_EN == 1){	// BME280 (湿度センサ付き)
+			sensors_csv(sensors_S,csv_b);
+			sensors_S += "湿度(％)";
+			if( temp < 100 && hum >= 0 && press < 2000 ){
+				if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[9], env_S);
+			}else env_S = "0, 0, 0";
+		}else{					// BMP280 (湿度センサ無し)
+			if( temp < 100 && press < 2000 ){
+				if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[8], env_S);
+			}else env_S = "0, 0";
+		}
+		sensors_csv(sensors_S,csv_b);
+		sensors_S += "気圧(hPa)";
+	}
 	
-	sensors_sendUdp(DEVICE, payload);
+	if(UDP_MODE & 2) sensors_sendUdp(DEVICE, payload);
 	return payload;
 }
 

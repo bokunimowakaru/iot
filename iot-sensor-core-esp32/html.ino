@@ -1,7 +1,7 @@
 #include <WiFiClient.h>
 #include <WebServer.h>
 #define html_title "IoT Sensor Core ESP32"
-#define HTML_INDEX_LEN_MAX	5000
+#define HTML_INDEX_LEN_MAX	4096
 #define HTML_MISC_LEN_MAX	1024
 #define HTML_RES_LEN_MAX	128
 
@@ -9,12 +9,15 @@
 // ユーザ設定
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
-RTC_DATA_ATTR char 		SSID_STA[16] = "";		// STAモードのSSID(お手持ちのAPのSSID)
-RTC_DATA_ATTR char 		PASS_STA[32] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
+RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
 RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
-RTC_DATA_ATTR byte 		PIN_LUM		= 35;		// GPIO 35に照度センサを接続
+RTC_DATA_ATTR byte 		PIN_VDD		= 26;		// GPIO 26をHIGH出力に設定(不可=0,2,15,12)
+RTC_DATA_ATTR byte 		PIN_GND		= 14;		// GPIO 14をLOW出力に設定
+RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
 RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
@@ -41,7 +44,6 @@ RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
 RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
 RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
 RTC_DATA_ATTR boolean	I2C_ACCUM_EN=false;
-
 */
 
 WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
@@ -54,6 +56,9 @@ boolean html_check_overrun(int len){
 	Serial.print("done html, ");
 	Serial.print(len);
 	Serial.println(" bytes");
+	if(HTML_INDEX_LEN_MAX - 256 < len){
+		Serial.println("WARNING: No Enough Buffer");
+	}
 	if(HTML_INDEX_LEN_MAX - 1 <= len){
 		Serial.println("ERROR: Prevented Buffer Overrun");
 		return false;
@@ -64,10 +69,12 @@ boolean html_check_overrun(int len){
 void html_index(){
 	char s[HTML_INDEX_LEN_MAX];
 	char res_s[HTML_RES_LEN_MAX]="待機中";
+	char sensors_res_s[HTML_RES_LEN_MAX]="なし";
 	char sensors_s[HTML_RES_LEN_MAX]="";
 	int i;
 	
-	Serial.println("HTML index");
+	/////////////// ------------------------------------------------
+	Serial.println("HTML index -------------------------------------");
 	
 	if(server.hasArg("SLEEP_SEC")){
 		int sleep_i = server.arg("SLEEP_SEC").toInt();
@@ -81,6 +88,18 @@ void html_index(){
 		}
 	}
 	
+	if(server.hasArg("BOARD_TYPE")){
+		i = server.arg("BOARD_TYPE").toInt();
+		if( i >= 0 && i < sensors_board_types_num() ){
+			if( i != BOARD_TYPE ){
+				BOARD_TYPE = i;
+				sensors_init();
+			}
+			Serial.print(" BOARD_TYPE=");
+			Serial.println(BOARD_TYPE);
+		}
+	}
+
 	if(server.hasArg("TEMP_EN")){
 		sensors_init_TEMP( server.arg("TEMP_EN").toInt() );
 		Serial.print(" TEMP_EN=");
@@ -133,7 +152,9 @@ void html_index(){
 		Serial.println(AD_TEMP_EN);
 	}
 	if(server.hasArg("I2C_HUM_EN")){
-		if( !server.arg("I2C_HUM_EN").toInt() ){
+		i = server.arg("I2C_HUM_EN").toInt();
+		if( i > 0 && i != I2C_HUM_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています。");
+		if( !sensors_init_I2C_HUM(i) ){
 			snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
 		}
 		Serial.print(" I2C_HUM_EN=");
@@ -141,23 +162,32 @@ void html_index(){
 	}
 	if(server.hasArg("I2C_ENV_EN")){
 		i = server.arg("I2C_ENV_EN").toInt();
-		if( i >= 0 && i <= 2) I2C_ENV_EN=i;
+		if( i > 0 && i != I2C_ENV_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています。");
+		if( !sensors_init_I2C_ENV(i) ){
+			snprintf(res_s, HTML_RES_LEN_MAX,"I2C環境センサの設定に失敗しました。");
+		}
 		Serial.print(" I2C_ENV_EN=");
 		Serial.println(I2C_ENV_EN);
 	}
 	if(server.hasArg("I2C_ACCUM_EN")){
 		i = server.arg("I2C_ACCUM_EN").toInt();
-		if( i==0 ) I2C_ACCUM_EN=false;
-		if( i==1 ) I2C_ACCUM_EN=true;
+		if( i > 0 && i != I2C_ACCUM_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています。");
+		if( !sensors_init_I2C_ACCUM(i) ){
+			snprintf(res_s, HTML_RES_LEN_MAX,"I2C加速度センサの設定に失敗しました。");
+		}
 		Serial.print(" I2C_ACCUM_EN=");
 		Serial.println(I2C_ACCUM_EN);
 	}
 	
 	if(server.hasArg("SENSORS")){
-		strcpy(res_s,"センサ取得値=");
-		int len=strlen(res_s);
+		/*
+		strcpy(sensors_res_s,"センサ取得値=");
+		int len=strlen(sensors_res_s);
 		String payload = String(sensors_get());
-		payload.toCharArray(&res_s[len],HTML_RES_LEN_MAX-len);
+		payload.toCharArray(&sensors_res_s[len],HTML_RES_LEN_MAX-len);
+		*/
+		String payload = String(sensors_get());
+		payload.toCharArray(sensors_res_s,HTML_RES_LEN_MAX);
 	}
 	sensors_name().toCharArray(sensors_s,HTML_RES_LEN_MAX);
 	
@@ -222,18 +252,19 @@ void html_index(){
 			<head>\
 				<title>%s</title>\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
 				<h1>%s</h1>\
 				<hr>\
 				<h3>状態</h3>\
 					<p>%s</p>\
-				<h3>有効なセンサ</h3>\
-					<p>%s</p>\
-				<h3>センサ値を取得</h3>\
+				<h3>取得したセンサ値</h3>\
+					<p>値=%s</p><p>項目=%s</p>\
+				<h3>センサ値の取得指示</h3>\
 					<p><a href=\"http://%s/?SENSORS=GET\">http://%s/?SENSORS=GET</a>\
 					<form method=\"GET\" action=\"/\">\
-					<input type=\"submit\" name=\"SENSORS\" value=\"取得\" size=\"4\">\
+					<input type=\"submit\" name=\"SENSORS\" value=\"取得\">\
 					</form></p>\
 				<hr>\
 				<h3>設定</h3>\
@@ -244,11 +275,11 @@ void html_index(){
 				<hr>\
 				<h3>電源</h3>\
 				<h4><a href=\"reboot\">再起動</a></h4>\
-				<h4><a href=\"sleep\">OFF（スリープ）</a></h4>\
+				<h4><a href=\"sleep\">OFF（スリープ・設定は保持）</a></h4>\
 				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
-		</html>", html_title, html_title, res_s, sensors_s, html_ip_s, html_ip_s
+		</html>", html_title, html_title, res_s, sensors_res_s, sensors_s, html_ip_s, html_ip_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -259,7 +290,8 @@ void html_wifi(){
 	char res_s[HTML_RES_LEN_MAX]="";
 	int i;
 	
-	Serial.println("HTML Wi-Fi");
+	/////////////// ------------------------------------------------
+	Serial.println("HTML Wi-Fi -------------------------------------");
 	
 	if(server.hasArg("SSID")){
 		String S = server.arg("SSID");
@@ -332,6 +364,7 @@ void html_wifi(){
 			<head>\
 				<title>%s Wi-Fi 設定</title>\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
 				<h1>%s Wi-Fi 設定</h1>\
@@ -342,7 +375,7 @@ void html_wifi(){
 					<input type=\"radio\" name=\"MODE\" value=\"1\" %s>AP\
 					<input type=\"radio\" name=\"MODE\" value=\"2\" %s>STA\
 					<input type=\"radio\" name=\"MODE\" value=\"3\" %s>AP+STA\
-					<input type=\"submit\" value=\"設定\" size=\"4\">\
+					<input type=\"submit\" value=\"設定\">\
 					<p>Wi-Fiモードを[STA]にすると無線LANが切断されます(操作不可になる)</p>\
 					<p>[AP]:本機がAPとして動作, [STA]:他のAPへ接続, [AP+STA]:両方</p>\
 				</form>\
@@ -352,7 +385,7 @@ void html_wifi(){
 					<p>本機へ Wi-Fi AP(アクセスポイント)へ接続するための設定です。</p>\
 					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"15\">\
 					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"15\">\
-					<input type=\"submit\" value=\"設定\" size=\"4\">\
+					<input type=\"submit\" value=\"設定\">\
 					<p>変更すると、Wi-Fi を新しい設定で再接続する必要があります。</p>\
 				</form>\
 				<hr>\
@@ -361,13 +394,13 @@ void html_wifi(){
 					<p>お手持ちのWi-Fiアクセスポイントの設定を記入し[設定]を押してください。</p>\
 					SSID=<input type=\"text\" name=\"SSID\" value=\"%s\" size=\"15\">\
 					PASS=<input type=\"password\" name=\"PASS\" size=\"15\">\
-					<input type=\"submit\" value=\"設定\" size=\"4\">\
+					<input type=\"submit\" value=\"設定\">\
 				</form>\
 				<hr>\
 				<h3>Wi-Fi 再起動</h3>\
 				<form method=\"GET\" action=\"/reboot\">\
 					<p>Wi-Fi 設定を有効にするために再起動を行ってください。</p>\
-					<input type=\"submit\" name=\"BOOT\" value=\"再起動\" size=\"6\">\
+					<input type=\"submit\" name=\"BOOT\" value=\"再起動\">\
 				</form>\
 				<hr>\
 				<h3>スリープ設定</h3>\
@@ -380,12 +413,12 @@ void html_wifi(){
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"1795\" %s>30分\
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"3595\" %s>60分\
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"65535\" %s>∞\
-					<input type=\"submit\" value=\"設定\" size=\"4\">\
+					<input type=\"submit\" value=\"設定\">\
 					<p>[OFF]以外に設定するとスリープ中(殆どの時間)は操作できません。</p>\
 				</form>\
 				<hr>\
 				<form method=\"GET\" action=\"/\">\
-					<input type=\"submit\" value=\"前の画面に戻る\">\
+					<input type=\"submit\" name=\"SENSORS\" value=\"前の画面に戻る\">\
 				</form>\
 				<hr>\
 				<p>by bokunimo.net</p>\
@@ -406,16 +439,25 @@ void html_sensors(){
 	char s[HTML_INDEX_LEN_MAX];
 	int i;
 	
-	Serial.println("HTML sensors");
+	/////////////// ------------------------------------------------
+	Serial.println("HTML sensors -----------------------------------");
+	
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
 				<title>%s センサ設定</title>\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
 				<h1>%s センサ設定</h1>\
 				<form method=\"GET\" action=\"/\">\
+					<p>ボード　\
+					<input type=\"radio\" name=\"BOARD_TYPE\" value=\"0\" %s>ESP\
+					<input type=\"radio\" name=\"BOARD_TYPE\" value=\"1\" %s>DevKitC\
+					<input type=\"radio\" name=\"BOARD_TYPE\" value=\"2\" %s>TTGO Koala\
+					</p>\
+					<hr>\
 					<p>内蔵温度センサ　\
 					<input type=\"radio\" name=\"TEMP_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"TEMP_EN\" value=\"1\" %s>ON\
@@ -465,7 +507,7 @@ void html_sensors(){
 					<input type=\"radio\" name=\"I2C_ACCUM_EN\" value=\"1\" %s>ADXL345\
 					</p>\
 					<p>センサ設定の実行　\
-					<input type=\"submit\" name=\"SENSORS\" value=\"設定\" size=\"4\">\
+					<input type=\"submit\" name=\"SENSORS\" value=\"設定\">\
 					</p>\
 				</form>\
 				<hr>\
@@ -473,6 +515,7 @@ void html_sensors(){
 			</body>\
 		</html>", html_title,
 			html_title,
+				html_checked[BOARD_TYPE==0], html_checked[BOARD_TYPE==1], html_checked[BOARD_TYPE==2],
 				html_checked[!TEMP_EN], html_checked[TEMP_EN], TEMP_ADJ, 
 				html_checked[!HALL_EN], html_checked[HALL_EN], 
 				html_checked[ADC_EN==0], html_checked[ADC_EN==32], html_checked[ADC_EN==33], html_checked[ADC_EN==34], html_checked[ADC_EN==35],
@@ -490,11 +533,16 @@ void html_sensors(){
 
 void html_sendto(){
 	char s[HTML_INDEX_LEN_MAX];
+	
+	/////////////// ------------------------------------------------
+	Serial.println("HTML sendto ------------------------------------");
+	
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
 				<title>%s データ送信設定</title>\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
 				<h1>%s データ送信設定</h1>\
@@ -513,6 +561,11 @@ void html_sendto(){
 					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"4\" %s>4\
 					<input type=\"radio\" name=\"DEVICE_NUM\" value=\"5\" %s>5\
 					</p>\
+					<p>送信データ種別　\
+					<input type=\"radio\" name=\"UDP_MODE\" value=\"1\" %s>センサ毎\
+					<input type=\"radio\" name=\"UDP_MODE\" value=\"2\" %s>全値\
+					<input type=\"radio\" name=\"UDP_MODE\" value=\"3\" %s>両方\
+					</p>\
 					<h3>Ambient 送信設定</h3>\
 					ID=<input type=\"text\" name=\"AmbientChannelId\" value=\"%d\" size=\"5\"> (0:OFF)\
 					WriteKey=<input type=\"text\" name=\"AmbientWriteKey\" value=\"%s\" size=\"18\">\
@@ -526,7 +579,7 @@ void html_sendto(){
 					<p>※スリープ中は本設定に関わらず、[Wi-Fi 設定]の[スリープ間隔]で送信します。</p>\
 					<p>Ambientへの送信間隔は30秒以上を推奨します(1日3000サンプルまで)。</p>\
 					<h3>送信設定の実行</h3>\
-					<input type=\"submit\" value=\"設定\" size=\"4\">\
+					<input type=\"submit\" value=\"設定\">\
 				</form>\
 				<hr>\
 				<p>by bokunimo.net</p>\
@@ -535,8 +588,65 @@ void html_sendto(){
 			html_title,
 			html_checked[UDP_PORT==0], html_checked[UDP_PORT==1024], html_checked[UDP_PORT==3054], html_checked[UDP_PORT==49152],
 			html_checked[DEVICE_NUM=='1'], html_checked[DEVICE_NUM=='2'], html_checked[DEVICE_NUM=='3'], html_checked[DEVICE_NUM=='4'], html_checked[DEVICE_NUM=='5'],
+			html_checked[UDP_MODE==1], html_checked[UDP_MODE==2], html_checked[UDP_MODE==3],
 			AmbientChannelId, AmbientWriteKey,
 			html_checked[SEND_INT_SEC==0], html_checked[SEND_INT_SEC==5], html_checked[SEND_INT_SEC==15], html_checked[SEND_INT_SEC==30], html_checked[SEND_INT_SEC==60]
+	);
+	server.send(200, "text/html", s);
+	html_check_overrun(strlen(s));
+}
+
+void html_pinout(){
+	char s[HTML_INDEX_LEN_MAX];
+	char buf_s[128];
+	int i;
+		
+	/////////////// ------------------------------------------------
+	Serial.println("HTML pinout ------------------------------------");
+	
+	snprintf(s, HTML_INDEX_LEN_MAX,
+		"<html>\
+			<head>\
+				<title>%s ピン配列表</title>\
+				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
+			</head>\
+			<body>\
+				<h1>%s ピン配列表</h1>\
+				<p>ボード名：%s</p>\
+				<table border=1><tr><th>番号</th><th>ピン名</th><th>接続先</th></tr>\
+		", html_title, html_title, sensors_boardName(BOARD_TYPE)
+	);
+	int low = sensors_pinout_pins_low();
+	int high = sensors_pinout_pins();
+	for(i=0;i >= 0; i += 2 * (i<low) - 1){	// i: 0,1,2,....low-1, high-1,high-2,....low
+		Serial.print(" pin " + String(i+1) + " (" + sensors_pinout_S(i) + ") : ");
+		String S = "-";
+		if( sensors_pin_assigned_S(i).length() == 0 ) S = "Null";
+		else if( !(sensors_pin_assigned_S(i).equals(sensors_pinout_S(i))) ) S = sensors_pin_assigned_S(i) + " へ接続";
+		Serial.println(S);
+		
+		String("<tr><td>" + String(i+1)
+			+ "</td><td>" + sensors_pinout_S(i)
+			+ "</td><td>" + S
+			+ "</td></tr>"
+		).toCharArray(buf_s, 128);
+		strncat(s,buf_s, HTML_INDEX_LEN_MAX - strlen(s) - 1);
+		if( i == low - 1){
+			i = high;
+			strncat(s,"<tr><th>番号</th><th>ピン名</th><th>接続先</th></tr>", HTML_INDEX_LEN_MAX - strlen(s) - 1);
+			Serial.println();
+		}
+		if( i == low) i = -2;
+	}
+	strncat(s,
+		"		</table>\
+				<hr>\
+				<form method=\"GET\" action=\"/\">\
+					<input type=\"submit\" name=\"SENSORS\" value=\"前の画面に戻る\">\
+				</form>\
+			</body>\
+		</html>", HTML_INDEX_LEN_MAX - strlen(s) - 1
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -545,13 +655,16 @@ void html_sendto(){
 void html_reboot(){
 	char s[HTML_INDEX_LEN_MAX];
 	
-	Serial.println("HTML reboot");
+	/////////////// ------------------------------------------------
+	Serial.println("HTML reboot ------------------------------------");
+	
 	snprintf(s, HTML_MISC_LEN_MAX,
 		"<html>\
 			<head>\
 				<title>Wi-Fi 再起動中</title>\
 				<meta http-equiv=\"refresh\" content=\"10;URL=http://%s/\">\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
 				<h1>Wi-Fi 再起動中</h1>\
@@ -571,16 +684,22 @@ void html_reboot(){
 void html_sleep(){
 	char s[HTML_INDEX_LEN_MAX];
 	
-	Serial.println("HTML sleep");
+	/////////////// ------------------------------------------------
+	Serial.println("HTML sleep -------------------------------------");
+	
 	snprintf(s, HTML_MISC_LEN_MAX,
 		"<html>\
 			<head>\
 				<title>Wi-Fi 電源OFF</title>\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
 				<h1>Wi-Fi ディープ・スリープへ移行中です。</h1>\
 				<p>IO %d ピンをLowレベルに設定(BOOTボタン押下)すると復帰します。</p>\
+				<p>スリープ間隔を設定していた場合は、設定時間後に自動復帰します。</p>\
+				<p>スマホの本機とのWi-Fiが切れるので、再度、Wi-Fi接続が必要です。</p>\
+				<p>本機に設定した内容は保持されます。(電源OFFやENボタンで消えます)</p>\
 				<p>復帰後のアクセス先＝<a href=\"http://%s/\">http://%s/</a></p>\
 			</body>\
 		</html>", PIN_SW, html_ip_s, html_ip_s
@@ -589,61 +708,15 @@ void html_sleep(){
 	html_check_overrun(strlen(s));
 	delay(110);
 	server.close();
-	pinMode(PIN_SW,INPUT_PULLUP);
-	while(!digitalRead(PIN_SW)){
-		digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-		delay(50);
-	}
-	digitalWrite(PIN_LED,LOW);
-	TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
-	TimerWakeUp_sleep();
-}
-
-void html_pinout(){
-	char s[HTML_INDEX_LEN_MAX];
-	char buf_s[128];
-	int i;
-	
-	Serial.println("HTML pinout");
-	snprintf(s, HTML_INDEX_LEN_MAX,
-		"<html>\
-			<head>\
-				<title>%s ピン配列表</title>\
-				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
-			</head>\
-			<body>\
-				<h1>%s ピン配列表</h1>\
-				<table><tr><th>番号</th><th>ピン名</th><th>接続先</th></tr>\
-		", html_title, html_title
-	);
-				
-	for(i=0;i<38;i++){
-		Serial.print(" pin " + String(i) + " (" + sensors_pinout_S(i) + ") : " + sensors_pin_assigned_S(i));
-		String S = "";
-		if( sensors_pin_assigned_S(i).length() == 0 ) S += "Null";
-		else if( !(sensors_pin_assigned_S(i).equals(sensors_pinout_S(i))) ) S += " ←接続";
-		Serial.println(S);
-		
-		String("<tr><td>" + String(i)
-			+ "</td><td>" + sensors_pinout_S(i)
-			+ "</td><td>" + sensors_pin_assigned_S(i) + S
-			+ "</td></tr>"
-		).toCharArray(buf_s, 128);
-		strncat(s,buf_s, HTML_INDEX_LEN_MAX - strlen(s) - 1);
-	}
-	strncat(s,
-		"		</table>\
-				<hr>\
-				<h4><a href =\"/\">戻る</a></h4>\
-			</body>\
-		</html>", HTML_INDEX_LEN_MAX - strlen(s) - 1
-	);
-	server.send(200, "text/html", s);
-	html_check_overrun(strlen(s));
+	sleep();
 }
 
 void html_text(){
-	server.send(200, "text/plain", "hello from esp8266!");
+	
+	/////////////// ------------------------------------------------
+	Serial.println("HTML text --------------------------------------");
+	
+	server.send(200, "text/plain", "hello from esp32!");
 }
 
 void html_demo(){
@@ -651,6 +724,10 @@ void html_demo(){
 	int sec = millis() / 1000;
 	int min = sec / 60;
 	int hr = min / 60;
+	
+	/////////////// ------------------------------------------------
+	Serial.println("HTML demo --------------------------------------");
+	
 	snprintf(s, 400,
 		"<html>\
 			<head>\
@@ -674,6 +751,10 @@ void html_demo(){
 void drawGraph() {
 	String out = "";
 	char temp[100];
+	
+	/////////////// ------------------------------------------------
+	Serial.println("HTML drawGraph ---------------------------------");
+	
 	out += "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"400\" height=\"150\">\n";
 	out += "<rect width=\"400\" height=\"150\" fill=\"rgb(250, 230, 210)\" stroke-width=\"1\" stroke=\"rgb(0, 0, 0)\" />\n";
 	out += "<g stroke=\"black\">\n";
@@ -689,6 +770,10 @@ void drawGraph() {
 }
 
 void html_404(){
+	
+	/////////////// ------------------------------------------------
+	Serial.println("HTML error 404 ---------------------------------");
+	
 	String message = "File Not Found\n\n";
 	message += "URI: ";
 	message += server.uri();

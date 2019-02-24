@@ -59,17 +59,20 @@ float i2c_si7021_getHum(){
 	return ret;
 }
 
-void i2c_si7021_Setup(int PIN_SDA, int PIN_SCL){
+boolean i2c_si7021_Setup(int PIN_SDA, int PIN_SCL){
 	delay(2);					// 1ms以上
-	Wire.begin(PIN_SDA,PIN_SCL); // I2Cインタフェースの使用を開始
+	boolean ret = Wire.begin(PIN_SDA,PIN_SCL); // I2Cインタフェースの使用を開始
 	delay(18);					// 15ms以上
-	Wire.beginTransmission(I2C_si7021);
-	Wire.write(0xE6);
-	Wire.write(0x3A);
-	Wire.endTransmission();
-	delay(18);					// 15ms以上
+	if(ret){
+		Wire.beginTransmission(I2C_si7021);
+		Wire.write(0xE6);
+		Wire.write(0x3A);
+		ret = (Wire.endTransmission() == 0);
+		delay(18);					// 15ms以上
+	}
+	return ret;
 }
 
-void i2c_si7021_Setup(){
-	i2c_si7021_Setup(21,22);
+boolean i2c_si7021_Setup(){
+	return i2c_si7021_Setup(21,22);
 }
