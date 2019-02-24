@@ -301,7 +301,7 @@ void sensors_init(){
 	
 	for(int i=0;i<sensors_devices_n;i++) sensors_devices_inited[i]=false;
 	
-//	if(LCD_EN)			sensors_init_LCD();
+	if(LCD_EN)			sensors_init_LCD(LCD_EN);
 	if(TEMP_EN)			sensors_init_TEMP(1);
 	if(HALL_EN)			sensors_init_HALL(1);
 	if(ADC_EN)			sensors_init_ADC(ADC_EN);
@@ -314,10 +314,41 @@ void sensors_init(){
 	if(I2C_ACCEM_EN)	sensors_init_I2C_ACCEM(1);
 }
 
-boolean sensors_init_LCD(int enable){
-	if( enable > 0 ) LCD_EN=true;
-	else LCD_EN=false;
-	return true;
+boolean sensors_init_LCD(int mode){
+	boolean ret = true;		// ピン干渉なし
+	if( mode == 0 ) LCD_EN=0;
+	if( mode >= 1 && mode <=2){
+		/*	LCD	ESP
+			VDD		IO19
+			RESET	IO18
+			SCL		IO5
+			SDA		IO17
+			GND		IO16
+		*/
+		if( sensors_pin_set("IO16","LCD_GND") &&
+			sensors_pin_set("IO17","LCD_SDA") &&
+			sensors_pin_set("IO5","LCD_SCL") &&
+			sensors_pin_set("IO18","LCD_RESET") &&
+			sensors_pin_set("IO19","LCD_VDD")
+		){	pinMode(16,OUTPUT);	digitalWrite(16,LOW);
+			pinMode(18,OUTPUT);	digitalWrite(18,LOW);
+			pinMode(19,OUTPUT);	digitalWrite(19,HIGH);
+			delay(10);
+			digitalWrite(18,HIGH);
+			if( i2c_lcd_Setup(17, 5, mode * 8, 2) ) LCD_EN=1;
+		}else{
+			ret = false;		// ピン干渉
+			LCD_EN=0;
+		}
+	}
+	if(LCD_EN != 1 && LCD_EN !=2 ){
+		sensors_pin_reset("IO16","LCD_GND");
+		sensors_pin_reset("IO17","LCD_SDA");
+		sensors_pin_reset("IO5","LCD_SCL");
+		sensors_pin_reset("IO18","LCD_RESET");
+		sensors_pin_reset("IO19","LCD_VDD");
+	}
+	return ret;
 }
 
 boolean sensors_init_TEMP(int enable){
@@ -847,6 +878,9 @@ String sensors_get(){
 	}
 	
 	if(UDP_MODE & 2) sensors_sendUdp(DEVICE, payload);
+	if(LCD_EN){
+		i2c_lcd_print_S( &payload );
+	}
 	return payload;
 }
 

@@ -21,9 +21,9 @@ RTC_DATA_ATTR byte 		PIN_VDD		= 26;		// GPIO 26をHIGH出力に設定(不可=0,2
 RTC_DATA_ATTR byte 		PIN_GND		= 14;		// GPIO 14をLOW出力に設定
 RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
 RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
-RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
+RTC_DATA_ATTR byte 		WIFI_AP_MODE= 1;		// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
-RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 60;	// 自動送信間隔(非スリープ時)
+RTC_DATA_ATTR uint16_t	SEND_INT_SEC= 30;		// 自動送信間隔(非スリープ時)
 RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
 RTC_DATA_ATTR byte		UDP_MODE	= 1;		// 0:OFF, 1:個々, 2:全値, 3:両方
@@ -34,7 +34,7 @@ RTC_DATA_ATTR int		AmbientChannelId = 0; 	// チャネル名(整数) 0=無効
 RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
 
 // デバイス有効化
-RTC_DATA_ATTR boolean	LCD_EN=false;
+RTC_DATA_ATTR byte		LCD_EN=0;
 RTC_DATA_ATTR boolean	NTP_EN=false;
 RTC_DATA_ATTR boolean	TEMP_EN=true;
 RTC_DATA_ATTR int8_t	TEMP_ADJ=0;
@@ -154,7 +154,6 @@ String sendSensorValues(){
 void setup(){
 	pinMode(PIN_LED,OUTPUT);					// LEDを接続したポートを出力に
 	sensors_init();
-	if(LCD_EN)lcdSetup();						// 液晶の初期化
 	Serial.begin(115200);
 	Serial.println("--------");
 	int wake = TimerWakeUp_init();

@@ -101,6 +101,19 @@ void html_index(){
 		}
 	}
 
+	if(server.hasArg("LCD_EN")){
+		i = server.arg("LCD_EN").toInt();
+		if( !sensors_init_LCD(i) ){
+			snprintf(res_s, HTML_RES_LEN_MAX,"I2C LCDの設定に失敗しました。");
+		}
+		Serial.print(" LCD_EN=");
+		Serial.println(LCD_EN);
+	}
+	if(server.hasArg("DISPLAY")){
+		String S = server.arg("DISPLAY");
+		i2c_lcd_print_S( &S );
+		Serial.println(" DISPLAY=" + S);
+	}
 	if(server.hasArg("TEMP_EN")){
 		sensors_init_TEMP( server.arg("TEMP_EN").toInt() );
 		Serial.print(" TEMP_EN=");
@@ -523,6 +536,19 @@ void html_sensors(){
 					</p>\
 				</form>\
 				<hr>\
+				<h1>表示設定</h1>\
+				<form method=\"GET\" action=\"/\">\
+					<p>I2C液晶　\
+					<input type=\"radio\" name=\"LCD_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"LCD_EN\" value=\"1\" %s>8x2\
+					<input type=\"radio\" name=\"LCD_EN\" value=\"2\" %s>16x2\
+					表示=<input type=\"text\" name=\"DISPLAY\" value=\"LCDﾋｮｳｼﾞbyWataru\" size=\"16\">\
+					</p>\
+					<p>表示設定　\
+					<input type=\"submit\" value=\"設定\">\
+					</p>\
+				</form>\
+				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
 		</html>", html_title,
@@ -537,7 +563,8 @@ void html_sensors(){
 				html_checked[AD_TEMP_EN==0], html_checked[AD_TEMP_EN==1], html_checked[AD_TEMP_EN==2],
 				html_checked[I2C_HUM_EN==0], html_checked[I2C_HUM_EN==1], html_checked[I2C_HUM_EN==2],
 				html_checked[I2C_ENV_EN==0], html_checked[I2C_ENV_EN==1], html_checked[I2C_ENV_EN==2],
-				html_checked[I2C_ACCEM_EN==0], html_checked[I2C_ACCEM_EN==1]
+				html_checked[I2C_ACCEM_EN==0], html_checked[I2C_ACCEM_EN==1],
+				html_checked[LCD_EN==0], html_checked[LCD_EN==1], html_checked[LCD_EN==2]
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -729,7 +756,7 @@ void html_sleep(){
 				<h1>Wi-Fi ディープ・スリープへ移行中です。</h1>\
 				<p>IO %d ピンをLowレベルに設定(BOOTボタン押下)すると復帰します。</p>\
 				<p>スリープ間隔を設定していた場合は、設定時間後に自動復帰します。</p>\
-				<p>スマホの本機とのWi-Fiが切れるので、再度、Wi-Fi接続が必要です。</p>\
+				<p>スマホと本機とのWi-Fiが切れるので、再度、Wi-Fi接続が必要です。</p>\
 				<p>本機に設定した内容は保持されます。(電源OFFやENボタンで消えます)</p>\
 				<p>復帰後のアクセス先＝<a href=\"http://%s/\">http://%s/</a></p>\
 			</body>\
