@@ -146,7 +146,7 @@ String sendSensorValues(){
 		Serial.println("Done: send UDP to LAN");
 		if( sentToAmbient(payload) ){
 			Serial.println("Done: send to Ambient");
-		}else{
+		}else if( AmbientChannelId > 0 ){
 			Serial.println("ERROR: cannot send to Ambient");
 			if(LCD_EN){
 				i2c_lcd_print("ERROR");
