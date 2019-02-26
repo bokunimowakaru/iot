@@ -146,6 +146,12 @@ String sendSensorValues(){
 		Serial.println("Done: send UDP to LAN");
 		if( sentToAmbient(payload) ){
 			Serial.println("Done: send to Ambient");
+		}else{
+			Serial.println("ERROR: cannot send to Ambient");
+			if(LCD_EN){
+				i2c_lcd_print("ERROR");
+				i2c_lcd_print2("Ambient");
+			}
 		}
 	}
 	return payload;
@@ -252,7 +258,6 @@ void loop(){
 	unsigned long time=millis();            // ミリ秒の取得
 	
 	html_handleClient();
-											udp://192.168.254.255:1024 "esp32_2,26, 0"
 	if( sensors_btnRead() ) Serial.println("Trigged by Button ------" + Line);
 	if( sensors_pirRead() ) Serial.println("Trigged by PIR Sensor --" + Line);
 	

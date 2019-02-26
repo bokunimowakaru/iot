@@ -3,7 +3,8 @@
 #define html_title "IoT Sensor Core ESP32"
 #define HTML_INDEX_LEN_MAX	4096
 #define HTML_MISC_LEN_MAX	1024
-#define HTML_RES_LEN_MAX	128
+#define HTML_RES_LEN_MAX	256
+#define HTML_S_LEN_MAX		96
 
 /* extern RTC_DATA_ATTR
 // ユーザ設定
@@ -61,29 +62,103 @@ boolean html_check_overrun(int len){
 		Serial.println("WARNING: No Enough Buffer");
 	}
 	if(HTML_INDEX_LEN_MAX - 1 <= len){
-		Serial.println("ERROR: Prevented Buffer Overrun");
+		Serial.println("ERROR: Prevented HTML_INDEX Buffer Overrun");
 		return false;
 	}
 	return true;
 }
 
-void html_index(){
-	char s[HTML_INDEX_LEN_MAX];
-	char res_s[HTML_RES_LEN_MAX]="待機中";
-	char sensors_res_s[HTML_RES_LEN_MAX]="なし";
-	char sensors_s[HTML_RES_LEN_MAX]="";
+void _html_cat_res_s(char *res_s, const char *s){
+	if( strlen(res_s) > HTML_RES_LEN_MAX - 8 ){
+		Serial.println("ERROR: Prevented HTML_RES Buffer Overrun");
+		return;
+	}
+	if( strlen(s) == HTML_S_LEN_MAX ){
+		Serial.println("WARNING: No Enough HTML_S Buffer");
+	}
+	if( strlen(res_s) > 0 ) strcat(res_s,"<br>");
+	strncat(res_s, s, HTML_RES_LEN_MAX - strlen(res_s) - 1);
+}
+
+void html_dataAttrSet(char *res_s){
 	int i;
-	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML index -------------------------------------");
-	
+	char s[HTML_S_LEN_MAX];
+	if(server.hasArg("WIFI_AP_MODE")){
+		String S = server.arg("WIFI_AP_MODE");
+		i = S.toInt();
+		if( i >= 1 && i <= 3 && WIFI_AP_MODE != i ){
+			char mode_s[3][7]={"AP","STA","AP+STA"};
+			WIFI_AP_MODE = i;
+			snprintf(s, HTML_S_LEN_MAX,"Wi-Fiモードを[%s]に設定しました(要Wi-Fi再起動)",mode_s[i-1]);
+			_html_cat_res_s(res_s, s);
+			Serial.print(" WIFI_AP_MODE=");
+			Serial.println(WIFI_AP_MODE);
+		}
+	}
+	if(server.hasArg("SSID_STA")){
+		String S = server.arg("SSID_STA");
+		int len = S.length();
+		if( len > 16 ){
+			_html_cat_res_s(res_s,"ERROR:接続先SSIDは16文字までです");
+		}else if( len > 0 ){
+			if(server.hasArg("PASS_STA")){
+				String P = server.arg("PASS_STA");
+				len = P.length();
+				if( len > 32 ){
+					_html_cat_res_s(res_s,"ERROR:接続先PASSは32文字までです");
+				}else if( len > 0 ){
+					S.toCharArray(SSID_STA,16);
+					P.toCharArray(PASS_STA,32);
+					snprintf(s, HTML_S_LEN_MAX,"接続先SSIDを[%s]に設定しました(要Wi-Fi再起動)",SSID_STA);
+					_html_cat_res_s(res_s, s);
+					Serial.print(" SSID_STA=");
+					Serial.print(SSID_STA);
+					Serial.print(" PASS_STA=");
+					Serial.println(PASS_STA);
+					if(WIFI_AP_MODE & 2 != 2){
+						WIFI_AP_MODE &= 2;
+						_html_cat_res_s(res_s, "Wi-Fiモード(STA)を設定しました(同上)");
+						Serial.print(" WIFI_AP_MODE=");
+						Serial.println(WIFI_AP_MODE);
+					}
+				}
+			}
+		}
+	}
+	if(server.hasArg("SSID_AP")){
+		String S = server.arg("SSID_AP");
+		int len = S.length();
+		if( len > 15 ){
+			_html_cat_res_s(res_s,"ERROR:本機SSIDは15文字までです");
+		}else{
+			if(server.hasArg("PASS_AP")){
+				String P = server.arg("PASS_AP");
+				len = P.length();
+				if( len > 15 ){
+					_html_cat_res_s(res_s,"ERROR:本機PASSは15文字までです");
+				}else{
+					S.toCharArray(SSID_AP,16);
+					P.toCharArray(PASS_AP,16);
+					snprintf(s, HTML_S_LEN_MAX,"本機SSIDを[%s]に設定しました(要Wi-Fi再起動)",SSID_AP);
+					_html_cat_res_s(res_s, s);
+					Serial.print(" SSID_AP=");
+					Serial.print(SSID_STA);
+					Serial.print(" PASS_AP=");
+					Serial.println(PASS_STA);
+				}
+			}
+		}
+	}
 	if(server.hasArg("SLEEP_SEC")){
 		int sleep_i = server.arg("SLEEP_SEC").toInt();
 		if(sleep_i >=0 && sleep_i <= 65535 && sleep_i != SLEEP_SEC){
 			SLEEP_SEC = sleep_i;
-			if(SLEEP_SEC == 65535 )	snprintf(res_s, HTML_RES_LEN_MAX,"スリープを[ON]に設定しました。ボタンや人感センサを設定していないと起動しません。");
-			else if(SLEEP_SEC == 0)	snprintf(res_s, HTML_RES_LEN_MAX,"スリープを[OFF]に設定しました。電力を多く消費するのでUSB等から給電してください。");
-			else					snprintf(res_s, HTML_RES_LEN_MAX,"間欠動作間隔を[%d]分[%d]秒に設定しました。スリープ中は操作できません。",(sleep_i+5)/60,(sleep_i+5)%60);
+			if(SLEEP_SEC == 65535 )	_html_cat_res_s(res_s, "スリープを[ON]に設定しました");
+			else if(SLEEP_SEC == 0)	_html_cat_res_s(res_s, "スリープを[OFF]に設定しました");
+			else {
+				snprintf(s, HTML_S_LEN_MAX,"間欠動作間隔を[%d]分[%d]秒に設定しました",(sleep_i+5)/60,(sleep_i+5)%60);
+				_html_cat_res_s(res_s, s);
+			}
 			Serial.print(" SLEEP_SEC=");
 			Serial.println(SLEEP_SEC);
 		}
@@ -94,17 +169,17 @@ void html_index(){
 		if( i >= 0 && i < sensors_board_types_num() ){
 			if( i != BOARD_TYPE ){
 				BOARD_TYPE = i;
+				snprintf(s, HTML_S_LEN_MAX,"ボードを[%s]に設定しました",sensors_boardName(i));
 				sensors_init();
 			}
 			Serial.print(" BOARD_TYPE=");
 			Serial.println(BOARD_TYPE);
 		}
 	}
-
 	if(server.hasArg("LCD_EN")){
 		i = server.arg("LCD_EN").toInt();
 		if( !sensors_init_LCD(i) ){
-			snprintf(res_s, HTML_RES_LEN_MAX,"I2C LCDの設定に失敗しました。");
+			_html_cat_res_s(res_s, "I2C LCDの設定に失敗しました");
 		}
 		Serial.print(" LCD_EN=");
 		Serial.println(LCD_EN);
@@ -134,7 +209,7 @@ void html_index(){
 	}
 	if(server.hasArg("ADC_EN")){
 		if( !sensors_init_ADC( server.arg("ADC_EN").toInt()) ){
-			snprintf(res_s, HTML_RES_LEN_MAX,"ADCの設定に失敗しました。");
+			_html_cat_res_s(res_s, "ADCの設定に失敗しました");
 		}
 		Serial.print(" ADC_EN=");
 		Serial.println(ADC_EN);
@@ -146,53 +221,133 @@ void html_index(){
 	}
 	if(server.hasArg("PIR_EN")){
 		if( !sensors_init_PIR( server.arg("PIR_EN").toInt()) ){
-			snprintf(res_s, HTML_RES_LEN_MAX,"人感センサの設定に失敗しました。");
+			_html_cat_res_s(res_s, "人感センサの設定に失敗しました");
 		}
 		Serial.print(" PIR_EN=");
 		Serial.println(PIR_EN);
 	}
 	if(server.hasArg("AD_LUM_EN")){
 		if( !sensors_init_AD_LUM( server.arg("AD_LUM_EN").toInt()) ){
-			snprintf(res_s, HTML_RES_LEN_MAX,"照度センサの設定に失敗しました。");
+			_html_cat_res_s(res_s, "照度センサの設定に失敗しました");
 		}
 		Serial.print(" AD_LUM_EN=");
 		Serial.println(AD_LUM_EN);
 	}
 	if(server.hasArg("AD_TEMP_EN")){
 		if( !sensors_init_AD_TEMP(server.arg("AD_TEMP_EN").toInt()) ){
-			snprintf(res_s, HTML_RES_LEN_MAX,"温度センサの設定に失敗しました。");
+			_html_cat_res_s(res_s, "温度センサの設定に失敗しました");
 		}
 		Serial.print(" AD_TEMP_EN=");
 		Serial.println(AD_TEMP_EN);
 	}
 	if(server.hasArg("I2C_HUM_EN")){
 		i = server.arg("I2C_HUM_EN").toInt();
-		if( i > 0 && i != I2C_HUM_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています。");
+		if( i > 0 && i != I2C_HUM_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています");
 		if( !sensors_init_I2C_HUM(i) ){
-			snprintf(res_s, HTML_RES_LEN_MAX,"I2C温湿度センサの設定に失敗しました。");
+			_html_cat_res_s(res_s, "I2C温湿度センサの設定に失敗しました");
 		}
 		Serial.print(" I2C_HUM_EN=");
 		Serial.println(I2C_HUM_EN);
 	}
 	if(server.hasArg("I2C_ENV_EN")){
 		i = server.arg("I2C_ENV_EN").toInt();
-		if( i > 0 && i != I2C_ENV_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています。");
+		if( i > 0 && i != I2C_ENV_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています");
 		if( !sensors_init_I2C_ENV(i) ){
-			snprintf(res_s, HTML_RES_LEN_MAX,"I2C環境センサの設定に失敗しました。");
+			_html_cat_res_s(res_s, "I2C環境センサの設定に失敗しました");
 		}
 		Serial.print(" I2C_ENV_EN=");
 		Serial.println(I2C_ENV_EN);
 	}
 	if(server.hasArg("I2C_ACCEM_EN")){
 		i = server.arg("I2C_ACCEM_EN").toInt();
-		if( i > 0 && i != I2C_ACCEM_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています。");
+		if( i > 0 && i != I2C_ACCEM_EN && sensors_wireBegin()) snprintf(res_s, HTML_RES_LEN_MAX,"(警告)既にI2Cが起動しています");
 		if( !sensors_init_I2C_ACCEM(i) ){
-			snprintf(res_s, HTML_RES_LEN_MAX,"I2C加速度センサの設定に失敗しました。");
+			_html_cat_res_s(res_s, "I2C加速度センサの設定に失敗しました");
 		}
 		Serial.print(" I2C_ACCEM_EN=");
 		Serial.println(I2C_ACCEM_EN);
 	}
+	if(server.hasArg("DEVICE_NUM")){
+		i = server.arg("DEVICE_NUM").toInt();
+		if( i >= 0 && i <= 9 ){
+			char c = (char)((int)'0'+i);
+			if( DEVICE_NUM != c ){
+				snprintf(s, HTML_S_LEN_MAX,"デバイス番号を[%c]に設定しました",c);
+				_html_cat_res_s(res_s, s);
+				DEVICE_NUM = c;
+				Serial.print(" DEVICE_NUM=");
+				Serial.println(DEVICE_NUM);
+			}
+		}
+	}
+	if(server.hasArg("UDP_PORT")){
+		i = server.arg("UDP_PORT").toInt();
+		if( i >= 0 && i <= 65535 && UDP_PORT != i){
+			UDP_PORT = i;
+			if(i){
+				snprintf(s, HTML_S_LEN_MAX,"UDP送信ポート番号を[%d]に設定しました",i);
+				_html_cat_res_s(res_s, s);
+			}
+			else _html_cat_res_s(res_s, "UDP送信を[OFF]に設定しました");
+			Serial.print(" UDP_PORT=");
+			Serial.println(UDP_PORT);
+		}
+	}
+	if(server.hasArg("UDP_MODE")){
+		i = server.arg("UDP_MODE").toInt();
+		if( i >= 0 && i <= 3 && UDP_MODE != i){
+			UDP_MODE = i;
+			if(i) _html_cat_res_s(res_s, "UDP送信モードを変更しました");
+			Serial.print(" UDP_MODE=");
+			Serial.println(UDP_MODE);
+		}
+	}
+	if(server.hasArg("AmbientChannelId")){
+		int i = server.arg("AmbientChannelId").toInt();
+		if( i != AmbientChannelId){
+			AmbientChannelId = i;
+			if(i){
+				snprintf(s, HTML_S_LEN_MAX,"Ambient ID を[%d]に設定しました",i);
+				_html_cat_res_s(res_s, s);
+			} else _html_cat_res_s(res_s, "Ambientへの送信を[OFF]にしました");
+			Serial.print(" AmbientChannelId=");
+			Serial.println(AmbientChannelId);
+		}
+	}
+	if(server.hasArg("AmbientWriteKey")){
+		String S = server.arg("AmbientWriteKey");
+		if( S.length() == 16 && S.equals(String(AmbientWriteKey)) == false ){
+			S.toCharArray(AmbientWriteKey,17);
+			snprintf(s, HTML_S_LEN_MAX,"Ambient(ID=%d)のWriteKeyを[%s]に設定しました",AmbientChannelId,AmbientWriteKey);
+			_html_cat_res_s(res_s, s);
+		}
+		Serial.print(" AmbientWriteKey=");
+		Serial.println(AmbientWriteKey);
+	}
+	if(server.hasArg("SEND_INT_SEC")){
+		i = server.arg("SEND_INT_SEC").toInt();
+		if( SEND_INT_SEC != i){
+			SEND_INT_SEC = i;
+			if(i){
+				snprintf(s, HTML_S_LEN_MAX,"自動送信間隔(動作時)を[%d]に設定しました",i);
+				_html_cat_res_s(res_s, s);
+			} else _html_cat_res_s(res_s, "自動送信を[OFF]に設定しました");
+			Serial.print(" SEND_INT_SEC=");
+			Serial.println(SEND_INT_SEC);
+		}
+	}
+}
+
+void html_index(){
+	char s[HTML_INDEX_LEN_MAX];
+	char res_s[HTML_RES_LEN_MAX]="待機中";
+	char sensors_res_s[HTML_RES_LEN_MAX]="なし";
+	char sensors_s[HTML_RES_LEN_MAX]="";
 	
+	/////////////// ------------------------------------------------
+	Serial.println("HTML index -------------------------------------");
+	
+	html_dataAttrSet(res_s);
 	if(server.hasArg("SENSORS")){
 		/*
 		strcpy(sensors_res_s,"センサ取得値=");
@@ -205,72 +360,6 @@ void html_index(){
 	}
 	sensors_name().toCharArray(sensors_s,HTML_RES_LEN_MAX);
 	
-	if(server.hasArg("DEVICE_NUM")){
-		i = server.arg("DEVICE_NUM").toInt();
-		if( i >= 0 && i <= 9 ){
-			char c = (char)((int)'0'+i);
-			if( DEVICE_NUM != c ){
-				snprintf(res_s, HTML_RES_LEN_MAX,"デバイス番号を[%c]に設定しました",c);
-				DEVICE_NUM = c;
-				Serial.print(" DEVICE_NUM=");
-				Serial.println(DEVICE_NUM);
-			}
-		}
-	}
-	
-	if(server.hasArg("UDP_PORT")){
-		i = server.arg("UDP_PORT").toInt();
-		if( i >= 0 && i <= 65535 && UDP_PORT != i){
-			UDP_PORT = i;
-			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"UDP送信ポート番号を[%d]に設定しました",i);
-			else snprintf(res_s, HTML_RES_LEN_MAX,"UDP送信を[OFF]に設定しました");
-			Serial.print(" UDP_PORT=");
-			Serial.println(UDP_PORT);
-		}
-	}
-	
-	if(server.hasArg("UDP_MODE")){
-		i = server.arg("UDP_MODE").toInt();
-		if( i >= 0 && i <= 3 && UDP_MODE != i){
-			UDP_MODE = i;
-			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"UDP送信モードを変更しました");
-			Serial.print(" UDP_MODE=");
-			Serial.println(UDP_MODE);
-		}
-	}
-	
-	if(server.hasArg("AmbientChannelId")){
-		int i = server.arg("AmbientChannelId").toInt();
-		if( i != AmbientChannelId){
-			AmbientChannelId = i;
-			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"Ambient ID を[%d]に設定しました",i);
-			else snprintf(res_s, HTML_RES_LEN_MAX,"Ambientへの送信を[OFF]にしました");
-			Serial.print(" AmbientChannelId=");
-			Serial.println(AmbientChannelId);
-		}
-	}
-	
-	if(server.hasArg("AmbientWriteKey")){
-		String S = server.arg("AmbientWriteKey");
-		if( S.length() == 16 && S.equals(String(AmbientWriteKey)) == false ){
-			S.toCharArray(AmbientWriteKey,17);
-			snprintf(res_s, HTML_RES_LEN_MAX,"Ambient(ID=%d)のWriteKeyを[%s]に設定しました",AmbientChannelId,AmbientWriteKey);
-		}
-		Serial.print(" AmbientWriteKey=");
-		Serial.println(AmbientWriteKey);
-	}
-	
-	if(server.hasArg("SEND_INT_SEC")){
-		i = server.arg("SEND_INT_SEC").toInt();
-		if( SEND_INT_SEC != i){
-			SEND_INT_SEC = i;
-			if(i) snprintf(res_s, HTML_RES_LEN_MAX,"自動送信間隔(動作時)を[%d]に設定しました",i);
-			else  snprintf(res_s, HTML_RES_LEN_MAX,"自動送信を[OFF]に設定しました");
-			Serial.print(" SEND_INT_SEC=");
-			Serial.println(SEND_INT_SEC);
-		}
-	}
-
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
@@ -318,71 +407,7 @@ void html_wifi(){
 	/////////////// ------------------------------------------------
 	Serial.println("HTML Wi-Fi -------------------------------------");
 	
-	if(server.hasArg("SSID")){
-		String S = server.arg("SSID");
-		int len = S.length();
-		if( len > 15 ){
-			strcpy(res_s,"エラー：接続先SSIDの文字数は15文字までです。");
-		}else{
-			if(server.hasArg("PASS")){
-				String P = server.arg("PASS");
-				len = P.length();
-				if( len > 31 ){
-					strcpy(res_s,"エラー：接続先PASSの文字数は31文字までです。");
-				}else{
-					S.toCharArray(SSID_STA,16);
-					P.toCharArray(PASS_STA,32);
-					snprintf(res_s, HTML_RES_LEN_MAX,"接続先SSIDを[%s]に設定しました(Wi-Fi再起動後に有効)。",SSID_STA);
-					Serial.print(" SSID_STA=");
-					Serial.print(SSID_STA);
-					Serial.print(" PASS_STA=");
-					Serial.println(PASS_STA);
-					if(WIFI_AP_MODE & 2 != 2){
-						WIFI_AP_MODE &= 2;
-						snprintf(res_s, HTML_RES_LEN_MAX,"Wi-Fiモード(STA)とSSIDを設定しました(Wi-Fi再起動後に有効)。");
-						Serial.print(" WIFI_AP_MODE=");
-						Serial.println(WIFI_AP_MODE);
-					}
-				}
-			}
-		}
-	}
-
-	if(server.hasArg("SSID_AP")){
-		String S = server.arg("SSID_AP");
-		int len = S.length();
-		if( len > 15 ){
-			strcpy(res_s,"エラー：本機のSSIDの文字数は15文字までです。");
-		}else{
-			if(server.hasArg("PASS_AP")){
-				String P = server.arg("PASS_AP");
-				len = P.length();
-				if( len > 15 ){
-					strcpy(res_s,"エラー：本機のPASSの文字数は15文字までです。");
-				}else{
-					S.toCharArray(SSID_AP,16);
-					P.toCharArray(PASS_AP,16);
-					snprintf(res_s, HTML_RES_LEN_MAX,"本機のSSIDを[%s]に設定しました(Wi-Fi再起動後に有効)。",SSID_STA);
-					Serial.print(" SSID_AP=");
-					Serial.print(SSID_STA);
-					Serial.print(" PASS_AP=");
-					Serial.println(PASS_STA);
-				}
-			}
-		}
-	}
-	
-	if(server.hasArg("MODE")){
-		String S = server.arg("MODE");
-		i = S.toInt();
-		if( i >= 1 && i <= 3 ){
-			char mode_s[3][7]={"AP","STA","AP+STA"};
-			WIFI_AP_MODE = i;
-			snprintf(res_s, HTML_RES_LEN_MAX,"Wi-Fiモードを[%s]に設定しました(Wi-Fi再起動後に有効)。",mode_s[i-1]);
-			Serial.print(" WIFI_AP_MODE=");
-			Serial.println(WIFI_AP_MODE);
-		}else strcpy(res_s,"エラー：Wi-Fiモードが範囲外です。");
-	}
+	html_dataAttrSet(res_s);
 	
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
@@ -397,9 +422,9 @@ void html_wifi(){
 				<hr>\
 				<h3>Wi-Fi 動作モード</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
-					<input type=\"radio\" name=\"MODE\" value=\"1\" %s>AP\
-					<input type=\"radio\" name=\"MODE\" value=\"2\" %s>STA\
-					<input type=\"radio\" name=\"MODE\" value=\"3\" %s>AP+STA\
+					<input type=\"radio\" name=\"WIFI_AP_MODE\" value=\"1\" %s>AP\
+					<input type=\"radio\" name=\"WIFI_AP_MODE\" value=\"2\" %s>STA\
+					<input type=\"radio\" name=\"WIFI_AP_MODE\" value=\"3\" %s>AP+STA\
 					<input type=\"submit\" value=\"設定\">\
 					<p>Wi-Fiモードを[STA]にすると無線LANが切断されます(操作不可になる)</p>\
 					<p>[AP]:本機がAPとして動作, [STA]:他のAPへ接続, [AP+STA]:両方</p>\
@@ -417,8 +442,8 @@ void html_wifi(){
 				<h3>Wi-Fi STA 接続先</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
 					<p>お手持ちのWi-Fiアクセスポイントの設定を記入し[設定]を押してください。</p>\
-					SSID=<input type=\"text\" name=\"SSID\" value=\"%s\" size=\"15\">\
-					PASS=<input type=\"password\" name=\"PASS\" size=\"15\">\
+					SSID=<input type=\"text\" name=\"SSID_STA\" value=\"%s\" size=\"15\">\
+					PASS=<input type=\"password\" name=\"PASS_STA\" size=\"15\">\
 					<input type=\"submit\" value=\"設定\">\
 				</form>\
 				<hr>\

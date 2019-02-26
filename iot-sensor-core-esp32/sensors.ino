@@ -333,9 +333,9 @@ boolean sensors_init_LCD(int mode){
 		){	pinMode(16,OUTPUT);	digitalWrite(16,LOW);
 			pinMode(18,OUTPUT);	digitalWrite(18,LOW);
 			pinMode(19,OUTPUT);	digitalWrite(19,HIGH);
-			delay(10);
+			delay(100);
 			digitalWrite(18,HIGH);
-			if( i2c_lcd_Setup(17, 5, mode * 8, 2) ) LCD_EN=1;
+			if( i2c_lcd_Setup(17, 5, mode * 8, 2) ) LCD_EN=mode;
 		}else{
 			ret = false;		// ピン干渉
 			LCD_EN=0;

@@ -8,15 +8,15 @@ Arduino ESP32 用 ソフトウェアI2C ドライバ soft_i2c / i2c_lcd
 							 			https://bokunimo.net/bokunimowakaru/
 *******************************************************************************/
 
-RTC_DATA_ATTR byte I2C_lcd		=0x3E;			// LCD の I2C アドレス 
-RTC_DATA_ATTR byte PORT_SDA		= 26;			// I2C SDAポート
-RTC_DATA_ATTR byte PORT_SCL		= 25;			// I2C SCLポート
-RTC_DATA_ATTR byte I2C_RAMDA	= 30;			// I2C データシンボル長[us]
-RTC_DATA_ATTR byte GPIO_RETRY	= 50;			// GPIO 切換え時のリトライ回数 50 -> 5 (2019/02/25)
-//	#define DEBUG								// デバッグモード
+#define I2C_lcd			0x3E			// LCD の I2C アドレス 
+byte 	i2c_lcd_PORT_SDA= 26;			// I2C SDAポート
+byte 	i2c_lcd_PORT_SCL= 25;			// I2C SCLポート
+#define i2c_lcd_RAMDA	30				// I2C データシンボル長[us]
+#define GPIO_RETRY		3				// GPIO 切換え時のリトライ回数 50 -> 3 (2019/02/25)
+//	#define i2c_lcd_DEBUG				// デバッグモード
 
 unsigned long _i2c_lcd_micros_prev;
-int i2c_lcd_ERROR_CHECK=1;								// 1:ACKを確認／0:ACKを無視する
+boolean i2c_lcd_ERROR_CHECK=true;				// 1:ACKを確認／0:ACKを無視する
 volatile boolean _i2c_lcd_ERROR_b = false;
 static byte _i2c_lcd_size_x=8;
 static byte _i2c_lcd_size_y=2;
@@ -36,11 +36,17 @@ void _i2c_lcd_delayMicroseconds(int i){
 }
 
 void i2c_lcd_debug(const char *s,byte priority){
-	#ifdef DEBUG
-	Serial.print(_i2c_lcd_micros());
-	if(priority>3) Serial.print(" ERROR:"); else Serial.print("      :");
-	Serial.println(s);
-	#endif
+	if(priority>3){
+		Serial.print(_i2c_lcd_micros());
+		Serial.print("ERROR:");
+		Serial.println(s);
+	}else{
+		#ifdef i2c_lcd_DEBUG
+		Serial.print(_i2c_lcd_micros());
+		Serial.print("     :");
+		Serial.println(s);
+		#endif
+	}
 }
 
 void i2c_lcd_error(const char *s){
@@ -53,27 +59,27 @@ void i2c_lcd_log(const char *s){
 
 void i2c_lcd_SCL(byte level){
 	if( level ){
-		pinMode(PORT_SCL, INPUT);
+		pinMode(i2c_lcd_PORT_SCL, INPUT);
 	}else{
-		pinMode(PORT_SCL, OUTPUT);
-		digitalWrite(PORT_SCL, LOW);
+		pinMode(i2c_lcd_PORT_SCL, OUTPUT);
+		digitalWrite(i2c_lcd_PORT_SCL, LOW);
 	}
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 }
 
 void i2c_lcd_SDA(byte level){
 	if( level ){
-		pinMode(PORT_SDA, INPUT);
+		pinMode(i2c_lcd_PORT_SDA, INPUT);
 	}else{
-		pinMode(PORT_SDA, OUTPUT);
-		digitalWrite(PORT_SDA, LOW);
+		pinMode(i2c_lcd_PORT_SDA, OUTPUT);
+		digitalWrite(i2c_lcd_PORT_SDA, LOW);
 	}
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 }
 
 byte i2c_lcd_i2c_tx(const byte in){
 	int i;
-	#ifdef DEBUG
+	#ifdef i2c_lcd_DEBUG
 		char s[32];
 		sprintf(s,"tx data = [%02X]",in);
 		i2c_lcd_log(s);
@@ -87,16 +93,16 @@ byte i2c_lcd_i2c_tx(const byte in){
 		i2c_lcd_SCL(0);							// (SCL)	L Out
 	}
 	/* ACK処理 */
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 	i2c_lcd_SDA(1);								// (SDA)	H Imp  2016/6/26 先にSDAを終わらせる
 	i2c_lcd_SCL(1);								// (SCL)	H Imp
 	for(i=3;i>0;i--){						// さらにクロックを上げた瞬間には確定しているハズ
-		if( digitalRead(PORT_SDA) == 0 ) break;	// 速やかに確認
-		_i2c_lcd_delayMicroseconds(I2C_RAMDA/2);
+		if( digitalRead(i2c_lcd_PORT_SDA) == 0 ) break;	// 速やかに確認
+		_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA/2);
 	}
 	if(i==0 && i2c_lcd_ERROR_CHECK ){
 		i2c_lcd_SCL(0);							// (SCL)	L Out
-		i2c_lcd_log("no ACK");
+		i2c_lcd_error("no ACK");
 		return(0);
 	}
 	return(i);
@@ -107,21 +113,21 @@ byte i2c_lcd_i2c_init(void){
 
 	_i2c_lcd_micros_0();
 	i2c_lcd_log("I2C_Init");
-	for(i=GPIO_RETRY;i>0;i--){						// リトライ 50 -> 5 (2019/02/25)
+	for(i=GPIO_RETRY;i>0;i--){						// リトライ 50 -> 3 (2019/02/25)
 		i2c_lcd_SDA(1);							// (SDA)	H Imp
 		i2c_lcd_SCL(1);							// (SCL)	H Imp
-		if( digitalRead(PORT_SCL)==1 &&
-			digitalRead(PORT_SDA)==1  ) break;
+		if( digitalRead(i2c_lcd_PORT_SCL)==1 &&
+			digitalRead(i2c_lcd_PORT_SDA)==1  ) break;
 		delay(1);
 	}
 	if(i==0) i2c_lcd_error("I2C_Init / Locked Lines");
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA*8);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA*8);
 	return(i);
 }
 
 byte i2c_lcd_i2c_init(int i2c_scl, int i2c_sda){
-	PORT_SCL = (byte)i2c_scl;
-	PORT_SDA = (byte)i2c_sda;
+	i2c_lcd_PORT_SCL = (byte)i2c_scl;
+	i2c_lcd_PORT_SDA = (byte)i2c_sda;
 	return i2c_lcd_i2c_init();
 }
 
@@ -139,15 +145,15 @@ byte i2c_lcd_i2c_start(void){
 	for(i=5000;i>0;i--){					// リトライ 5000ms
 		i2c_lcd_SDA(1);							// (SDA)	H Imp
 		i2c_lcd_SCL(1);							// (SCL)	H Imp
-		if( digitalRead(PORT_SCL)==1 &&
-			digitalRead(PORT_SDA)==1  ) break;
+		if( digitalRead(i2c_lcd_PORT_SCL)==1 &&
+			digitalRead(i2c_lcd_PORT_SDA)==1  ) break;
 		delay(1);
 	}
 	i2c_lcd_log("i2c_start");
 	if(i==0 && i2c_lcd_ERROR_CHECK) i2c_lcd_error("i2c_start / Locked Lines");
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA*8);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA*8);
 	i2c_lcd_SDA(0);								// (SDA)	L Out
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 	i2c_lcd_SCL(0);								// (SCL)	L Out
 	return(i);
 }
@@ -171,16 +177,16 @@ byte i2c_lcd_i2c_read(byte adr, byte *rx, byte len){
 	
 	/* スレーブ待機状態待ち */
 	for(i=GPIO_RETRY;i>0;i--){
-		_i2c_lcd_delayMicroseconds(I2C_RAMDA);
-		if( digitalRead(PORT_SDA)==0  ) break;
+		_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
+		if( digitalRead(i2c_lcd_PORT_SDA)==0  ) break;
 	}
 	if(i==0 && i2c_lcd_ERROR_CHECK){
 		i2c_lcd_error("I2C_RX / no ACK (Reading)");
 		return(0);
 	}
 	for(i=10;i>0;i--){
-		_i2c_lcd_delayMicroseconds(I2C_RAMDA);
-		if( digitalRead(PORT_SCL)==1  ) break;
+		_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
+		if( digitalRead(i2c_lcd_PORT_SCL)==1  ) break;
 	}
 	if(i==0 && i2c_lcd_ERROR_CHECK){
 		i2c_lcd_error("I2C_RX / Clock Line Holded");
@@ -193,27 +199,27 @@ byte i2c_lcd_i2c_read(byte adr, byte *rx, byte len){
 		rx[ret]=0x00;
 		for(i=0;i<8;i++){
 			i2c_lcd_SCL(1);						// (SCL)	H Imp
-			rx[ret] |= (digitalRead(PORT_SDA))<<(7-i);		//data[22] b4=Port 12(SDA)
+			rx[ret] |= (digitalRead(i2c_lcd_PORT_SDA))<<(7-i);		//data[22] b4=Port 12(SDA)
 			i2c_lcd_SCL(0);						// (SCL)	L Out
 		}
 		if(ret<len-1){
 			// ACKを応答する
 			i2c_lcd_SDA(0);							// (SDA)	L Out
 			i2c_lcd_SCL(1);							// (SCL)	H Imp
-			_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+			_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 		}else{
 			// NACKを応答する
 			i2c_lcd_SDA(1);							// (SDA)	H Imp
 			i2c_lcd_SCL(1);							// (SCL)	H Imp
-			_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+			_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 		}
 	}
 	/* STOP */
 	i2c_lcd_SCL(0);								// (SCL)	L Out
 	i2c_lcd_SDA(0);								// (SDA)	L Out
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 	i2c_lcd_SCL(1);								// (SCL)	H Imp
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 	i2c_lcd_SDA(1);								// (SDA)	H Imp
 	return(ret);
 }
@@ -245,10 +251,10 @@ byte i2c_lcd_i2c_write(byte adr, byte *tx, byte len){
 	/* STOP */
 	i2c_lcd_SDA(0);								// (SDA)	L Out
 	i2c_lcd_SCL(0);								// (SCL)	L Out
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 	if(len==0)_i2c_lcd_delayMicroseconds(800);		// AM2320用
 	i2c_lcd_SCL(1);								// (SCL)	H Imp
-	_i2c_lcd_delayMicroseconds(I2C_RAMDA);
+	_i2c_lcd_delayMicroseconds(i2c_lcd_RAMDA);
 	i2c_lcd_SDA(1);								// (SDA)	H Imp
 	return(ret);
 }
@@ -557,8 +563,8 @@ void lcdSetup(){
 
 boolean i2c_lcd_Setup(int PIN_SDA, int PIN_SCL,byte x, byte y){
 	_i2c_lcd_ERROR_b = false;
-	PORT_SDA = PIN_SDA;
-	PORT_SCL = PIN_SCL;
+	i2c_lcd_PORT_SDA = PIN_SDA;
+	i2c_lcd_PORT_SCL = PIN_SCL;
 	if(x==16||x==8||x==20) _i2c_lcd_size_x=x;
 	if(y==1 ||y==2) _i2c_lcd_size_y=y;
 	byte data[2];
