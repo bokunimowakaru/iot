@@ -390,6 +390,10 @@ boolean sensors_init_BTN(int mode){
 
 boolean sensors_init_PIR(int enable){
 	boolean ret = true;		// ピン干渉なし
+	if( IR_IN_EN ) return false;	// IR と排他 ∵VDD=26/GND=14
+	PIN_VDD = 26;
+	PIN_PIR = 27;
+	PIN_GND = 14;
 	if( enable > 0 ){
 		if(	sensors_pin_set("IO" + String(PIN_GND),"人感_GND") &&
 			sensors_pin_set("IO" + String(PIN_PIR),"人感_OUT") &&
@@ -411,6 +415,36 @@ boolean sensors_init_PIR(int enable){
 	}
 	return ret;
 }
+
+boolean sensors_init_IR_IN(int mode){
+	boolean ret = true;		// ピン干渉なし
+	if( PIR_EN ) return false;	// PIR と排他 ∵VDD=12/GND=14
+	PIN_IR_IN = 27;
+	PIN_GND = 14;
+	PIN_VDD = 12;
+	if( mode > 0 ){
+		if(	sensors_pin_set("IO" + String(PIN_GND),"赤外線_GND") &&
+			sensors_pin_set("IO" + String(PIN_IR_IN),"赤外線_OUT") &&
+			sensors_pin_set("IO" + String(PIN_VDD),"赤外線_VCC")
+		){	pinMode(PIN_GND,OUTPUT);	digitalWrite(PIN_GND,LOW);
+			pinMode(PIN_IR_IN,INPUT);
+			pinMode(PIN_VDD,OUTPUT);	digitalWrite(PIN_VDD,HIGH);
+			IR_IN_EN=mode;
+		}else{
+			ret = false;		// ピン干渉
+			IR_IN_EN=0;
+		}
+	}else IR_IN_EN=0;
+	
+	if(!IR_IN_EN){
+		sensors_pin_reset("IO" + String(PIN_GND),"赤外線_GND");
+		sensors_pin_reset("IO" + String(PIN_IR_IN),"赤外線_OUT");
+		sensors_pin_reset("IO" + String(PIN_VDD),"赤外線_VCC");
+	}
+	return ret;
+}
+
+
 
 boolean sensors_init_AD_LUM(int enable){
 	boolean ret = true;		// ピン干渉なし

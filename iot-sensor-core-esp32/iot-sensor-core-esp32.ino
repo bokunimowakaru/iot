@@ -17,6 +17,8 @@ RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
 RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
+RTC_DATA_ATTR byte		PIN_IR_IN	= 27;		// IO 4(10番ピン) にIRセンサを接続
+RTC_DATA_ATTR byte		PIN_IR_OUT	= 2;		// GPIO 2(24番ピン)赤外線LEDの接続ポート
 RTC_DATA_ATTR byte 		PIN_VDD		= 26;		// GPIO 26をHIGH出力に設定(不可=0,2,15,12)
 RTC_DATA_ATTR byte 		PIN_GND		= 14;		// GPIO 14をLOW出力に設定
 RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
@@ -42,6 +44,8 @@ RTC_DATA_ATTR boolean	HALL_EN=false;
 RTC_DATA_ATTR byte		ADC_EN=0;
 RTC_DATA_ATTR byte		BTN_EN=0;				// 1:ON(L) 2:PingPong
 RTC_DATA_ATTR boolean	PIR_EN=false;
+RTC_DATA_ATTR byte		IR_IN_EN=0;
+RTC_DATA_ATTR byte		IR_OUT_EN=false;
 RTC_DATA_ATTR boolean	AD_LUM_EN=false;
 RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
 RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
