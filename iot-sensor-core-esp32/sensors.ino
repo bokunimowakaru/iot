@@ -252,6 +252,35 @@ boolean sensors_pirRead(){
 	return false;
 }
 
+#define sensor_IR_DATA_LEN_MAX 16		// リモコンコードのデータ長(byte)
+byte sensor_ir_data8 = 0x00;
+
+byte sensors_ir_data(){
+	return sensor_ir_data8;
+}
+
+boolean sensors_irRead(){
+	if( !IR_IN_EN) return false;
+	boolean ir = (boolean)digitalRead(PIN_IR_IN);
+	if( ir ) return false;
+	
+	byte data[sensor_IR_DATA_LEN_MAX];
+	int len = ir_read(data, sensor_IR_DATA_LEN_MAX, IR_IN_EN);
+	int len8 = len / 8;
+	sensor_ir_data8 = data[len8 - 1];
+	if(len%8) len8++;
+	if(len8 < 2) return false;
+	String S = String(len);
+	for(int i=0; i < len8; i++){
+		S += ",";
+		S += String(data[i]>>4,HEX);
+		S += String(data[i]%15,HEX);
+	}
+	Serial.println("ir_in      = " + S);
+	sensors_sendUdp("ir_in", S);
+	return true;
+}
+
 boolean sensors_csv(String &S, boolean csv_b){
 	if(csv_b) S += ", ";
 	return true;
@@ -773,6 +802,15 @@ String sensors_get(){
 		sensors_pirPush_b = false;
 		sensors_pirPrev_b = pir_b;
 	}
+	if(IR_IN_EN){
+		Serial.print("ir_in      = ");
+		Serial.println(sensor_ir_data8);
+		sensors_csv(payload,csv_b);
+		sensors_csv(sensors_S,csv_b);
+		csv_b = true;
+		payload += String(sensor_ir_data8);
+		sensors_S += "赤外RC";
+	}
 	if(AD_LUM_EN){
 		float lum = (float)analogRead(PIN_LUM) / 4096. * 3100 ;  // 直読み値
 		lum *= 100. / 33.;                      // 照度(lx)へ変換
@@ -798,8 +836,7 @@ String sensors_get(){
 			temp += (float)TEMP_ADJ - 50.;             // 温度(相対値)へ変換
 		}
 		String temp_S = dtoStrf(temp,1);
-		Serial.print("temp.      = ");
-		Serial.println(temp_S);
+		Serial.println("temp.      = " + temp_S);
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
@@ -895,8 +932,7 @@ String sensors_get(){
 			acm_S += dtoStrf(acm[i],1);
 			if(i < 2 ) acm_S += ", ";
 		}
-		Serial.print("accem      = ");
-		Serial.println(acm_S);
+		Serial.println("accem      = " + acm_S);
 		sensors_csv(payload,csv_b);
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;

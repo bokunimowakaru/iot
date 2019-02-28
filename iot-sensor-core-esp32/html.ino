@@ -226,6 +226,13 @@ void html_dataAttrSet(char *res_s){
 		Serial.print(" PIR_EN=");
 		Serial.println(PIR_EN);
 	}
+	if(server.hasArg("IR_IN_EN")){
+		if( !sensors_init_IR_IN( server.arg("IR_IN_EN").toInt()) ){
+			_html_cat_res_s(res_s, "赤外線リモコンレシーバの設定に失敗しました");
+		}
+		Serial.print(" IR_IN_EN=");
+		Serial.println(IR_IN_EN);
+	}
 	if(server.hasArg("AD_LUM_EN")){
 		if( !sensors_init_AD_LUM( server.arg("AD_LUM_EN").toInt()) ){
 			_html_cat_res_s(res_s, "照度センサの設定に失敗しました");
@@ -533,6 +540,12 @@ void html_sensors(){
 					<input type=\"radio\" name=\"PIR_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"PIR_EN\" value=\"1\" %s>ON\
 					</p>\
+					<p>赤外線RC　\
+					<input type=\"radio\" name=\"IR_IN_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"IR_IN_EN\" value=\"1\" %s>AEHA\
+					<input type=\"radio\" name=\"IR_IN_EN\" value=\"2\" %s>NEC\
+					<input type=\"radio\" name=\"IR_IN_EN\" value=\"3\" %s>SIRC\
+					</p>\
 					<p>照度センサ　\
 					<input type=\"radio\" name=\"AD_LUM_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"AD_LUM_EN\" value=\"1\" %s>NJL7502L\
@@ -584,6 +597,7 @@ void html_sensors(){
 				html_checked[ADC_EN==0], html_checked[ADC_EN==32], html_checked[ADC_EN==33], html_checked[ADC_EN==34], html_checked[ADC_EN==35],
 				html_checked[BTN_EN==0], html_checked[BTN_EN==1], html_checked[BTN_EN==2],
 				html_checked[PIR_EN==0], html_checked[PIR_EN==1],
+				html_checked[IR_IN_EN==0], html_checked[IR_IN_EN==1],html_checked[IR_IN_EN==2], html_checked[IR_IN_EN==3],
 				html_checked[AD_LUM_EN==0], html_checked[AD_LUM_EN==1],
 				html_checked[AD_TEMP_EN==0], html_checked[AD_TEMP_EN==1], html_checked[AD_TEMP_EN==2],
 				html_checked[I2C_HUM_EN==0], html_checked[I2C_HUM_EN==1], html_checked[I2C_HUM_EN==2],

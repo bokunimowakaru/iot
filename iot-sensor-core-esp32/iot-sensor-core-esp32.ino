@@ -61,6 +61,8 @@ unsigned long TIME=0;							// 1970年からmillis()＝0までの秒数
 unsigned long TIME_NEXT=0;						// 次回の送信時刻(ミリ秒)
 boolean TIME_NEXT_b=false;						// 桁あふれフラグ
 
+const String Line="------------------------";
+
 boolean setupWifiAp(){
 	delay(1000);								// 切換え・設定待ち時間
 	WiFi.softAPConfig(
@@ -255,15 +257,16 @@ void setup(){
 	Serial.println("/");
 	sendSensorValues();
 	TIME_NEXT = millis() + (unsigned long)SEND_INT_SEC * 1000;
+	Serial.println("Waiting for Trigger ----" + Line);
 }
 
 void loop(){
-	const String Line="------------------------";
 	unsigned long time=millis();            // ミリ秒の取得
 	
 	html_handleClient();
 	if( sensors_btnRead() ) Serial.println("Trigged by Button ------" + Line);
 	if( sensors_pirRead() ) Serial.println("Trigged by PIR Sensor --" + Line);
+	if( sensors_irRead() )  Serial.println("Trigged by IR Sensor ---" + Line);
 	
 	if( ((WIFI_AP_MODE & 2) == 2) && (SLEEP_SEC > 0) ){		// WiFi_STA 動作時
 		if( time > TIMEOUT ) sleep();
@@ -279,7 +282,6 @@ void loop(){
 		while( millis() < 100 ) delay(10);	// 待ち時間処理(最大100ms)
 	}
 	if(time > TIME_NEXT && !TIME_NEXT_b){
-		Serial.println("Trigged by Timer -------" + Line);
 		Serial.println("MCU Clock_s= " + String(time/1000));
 		sendSensorValues();
 		if(SEND_INT_SEC){
@@ -289,6 +291,7 @@ void loop(){
 			TIME_NEXT = millis() + 5000ul;
 			if( TIME_NEXT < 5000ul ) TIME_NEXT_b = true;
 		}
+		Serial.println("Trigged by Timer -------" + Line);
 	}
 }
 
