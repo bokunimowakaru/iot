@@ -16,11 +16,11 @@ RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのA
 RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
-RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
-RTC_DATA_ATTR byte		PIN_IR_IN	= 27;		// IO 4(10番ピン) にIRセンサを接続
+RTC_DATA_ATTR byte 		PIN_PIR		= 26;		// GPIO 26に人感センサを接続
+RTC_DATA_ATTR byte		PIN_IR_IN	= 26;		// GPIO 26にIRセンサを接続
 RTC_DATA_ATTR byte		PIN_IR_OUT	= 2;		// GPIO 2(24番ピン)赤外線LEDの接続ポート
-RTC_DATA_ATTR byte 		PIN_VDD		= 26;		// GPIO 26をHIGH出力に設定(不可=0,2,15,12)
-RTC_DATA_ATTR byte 		PIN_GND		= 14;		// GPIO 14をLOW出力に設定
+RTC_DATA_ATTR byte 		PIN_VDD		= 25;		// GPIO 25をHIGH出力に設定(不可=0,2,15,12)
+RTC_DATA_ATTR byte 		PIN_GND		= 27;		// GPIO 17をLOW出力に設定
 RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
 RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE= 1;		// Wi-Fi APモード ※2:STAモード
@@ -61,7 +61,7 @@ unsigned long TIME=0;							// 1970年からmillis()＝0までの秒数
 unsigned long TIME_NEXT=0;						// 次回の送信時刻(ミリ秒)
 boolean TIME_NEXT_b=false;						// 桁あふれフラグ
 
-const String Line="------------------------";
+const String Line = "------------------------";
 
 boolean setupWifiAp(){
 	delay(1000);								// 切換え・設定待ち時間
@@ -167,26 +167,43 @@ void setup(){
 	pinMode(PIN_LED,OUTPUT);					// LEDを接続したポートを出力に
 	sensors_init();
 	Serial.begin(115200);
-	Serial.println("--------");
+	Serial.println(Line);
 	int wake = TimerWakeUp_init();
+	int sw = 1;
 	if(BTN_EN > 0){
 		pinMode(PIN_SW,INPUT_PULLUP);
-		if(wake == 1 || wake == 2) sensors_btnPush(true);
+		if(wake == 1 || wake == 2){
+			sensors_btnPush(true);
+			sw = 0;
+		}
 		if(wake == 3 || wake == 4){
-			if(digitalRead(PIN_SW)) sleep();
+			sw = digitalRead(PIN_SW);
+		}
+	}
+	if(IR_IN_EN > 0){
+		pinMode(PIN_IR_IN,INPUT_PULLUP);
+		pinMode(PIN_GND,OUTPUT);	digitalWrite(PIN_GND,LOW);
+		pinMode(PIN_VDD,OUTPUT);	digitalWrite(PIN_VDD,HIGH);
+		if(wake == 1 || wake == 2){
+			if( sw ){
+				sw = digitalRead(PIN_IR_IN);
+				if( !sw ) sw = !sensors_irRead(true);
+			}
 		}
 	}
 	if(PIR_EN){
 		pinMode(PIN_PIR,INPUT_PULLUP);
-		pinMode(PIN_VDD,OUTPUT);	digitalWrite(PIN_VDD,HIGH);
 		pinMode(PIN_GND,OUTPUT);	digitalWrite(PIN_GND,LOW);
-		if(wake == 1 || wake == 2) sensors_pirPush(true);
+		pinMode(PIN_VDD,OUTPUT);	digitalWrite(PIN_VDD,HIGH);
+		if(wake == 1 || wake == 2){
+			sensors_pirPush(true);
+			sw = 0;
+		}
 		if(wake == 3 || wake == 4){
-			if(!digitalRead(PIN_PIR)) sleep();
+			if( sw ) sw = !digitalRead(PIN_PIR);
 		}
 	}
-	if(TimerWakeUp_init() > 0){
-	}
+	if( (BTN_EN || IR_IN_EN || PIR_EN) && sw ) sleep();
 	
 	Serial.println("-------- IoT Sensor Core ESP32 by Wataru KUNINO --------");
 	Serial.print("Wi-Fi Mode = ");
@@ -314,10 +331,28 @@ void sleep(){
 			delay(50);
 		}
 		TimerWakeUp_setExternalInput((gpio_num_t)PIN_PIR, HIGH);
+	}
+	if(IR_IN_EN){
+		pinMode(PIN_IR_IN,INPUT);
+		while(!digitalRead(PIN_IR_IN)){
+			digitalWrite(PIN_LED,!digitalRead(PIN_LED));
+			delay(50);
+		}
+		TimerWakeUp_setExternalInput((gpio_num_t)PIN_IR_IN, LOW);
+	}
+	
+	// RTC_IO
+	//						// IO0	Booting Mode|Default:Pull-up
+	rtc_io_setPin(2,0);		// IO2	Booting Mode|Default:Pull-down
+	//						// IO5	Timing SDIO	|Default:Pull-up
+	rtc_io_setPin(12,0);	// IO12	VDD_SDIO	|Default:Pull-down
+	//						// IO15	DebuggingLog|Default:Pull-up
+	if(PIR_EN || IR_IN_EN){
 		rtc_io_setPin(PIN_GND,0);
 		rtc_io_setPin(PIN_VDD,1);
-		rtc_io_on();
 	}
+	rtc_io_on();
+	
 	if(SLEEP_SEC > 0) TimerWakeUp_setSleepTime(SLEEP_SEC);
 	digitalWrite(PIN_LED,LOW);
 	TimerWakeUp_sleep();

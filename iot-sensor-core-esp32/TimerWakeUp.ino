@@ -36,13 +36,14 @@ byte TimerWakeUp_print_wakeup_reason(){
 
   switch(wakeup_reason)
   {
-    case 1  : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-    case 2  : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-    case 3  : Serial.println("Wakeup caused by timer"); break;
-    case 4  : Serial.println("Wakeup caused by touchpad"); break;
-    case 5  : Serial.println("Wakeup caused by ULP program"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+    case 1  : Serial.print("Wakeup caused by external signal using RTC_IO "); break;
+    case 2  : Serial.print("Wakeup caused by external signal using RTC_CNTL "); break;
+    case 3  : Serial.print("Wakeup caused by timer "); break;
+    case 4  : Serial.print("Wakeup caused by touchpad "); break;
+    case 5  : Serial.print("Wakeup caused by ULP program "); break;
+    default : Serial.print("Wakeup was not caused by deep sleep "); break;
   }
+  Serial.println( "(" + String(wakeup_reason) + ")");
   return wakeup_reason;
 }
 

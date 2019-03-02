@@ -1,44 +1,4 @@
-/* extern RTC_DATA_ATTR
-// ユーザ設定
-RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
-RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
-RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
-RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
-RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
-RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
-RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
-RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
-RTC_DATA_ATTR byte 		PIN_VDD		= 26;		// GPIO 26をHIGH出力に設定(不可=0,2,15,12)
-RTC_DATA_ATTR byte 		PIN_GND		= 14;		// GPIO 14をLOW出力に設定
-RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
-RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
-RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
-RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
-RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 60;	// 自動送信間隔(非スリープ時)
-RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
-RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
-RTC_DATA_ATTR byte		UDP_MODE	= 1;		// 0:OFF, 1:個々, 2:全値, 3:両方
-RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
-RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
-RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
-RTC_DATA_ATTR int		AmbientChannelId = 0; 	// チャネル名(整数) 0=無効
-RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
-
-// デバイス有効化
-RTC_DATA_ATTR boolean	LCD_EN=false;
-RTC_DATA_ATTR boolean	NTP_EN=false;
-RTC_DATA_ATTR boolean	TEMP_EN=true;
-RTC_DATA_ATTR int8_t	TEMP_ADJ=0;
-RTC_DATA_ATTR boolean	HALL_EN=false;
-RTC_DATA_ATTR byte		ADC_EN=0;
-RTC_DATA_ATTR byte		BTN_EN=0;				// 1:ON(L) 2:PingPong
-RTC_DATA_ATTR boolean	PIR_EN=false;
-RTC_DATA_ATTR boolean	AD_LUM_EN=false;
-RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
-RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
-RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
-RTC_DATA_ATTR boolean	I2C_ACCEM_EN=false;
-*/
+// extern RTC_DATA_ATTR
 
 boolean sensors_WireBegin = false;				// Wire.beginの実行有無
 boolean sensors_btnPrev_b = false;				// ボタン；前回の値を記録
@@ -98,19 +58,19 @@ const String sensors_PINOUT_S_TTGO_Koala[36] = {
 String sensors_PIN_ASSIGNED_S[38];
 
 /*
-DoIt	DevC	AE-ESP	TTGO	メモ
+DoIt	DevC	AE-ESP	TTGO	メモ	TTGO以外
 IO36 i	IO36 i	IO36 i	IO36i
 IO39 i	IO39 i	IO39 i	IO39i
-IO34 i	IO34 i	IO34 i	IO32	ADC、TTGO以外は入力専用
-IO35 i	IO35 i	IO35 i	IO33	ADC、TTGO以外は入力専用
-IO32	IO32	IO32	IO34 i	ADC
-IO33	IO33	IO33	IO35 i	ADC
-IO25	IO25	IO25	IO25	共通
-IO26	IO26	IO26	IO26	共通
-IO27	IO27	IO27	IO27	共通
-IO14	IO14	IO14	IO14	共通
-IO12	IO12	IO12	IO12	共通
-IO13	GND		GND		IO13	GND
+IO34 i	IO34 i	IO34 i	IO32★	ADC、
+IO35 i	IO35 i	IO35 i	IO33★	ADC
+IO32	IO32	IO32	IO34 i	ADC				LUM/-
+IO33	IO33	IO33	IO35 i	ADC				LUM/O
+IO25	IO25	IO25	IO25	共通	PIR/+	LUM/+					BME/+
+IO26	IO26	IO26	IO26	共通	PIR/O	SHT/+	Si/+	BME/-
+IO27	IO27	IO27	IO27	共通	PIR/-	SHT/D	Si/-	BME/C
+IO14	IO14	IO14	IO14	共通	IR/+	SHT/C	Si/C	BME/D
+IO12	IO12	IO12	IO12	PDown★			SHT/A	Si/D	BME/A
+IO13	GND		GND		IO13	GND				SHT/-			BME/0
 GND		IO13	IO13	5V
 --------------------------------------
 IO23	IO23	IO23
@@ -119,24 +79,36 @@ TXD		TXD		TXD
 RXD		RXD		RXD
 IO21	IO21	IO21
 		GND		NC
-IO19	IO19	IO19
-IO18	IO18	IO18
-IO5		IO5		IO5
-IO17	IO17	IO17
-IO16	IO16	IO16
+IO19	IO19	IO19			LCD/+
+IO18	IO18	IO18			LCD/R
+IO5		IO5		IO5		PUp		LCD/C
+IO17	IO17	IO17			LCD/D
+IO16	IO16	IO16			LCD/-
 IO4		IO4		IO4
-		IO0		IO0
-IO2		IO2		IO2
-IO15	IO15	IO15
+		IO0		IO0				BTN
+IO2		IO2		IO2		PDown	LED		IR_OUT
+IO15	IO15	IO15	PUp
 GND		
 3V3		
 */
 
-/*
+/*	専用ピン
+	IO0			|Booting Mode	|Default:Pull-up	|0:Download Boot, 1:SPI Boot 
+	IO2			|Booting Mode	|Default:Pull-down	// Hレベルだとファーム書き換え不可
+	IO5			|Timing SDIO Slv|Default:Pull-up	|0:Falling-edge Output, 1:Rising-edge
+	IO12(MTDI)	|VDD_SDIO		|Default:Pull-down	|0:3.3V, 1:1.8V
+	IO15(MTDO)	|Debugging Log	|Default:Pull-up	|0:U0TXD Silent, 1:U0TXD Active
+	
+	VDD_SDIO works as the power supply for the related IO, and also for an external device.
+	When the VDD_SDIO outputs 1.8 V, the value of GPIO12 should be set to 1
+	When the VDD_SDIO outputs 3.3 V, the value of GPIO12 is 0 (default)
+*/
+
+/*	IO20 IO24 IO28 IO29 IO30 IO31
      @note There are more enumerations like that
      up to GPIO39, excluding GPIO20, GPIO24 and GPIO28..31.
-     
-     They are not shown here to reduce redundant information.
+*/
+/*	IO34 IO35 IO36 IO37 IO38 IO39
      @note GPIO34..39 are input mode only. 
 */
 
@@ -259,7 +231,7 @@ byte sensors_ir_data(){
 	return sensor_ir_data8;
 }
 
-boolean sensors_irRead(){
+boolean sensors_irRead(boolean noUdp){
 	if( !IR_IN_EN) return false;
 	boolean ir = (boolean)digitalRead(PIN_IR_IN);
 	if( ir ) return false;
@@ -277,8 +249,12 @@ boolean sensors_irRead(){
 		S += String(data[i]%15,HEX);
 	}
 	Serial.println("ir_in      = " + S);
-	sensors_sendUdp("ir_in", S);
+	if (!noUdp) sensors_sendUdp("ir_in", S);
 	return true;
+}
+
+boolean sensors_irRead(){
+	return sensors_irRead(false);
 }
 
 boolean sensors_csv(String &S, boolean csv_b){
@@ -421,7 +397,7 @@ boolean sensors_init_PIR(int enable){
 	boolean ret = true;		// ピン干渉なし
 	if( IR_IN_EN ) return false;	// IR と排他 ∵VDD=26/GND=14
 	PIN_VDD = 26;
-	PIN_PIR = 27;
+//	PIN_PIR = 26;
 	PIN_GND = 14;
 	if( enable > 0 ){
 		if(	sensors_pin_set("IO" + String(PIN_GND),"人感_GND") &&
@@ -448,7 +424,7 @@ boolean sensors_init_PIR(int enable){
 boolean sensors_init_IR_IN(int mode){
 	boolean ret = true;		// ピン干渉なし
 	if( PIR_EN ) return false;	// PIR と排他 ∵VDD=12/GND=14
-	PIN_IR_IN = 27;
+//	PIN_IR_IN = 26;
 	PIN_GND = 14;
 	PIN_VDD = 12;
 	if( mode > 0 ){
