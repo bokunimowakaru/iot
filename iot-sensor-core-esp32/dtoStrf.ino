@@ -1,6 +1,6 @@
 String dtoStrf(double val,int frac){
 	float delta = 0.5;
-	if( (int)delta == 1 ) delta = 0.0;	// lÌŒÜ“ü‚ªs‚í‚ê‚È‚¢‚±‚Æ‚ğŠm”F
+	if( (int)delta == 1 ) delta = 0.0;	// å››æ¨äº”å…¥ãŒè¡Œã‚ã‚Œãªã„ã“ã¨ã‚’ç¢ºèª
 	
 	if( frac < 1 ){
 		if(val < 0) return String((int)(val-delta));
@@ -25,7 +25,7 @@ String dtoStrf(double val){
 	return dtoStrf(val, 3);
 }
 
-/* TEST—p
+/* TESTç”¨
 void dtoStrf_test(){
 	float delta = 0.5;
 	if( (int)delta == 1 ) delta = 0.0;

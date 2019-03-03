@@ -95,13 +95,33 @@ void html_dataAttrSet(char *res_s){
 			Serial.println(WIFI_AP_MODE);
 		}
 	}
+	
+	if(server.hasArg("WPS_STA")){
+		String S = server.arg("WPS_STA");
+		i = S.toInt();
+		if( i == 0 ) WPS_STA = false;
+		if( i == 1 ){
+			WPS_STA = true;
+			snprintf(s, HTML_S_LEN_MAX,"WPSを設定しました(Wi-Fi再起動後[%d]秒以内有効)",TIMEOUT /1000);
+			_html_cat_res_s(res_s, s);
+			if(WIFI_AP_MODE & 2 != 2){
+				WIFI_AP_MODE &= 2;
+				_html_cat_res_s(res_s, "Wi-Fiモード(STA)を設定しました");
+			}
+		}
+		Serial.print(" WPS_STA=");
+		Serial.println(WPS_STA);
+	}
+	
 	if(server.hasArg("SSID_STA")){
 		String S = server.arg("SSID_STA");
 		int len = S.length();
 		if( len > 16 ){
 			_html_cat_res_s(res_s,"ERROR:接続先SSIDは16文字までです");
 		}else if( len > 0 ){
-			if(server.hasArg("PASS_STA")){
+			if(WPS_STA == true){
+				_html_cat_res_s(res_s,"新しいSSIDはWPSによって設定されます");
+			}else if(server.hasArg("PASS_STA")){
 				String P = server.arg("PASS_STA");
 				len = P.length();
 				if( len > 32 ){
@@ -440,6 +460,8 @@ void html_wifi(){
 				<h3>Wi-Fi AP 設定</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
 					<p>本機 Wi-Fi AP(アクセスポイント)へ接続するための設定です。</p>\
+					<input type=\"radio\" name=\"WPS_STA\" value=\"1\" %s>WPS\
+					<input type=\"radio\" name=\"WPS_STA\" value=\"0\" %s>\
 					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"15\">\
 					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"15\">\
 					<input type=\"submit\" value=\"設定\">\
@@ -483,7 +505,7 @@ void html_wifi(){
 		</html>", html_title,
 			html_title,  res_s,
 			html_checked[WIFI_AP_MODE==1], html_checked[WIFI_AP_MODE==2], html_checked[WIFI_AP_MODE==3],
-			SSID_AP, PASS_AP,
+			html_checked[WPS_STA==1],html_checked[WPS_STA==0],SSID_AP, PASS_AP,
 			SSID_STA,
 			html_checked[SLEEP_SEC==0], html_checked[SLEEP_SEC==25], html_checked[SLEEP_SEC==55], html_checked[SLEEP_SEC==175],
 			html_checked[SLEEP_SEC==595], html_checked[SLEEP_SEC==1795], html_checked[SLEEP_SEC==3595], html_checked[SLEEP_SEC==65535]

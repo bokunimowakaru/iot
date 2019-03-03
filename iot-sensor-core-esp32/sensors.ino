@@ -192,16 +192,21 @@ void sensors_btnPush(boolean in){
 	sensors_btnPush_b = in;
 }
 
-boolean sensors_btnRead(){
+boolean sensors_btnRead(const String &S){
 	if(BTN_EN>0){
 		boolean btn = (boolean)!digitalRead(PIN_SW);
 		if( sensors_btnPrev_b != btn){
+			if(S.length()>0) Serial.println(S);
 			sensors_get();
 			delay(10);
 			return true;
 		}
 	}
 	return false;
+}
+
+boolean sensors_btnRead(){
+	return sensors_btnRead("");
 }
 
 void sensors_pirPrev(boolean in){
@@ -212,16 +217,21 @@ void sensors_pirPush(boolean in){
 	sensors_pirPush_b = in;
 }
 
-boolean sensors_pirRead(){
+boolean sensors_pirRead(const String &S){
 	if(PIR_EN){
 		boolean pir = (boolean)digitalRead(PIN_PIR);
 		if( sensors_pirPrev_b != pir){
+			if(S.length()>0) Serial.println(S);
 			sensors_get();
 			delay(10);
 			return true;
 		}
 	}
 	return false;
+}
+
+boolean sensors_pirRead(){
+	return sensors_pirRead("");
 }
 
 #define sensor_IR_DATA_LEN_MAX 16		// リモコンコードのデータ長(byte)
@@ -231,7 +241,7 @@ byte sensors_ir_data(){
 	return sensor_ir_data8;
 }
 
-boolean sensors_irRead(boolean noUdp){
+boolean sensors_irRead(boolean noUdp, const String &SP){
 	if( !IR_IN_EN) return false;
 	boolean ir = (boolean)digitalRead(PIN_IR_IN);
 	if( ir ) return false;
@@ -242,6 +252,7 @@ boolean sensors_irRead(boolean noUdp){
 	sensor_ir_data8 = data[len8 - 1];
 	if(len%8) len8++;
 	if(len8 < 2) return false;
+	if(SP.length()>0) Serial.println(SP);
 	String S = String(len);
 	for(int i=0; i < len8; i++){
 		S += ",";
@@ -251,6 +262,14 @@ boolean sensors_irRead(boolean noUdp){
 	Serial.println("ir_in      = " + S);
 	if (!noUdp) sensors_sendUdp("ir_in", S);
 	return true;
+}
+
+boolean sensors_irRead(const String &S){
+	return sensors_irRead(false, S);
+}
+
+boolean sensors_irRead(boolean noUdp){
+	return sensors_irRead(noUdp);
 }
 
 boolean sensors_irRead(){

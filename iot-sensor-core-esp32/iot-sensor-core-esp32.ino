@@ -4,8 +4,9 @@ IoT Sensor Core for ESP32
 										   Copyright (c) 2019 Wataru KUNINO
 *******************************************************************************/
 #include <WiFi.h>								// ESP32用WiFiライブラリ
+#include <esp_wps.h>							// ESP32用Wi-Fi WPSライブラリ
 #include <WiFiUdp.h>							// UDP通信を行うライブラリ
-#include <ESPmDNS.h>
+#include <ESPmDNS.h>							// ESP32用マルチキャストDNS
 #include "Ambient.h"							// Ambient接続用 ライブラリ
 
 // ユーザ設定
@@ -13,6 +14,7 @@ RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
 RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR boolean	WPS_STA		= false;	// STAモードのWPS指示
 RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
@@ -79,6 +81,28 @@ boolean setupWifiAp(){
 
 boolean setupWifiSta(){
 	unsigned long start_ms=millis();			// 初期化開始時のタイマー値を保存
+	
+	if(WPS_STA){
+		Serial.println("WPS Commission Started");
+		esp_wps_config_t config;
+		config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;
+		config.wps_type = WPS_TYPE_PBC;			// WPS_TYPE_PBC または WPS_TYPE_PIN
+		strcpy(config.factory_info.manufacturer, "BOKUNIMO.NET");
+		strcpy(config.factory_info.model_number, "EG.66");
+		strcpy(config.factory_info.model_name, "IOT-CORE-ESP32");
+		strcpy(config.factory_info.device_name, "IOT SENSOR");
+		
+		int wps = esp_wifi_wps_enable(&config);	// WPS初期化
+		if(wps != ESP_OK){
+			Serial.println("ERROR: failed WPS init (" + String(wps) +")");
+			return false;
+		}
+		wps = esp_wifi_wps_start(TIMEOUT);		// WPS接続(blocking time,最大120秒)
+		if(wps != ESP_OK){
+			Serial.println("No WPS enabled AP (" + String(wps) +")");
+			return false;
+		}
+	}
 	WiFi.begin(SSID_STA,PASS_STA);				// 無線LANアクセスポイントへ接続
 	while(WiFi.status()!=WL_CONNECTED){ 		// 接続に成功するまで待つ
 		delay(500); 							// 待ち時間処理
@@ -92,13 +116,29 @@ boolean setupWifiSta(){
 		}
 	}
 	Serial.println();							// 改行をシリアル出力
+	Serial.print("Station ID = ");
+	Serial.println(WiFi.SSID());				// SSIDをシリアル表示
+	Serial.print("       psk = ");
+	Serial.println(WiFi.psk());					// PASSをシリアル表示
 	Serial.print("Station IP = ");
-	Serial.println(WiFi.localIP() );			// IPアドレスをシリアル表示
+	Serial.println(WiFi.localIP());				// IPアドレスをシリアル表示
 	Serial.print("      Mask = ");
 	Serial.println(WiFi.subnetMask());			// ネットマスクをシリアル表示
 	Serial.print("   Gateway = ");
 	Serial.println(WiFi.gatewayIP());			// ゲートウェイをシリアル表示
 	Serial.println("Station started");
+	if(WPS_STA){
+		String ssid = WiFi.SSID();
+		String pass = WiFi.psk();
+		if( ssid.length()>16 || pass.length()>32){
+			Serial.println("SORRY, length of SSID or PASS is over.");
+		}else{
+			ssid.toCharArray(SSID_STA,17);
+			pass.toCharArray(PASS_STA,33);
+			Serial.println("Stored SSID and PASS to RTC memory.");
+			WPS_STA=false;
+		}
+	}
 	return true;
 }
 
@@ -281,9 +321,9 @@ void loop(){
 	unsigned long time=millis();            // ミリ秒の取得
 	
 	html_handleClient();
-	if( sensors_btnRead() ) Serial.println("Trigged by Button ------" + Line);
-	if( sensors_pirRead() ) Serial.println("Trigged by PIR Sensor --" + Line);
-	if( sensors_irRead() )  Serial.println("Trigged by IR Sensor ---" + Line);
+	sensors_btnRead("Trigged by Button ------" + Line);
+	sensors_pirRead("Trigged by PIR Sensor --" + Line);
+	sensors_irRead("Trigged by IR Sensor ---" + Line);
 	
 	if( ((WIFI_AP_MODE & 2) == 2) && (SLEEP_SEC > 0) ){		// WiFi_STA 動作時
 		if( time > TIMEOUT ) sleep();
