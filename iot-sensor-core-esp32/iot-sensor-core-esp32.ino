@@ -4,9 +4,9 @@ IoT Sensor Core for ESP32
 										   Copyright (c) 2019 Wataru KUNINO
 *******************************************************************************/
 #include <WiFi.h>								// ESP32用WiFiライブラリ
-#include <esp_wps.h>							// ESP32用Wi-Fi WPSライブラリ
 #include <WiFiUdp.h>							// UDP通信を行うライブラリ
 #include <ESPmDNS.h>							// ESP32用マルチキャストDNS
+#include <esp_wps.h>							// ESP32用Wi-Fi WPSライブラリ
 #include "Ambient.h"							// Ambient接続用 ライブラリ
 
 // ユーザ設定
@@ -28,7 +28,7 @@ RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE= 1;		// Wi-Fi APモード ※2:STAモード
 RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
 RTC_DATA_ATTR uint16_t	SEND_INT_SEC= 30;		// 自動送信間隔(非スリープ時)
-RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
+RTC_DATA_ATTR uint16_t	TIMEOUT		= 12000;	// タイムアウト 12秒
 RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
 RTC_DATA_ATTR byte		UDP_MODE	= 1;		// 0:OFF, 1:個々, 2:全値, 3:両方
 RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
@@ -66,20 +66,29 @@ boolean TIME_NEXT_b=false;						// 桁あふれフラグ
 const String Line = "------------------------";
 
 boolean setupWifiAp(){
-	delay(1000);								// 切換え・設定待ち時間
+	boolean ret;
+	Serial.println("Start Wi-Fi Soft AP ----"+ Line);
 	WiFi.softAPConfig(
 		IPAddress(192,168,254,1), 				// AP側の固定IPアドレス
 		IPAddress(192,168,254,1), 				// 本機のゲートウェイアドレス
 		IPAddress(255,255,255,0)				// ネットマスク
 	);
-	WiFi.softAP(SSID_AP,PASS_AP);				// ソフトウェアAPの起動
-
-	Serial.print("SoftAP  IP = "); Serial.println(WiFi.softAPIP());
-	Serial.println("Software AP started");
-	return true;
+	delay(500);									// 待ち時間が必要(起動後HUP対策)
+	ret = WiFi.softAP(SSID_AP,PASS_AP);			// ソフトウェアAPの起動
+	if(ret){
+		Serial.print("SoftAP  IP = "); Serial.println(WiFi.softAPIP());
+		Serial.println("Software AP started");
+	}else{
+		Serial.println("ERROR: Failed to start SoftAP");
+		TimerWakeUp_setSleepTime(TIMEOUT / 1000);
+		sleep();
+	}
+	return ret;
 }
 
 boolean setupWifiSta(){
+	Serial.println("Start Wi-Fi STA --------"+ Line);
+	delay(500);									// 切換え・設定待ち時間
 	unsigned long start_ms=millis();			// 初期化開始時のタイマー値を保存
 	
 	if(WPS_STA){
@@ -102,46 +111,69 @@ boolean setupWifiSta(){
 			Serial.println("No WPS enabled AP (" + String(wps) +")");
 			return false;
 		}
+		
+		String ssid;
+		String pass;
 		while(millis()-start_ms < TIMEOUT){ 	// WPS 有効中
 			delay(500); 						// 待ち時間処理
 			digitalWrite(PIN_LED,!digitalRead(PIN_LED));	// LEDの点滅
-			Serial.print("*");
+			Serial.print(".");
+			ssid = WiFi.SSID();
+			pass = WiFi.psk();
+			if(ssid.length()>0 && pass.length()>0){
+				Serial.print("!");
+				break;
+			}
 		}
-		WiFi.begin();
-		delay(500);
 		Serial.println();							// 改行をシリアル出力
-		Serial.print("Station ID = ");
-		Serial.println(WiFi.SSID());				// SSIDをシリアル表示
-		Serial.print("       psk = ");
-		Serial.println(WiFi.psk());					// PASSをシリアル表示
-		String ssid = WiFi.SSID();
-		String pass = WiFi.psk();
 		if(ssid.length()>0 && pass.length()>0){
 			if( ssid.length()>16 || pass.length()>64){
 				Serial.println("SORRY, length of SSID or PASS is over.");
 			}else{
 				ssid.toCharArray(SSID_STA,17);
-				pass.toCharArray(PASS_STA,33);
+				pass.toCharArray(PASS_STA,65);
 				Serial.println("Stored SSID and PASS to RTC memory.");
 			}
 		}else{
-			Serial.println("Failed to get AP SSID or PASS");
+			Serial.println("ERROR: Failed to get AP SSID or PASS");
+			esp_wifi_wps_disable();
 			return false;
 		}
+		Serial.print("Station ID = ");
+		Serial.println(WiFi.SSID());				// SSIDをシリアル表示
+		Serial.print("       psk = ");
+		Serial.println(WiFi.psk());					// PASSをシリアル表示
+		esp_wifi_wps_disable();
 	}
-	if(!WPS_STA)WiFi.begin(SSID_STA,PASS_STA);	// 無線LANアクセスポイントへ接続
+	delay(10);
+	Serial.println("Wi-Fi STA Started connection");
+	WiFi.begin(SSID_STA,PASS_STA);				// 無線LANアクセスポイントへ接続
 	start_ms=millis();							// 初期化開始時のタイマー値を保存
-	while(WiFi.status()!=WL_CONNECTED){ 		// 接続に成功するまで待つ
-		delay(500); 							// 待ち時間処理
+	char c;										// 接続状態フラグ
+	do{ 										// 接続に成功するまで繰り返し
 		digitalWrite(PIN_LED,!digitalRead(PIN_LED));	// LEDの点滅
-		Serial.print(".");
+		c = debug_wl_status(WiFi.status());
+		Serial.print(c);
+		if(c == '#'){
+			while(c == '#'){
+			//	WiFi.disconnect();				// WiFiアクセスポイントを切断する
+				delay(500); 					// 待ち時間処理
+				WiFi.begin(SSID_STA,PASS_STA);
+				delay(1000); 					// 待ち時間処理
+				digitalWrite(PIN_LED,!digitalRead(PIN_LED));	// LEDの点滅
+				c = debug_wl_status(WiFi.status());
+				Serial.print(c);
+			}
+			start_ms=millis();
+		}
+		delay(500); 							// 待ち時間処理
 		if(millis()-start_ms>TIMEOUT){			// 待ち時間後の処理
 			WiFi.disconnect();					// WiFiアクセスポイントを切断する
 			Serial.println();					// 改行をシリアル出力
 			Serial.println("No Internet AP");	// 接続が出来なかったときの表示
 			return false;
 		}
-	}
+	}while(c != '!');							// WL_CONNECTEDを検出するまで
 	Serial.println();							// 改行をシリアル出力
 	WPS_STA=false;
 	Serial.print("Station IP = ");
@@ -263,11 +295,18 @@ void setup(){
 		char mode_s[4][7]={"OFF","AP","STA","AP+STA"};
 		Serial.println( mode_s[WIFI_AP_MODE] );
 	}else Serial.println( WIFI_AP_MODE );
-	Serial.println("SSID_AP    = " + String(SSID_AP) );
-	Serial.println("PASS_AP    = " + String(PASS_AP) );
-	if(strlen(SSID_STA)>0)Serial.println("SSID_STA   = " + String(SSID_STA) );
-	if(strlen(PASS_STA)>0)Serial.println("PASS_STA   = ********");
-	
+	if( (WIFI_AP_MODE & 1) == 1){
+		Serial.println("SSID_AP    = " + String(SSID_AP) );
+		Serial.println("PASS_AP    = " + String(PASS_AP) );
+	}
+	if( (WIFI_AP_MODE & 2) == 2){
+		if(strlen(SSID_STA)>0)Serial.println("SSID_STA   = " + String(SSID_STA) );
+		if(strlen(PASS_STA)>0){
+			Serial.print("PASS_STA   = ");
+			for(int i=0;i<strlen(PASS_STA);i++) Serial.print("*");
+			Serial.println();
+		}
+	}
 	delay(10);									// ESP32に必要な待ち時間
 	switch(WIFI_AP_MODE){
 		case 1:	// WIFI_AP
@@ -351,6 +390,7 @@ void loop(){
 		while( millis() < 100 ) delay(10);	// 待ち時間処理(最大100ms)
 	}
 	if(time > TIME_NEXT && !TIME_NEXT_b){
+		Serial.println("Trigged by Timer -------" + Line);
 		Serial.println("MCU Clock_s= " + String(time/1000));
 		sendSensorValues();
 		if(SEND_INT_SEC){
@@ -360,13 +400,14 @@ void loop(){
 			TIME_NEXT = millis() + 5000ul;
 			if( TIME_NEXT < 5000ul ) TIME_NEXT_b = true;
 		}
-		Serial.println("Trigged by Timer -------" + Line);
 	}
 }
 
 void sleep(){
 	boolean led;
 	Serial.println("Shutting down");
+//	WiFi.disconnect();
+
 	pinMode(PIN_SW,INPUT_PULLUP);
 	
 	if(I2C_ENV_EN > 0) i2c_bme280_stop();

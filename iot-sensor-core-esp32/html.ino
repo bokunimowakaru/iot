@@ -167,9 +167,11 @@ void html_dataAttrSet(char *res_s){
 		Serial.println(LCD_EN);
 	}
 	if(server.hasArg("DISPLAY")){
-		String S = server.arg("DISPLAY");
-		i2c_lcd_print_S( &S );
-		Serial.println(" DISPLAY=" + S);
+		if(LCD_EN > 0){
+			String S = server.arg("DISPLAY");
+			i2c_lcd_print_S( &S );
+			Serial.println(" DISPLAY=" + S);
+		}
 	}
 	if(server.hasArg("TEMP_EN")){
 		sensors_init_TEMP( server.arg("TEMP_EN").toInt() );
@@ -422,8 +424,8 @@ void html_wifi(){
 				<h3>Wi-Fi AP 設定</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
 					<p>本機 Wi-Fi AP(アクセスポイント)へ接続するための設定です。</p>\
-					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"15\">\
-					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"15\">\
+					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"10\">\
+					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"10\">\
 					<p><input type=\"submit\" value=\"設定\"></p>\
 					<p>変更すると、Wi-Fi を新しい設定で再接続する必要があります。</p>\
 				</form>\
@@ -433,8 +435,8 @@ void html_wifi(){
 					<p>お手持ちのWi-Fiアクセスポイントの設定を記入し[設定]を押してください。</p>\
 					<input type=\"radio\" name=\"WPS_STA\" value=\"1\" %s>WPS\
 					<input type=\"radio\" name=\"WPS_STA\" value=\"0\" %s>\
-					SSID=<input type=\"text\" name=\"SSID_STA\" value=\"%s\" size=\"15\">\
-					PASS=<input type=\"password\" name=\"PASS_STA\" size=\"15\">\
+					SSID=<input type=\"text\" name=\"SSID_STA\" value=\"%s\" size=\"10\">\
+					PASS=<input type=\"password\" name=\"PASS_STA\" size=\"10\">\
 					<p><input type=\"submit\" value=\"設定\"></p>\
 				</form>\
 				<hr>\
@@ -730,10 +732,12 @@ void html_reboot(){
 			</head>\
 			<body>\
 				<h1>Wi-Fi 再起動中</h1>\
-				<p>しばらくおまちください(約10秒)。</p>\
+				<p>しばらくおまちください(約12秒)。</p>\
 				<p>STAモードに切り替えたときは、LAN側からアクセスしてください。</p>\
+				<p>接続できないときはスマートフォンのWi-Fi接続先を確認してください。</p>\
+				<p><a href=\"http://%s/\">http://%s/</a></p>\
 			</body>\
-		</html>", html_ip_s
+		</html>", html_ip_s, html_ip_s, html_ip_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -755,7 +759,7 @@ void html_gpio_init(){
 			</head>\
 			<body>\
 				<h1>GPIO 再起動中</h1>\
-				<p>おまちください(約3秒)。</p>\
+				<p>おまちください(約5秒)。</p>\
 			</body>\
 		</html>");
 	sensors_init();
@@ -854,7 +858,7 @@ void drawGraph() {
 void html_404(){
 	
 	/////////////// ------------------------------------------------
-	Serial.println("HTML error 404 ---------------------------------");
+	Serial.println("HTML 404 ---------------------------------------");
 	
 	String message = "File Not Found\n\n";
 	message += "URI: ";
