@@ -6,47 +6,7 @@
 #define HTML_RES_LEN_MAX	256
 #define HTML_S_LEN_MAX		96
 
-/* extern RTC_DATA_ATTR
-// ユーザ設定
-RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
-RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
-RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
-RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
-RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
-RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
-RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
-RTC_DATA_ATTR byte 		PIN_PIR		= 27;		// GPIO 27に人感センサを接続
-RTC_DATA_ATTR byte 		PIN_VDD		= 26;		// GPIO 26をHIGH出力に設定(不可=0,2,15,12)
-RTC_DATA_ATTR byte 		PIN_GND		= 14;		// GPIO 14をLOW出力に設定
-RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
-RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
-RTC_DATA_ATTR byte 		WIFI_AP_MODE	= 1;	// Wi-Fi APモード ※2:STAモード
-RTC_DATA_ATTR uint16_t	SLEEP_SEC	= 0;		// スリープ間隔
-RTC_DATA_ATTR uint16_t	SEND_INT_SEC	= 60;	// 自動送信間隔(非スリープ時)
-RTC_DATA_ATTR uint16_t	TIMEOUT		= 10000;	// タイムアウト 10秒
-RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
-RTC_DATA_ATTR byte		UDP_MODE	= 1;		// 0:OFF, 1:個々, 2:全値, 3:両方
-RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
-RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
-RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
-RTC_DATA_ATTR int		AmbientChannelId = 0; 	// チャネル名(整数) 0=無効
-RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
-
-// デバイス有効化
-RTC_DATA_ATTR boolean	LCD_EN=false;
-RTC_DATA_ATTR boolean	NTP_EN=false;
-RTC_DATA_ATTR boolean	TEMP_EN=true;
-RTC_DATA_ATTR int8_t	TEMP_ADJ=0;
-RTC_DATA_ATTR boolean	HALL_EN=false;
-RTC_DATA_ATTR byte		ADC_EN=0;
-RTC_DATA_ATTR byte		BTN_EN=0;				// 1:ON(L) 2:PingPong
-RTC_DATA_ATTR boolean	PIR_EN=false;
-RTC_DATA_ATTR boolean	AD_LUM_EN=false;
-RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
-RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
-RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
-RTC_DATA_ATTR boolean	I2C_ACCEM_EN=false;
-*/
+// extern RTC_DATA_ATTR
 
 WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
 
@@ -126,8 +86,8 @@ void html_dataAttrSet(char *res_s){
 			}else if(server.hasArg("PASS_STA")){
 				String P = server.arg("PASS_STA");
 				len = P.length();
-				if( len > 32 ){
-					_html_cat_res_s(res_s,"ERROR:接続先PASSは32文字までです");
+				if( len > 64 ){
+					_html_cat_res_s(res_s,"ERROR:接続先PASSは64文字までです");
 				}else if( len > 0 ){
 					S.toCharArray(SSID_STA,16);
 					P.toCharArray(PASS_STA,32);

@@ -13,7 +13,7 @@ IoT Sensor Core for ESP32
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
-RTC_DATA_ATTR char 		PASS_STA[33] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR char 		PASS_STA[65] = "";		// STAモードのPASS(お手持ちのAPのPASS)
 RTC_DATA_ATTR boolean	WPS_STA		= false;	// STAモードのWPS指示
 RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
@@ -107,8 +107,30 @@ boolean setupWifiSta(){
 			digitalWrite(PIN_LED,!digitalRead(PIN_LED));	// LEDの点滅
 			Serial.print("*");
 		}
+		WiFi.begin();
+		delay(500);
+		Serial.println();							// 改行をシリアル出力
+		Serial.print("Station ID = ");
+		Serial.println(WiFi.SSID());				// SSIDをシリアル表示
+		Serial.print("       psk = ");
+		Serial.println(WiFi.psk());					// PASSをシリアル表示
+		String ssid = WiFi.SSID();
+		String pass = WiFi.psk();
+		if(ssid.length()>0 && pass.length()>0){
+			if( ssid.length()>16 || pass.length()>64){
+				Serial.println("SORRY, length of SSID or PASS is over.");
+			}else{
+				ssid.toCharArray(SSID_STA,17);
+				pass.toCharArray(PASS_STA,33);
+				Serial.println("Stored SSID and PASS to RTC memory.");
+			}
+		}else{
+			Serial.println("Failed to get AP SSID or PASS");
+			return false;
+		}
 	}
-	WiFi.begin(SSID_STA,PASS_STA);				// 無線LANアクセスポイントへ接続
+	if(!WPS_STA)WiFi.begin(SSID_STA,PASS_STA);	// 無線LANアクセスポイントへ接続
+	start_ms=millis();							// 初期化開始時のタイマー値を保存
 	while(WiFi.status()!=WL_CONNECTED){ 		// 接続に成功するまで待つ
 		delay(500); 							// 待ち時間処理
 		digitalWrite(PIN_LED,!digitalRead(PIN_LED));	// LEDの点滅
@@ -121,10 +143,7 @@ boolean setupWifiSta(){
 		}
 	}
 	Serial.println();							// 改行をシリアル出力
-	Serial.print("Station ID = ");
-	Serial.println(WiFi.SSID());				// SSIDをシリアル表示
-	Serial.print("       psk = ");
-	Serial.println(WiFi.psk());					// PASSをシリアル表示
+	WPS_STA=false;
 	Serial.print("Station IP = ");
 	Serial.println(WiFi.localIP());				// IPアドレスをシリアル表示
 	Serial.print("      Mask = ");
@@ -132,18 +151,6 @@ boolean setupWifiSta(){
 	Serial.print("   Gateway = ");
 	Serial.println(WiFi.gatewayIP());			// ゲートウェイをシリアル表示
 	Serial.println("Station started");
-	if(WPS_STA){
-		String ssid = WiFi.SSID();
-		String pass = WiFi.psk();
-		if( ssid.length()>16 || pass.length()>32){
-			Serial.println("SORRY, length of SSID or PASS is over.");
-		}else{
-			ssid.toCharArray(SSID_STA,17);
-			pass.toCharArray(PASS_STA,33);
-			Serial.println("Stored SSID and PASS to RTC memory.");
-			WPS_STA=false;
-		}
-	}
 	return true;
 }
 
