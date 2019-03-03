@@ -107,6 +107,8 @@ void html_dataAttrSet(char *res_s){
 			if(WIFI_AP_MODE & 2 != 2){
 				WIFI_AP_MODE &= 2;
 				_html_cat_res_s(res_s, "Wi-Fiモード(STA)を設定しました");
+				Serial.print(" WIFI_AP_MODE=");
+				Serial.println(WIFI_AP_MODE);
 			}
 		}
 		Serial.print(" WPS_STA=");
@@ -119,7 +121,7 @@ void html_dataAttrSet(char *res_s){
 		if( len > 16 ){
 			_html_cat_res_s(res_s,"ERROR:接続先SSIDは16文字までです");
 		}else if( len > 0 ){
-			if(WPS_STA == true){
+			if(WPS_STA){
 				_html_cat_res_s(res_s,"新しいSSIDはWPSによって設定されます");
 			}else if(server.hasArg("PASS_STA")){
 				String P = server.arg("PASS_STA");
@@ -150,7 +152,7 @@ void html_dataAttrSet(char *res_s){
 		int len = S.length();
 		if( len > 15 ){
 			_html_cat_res_s(res_s,"ERROR:本機SSIDは15文字までです");
-		}else{
+		}else if( len > 0 ){
 			if(server.hasArg("PASS_AP")){
 				String P = server.arg("PASS_AP");
 				len = P.length();
@@ -452,7 +454,7 @@ void html_wifi(){
 					<input type=\"radio\" name=\"WIFI_AP_MODE\" value=\"1\" %s>AP\
 					<input type=\"radio\" name=\"WIFI_AP_MODE\" value=\"2\" %s>STA\
 					<input type=\"radio\" name=\"WIFI_AP_MODE\" value=\"3\" %s>AP+STA\
-					<input type=\"submit\" value=\"設定\">\
+					<p><input type=\"submit\" value=\"設定\"></p>\
 					<p>Wi-Fiモードを[STA]にすると無線LANが切断されます(操作不可になる)</p>\
 					<p>[AP]:本機がAPとして動作, [STA]:他のAPへ接続, [AP+STA]:両方</p>\
 				</form>\
@@ -460,26 +462,26 @@ void html_wifi(){
 				<h3>Wi-Fi AP 設定</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
 					<p>本機 Wi-Fi AP(アクセスポイント)へ接続するための設定です。</p>\
-					<input type=\"radio\" name=\"WPS_STA\" value=\"1\" %s>WPS\
-					<input type=\"radio\" name=\"WPS_STA\" value=\"0\" %s>\
 					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"15\">\
 					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"15\">\
-					<input type=\"submit\" value=\"設定\">\
+					<p><input type=\"submit\" value=\"設定\"></p>\
 					<p>変更すると、Wi-Fi を新しい設定で再接続する必要があります。</p>\
 				</form>\
 				<hr>\
 				<h3>Wi-Fi STA 接続先</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
 					<p>お手持ちのWi-Fiアクセスポイントの設定を記入し[設定]を押してください。</p>\
+					<input type=\"radio\" name=\"WPS_STA\" value=\"1\" %s>WPS\
+					<input type=\"radio\" name=\"WPS_STA\" value=\"0\" %s>\
 					SSID=<input type=\"text\" name=\"SSID_STA\" value=\"%s\" size=\"15\">\
 					PASS=<input type=\"password\" name=\"PASS_STA\" size=\"15\">\
-					<input type=\"submit\" value=\"設定\">\
+					<p><input type=\"submit\" value=\"設定\"></p>\
 				</form>\
 				<hr>\
 				<h3>Wi-Fi 再起動</h3>\
 				<form method=\"GET\" action=\"/reboot\">\
 					<p>Wi-Fi 設定を有効にするために再起動を行ってください。</p>\
-					<input type=\"submit\" name=\"BOOT\" value=\"再起動\">\
+					<p><input type=\"submit\" name=\"BOOT\" value=\"再起動\"></p>\
 				</form>\
 				<hr>\
 				<h3>スリープ設定</h3>\
@@ -492,12 +494,12 @@ void html_wifi(){
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"1795\" %s>30分\
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"3595\" %s>60分\
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"65535\" %s>∞\
-					<input type=\"submit\" value=\"設定\">\
+					<p><input type=\"submit\" value=\"設定\"></p>\
 					<p>[OFF]以外に設定するとスリープ中(殆どの時間)は操作できません。</p>\
 				</form>\
 				<hr>\
 				<form method=\"GET\" action=\"/\">\
-					<input type=\"submit\" name=\"SENSORS\" value=\"前の画面に戻る\">\
+					<p><input type=\"submit\" name=\"SENSORS\" value=\"前の画面に戻る\"></p>\
 				</form>\
 				<hr>\
 				<p>by bokunimo.net</p>\
@@ -505,8 +507,8 @@ void html_wifi(){
 		</html>", html_title,
 			html_title,  res_s,
 			html_checked[WIFI_AP_MODE==1], html_checked[WIFI_AP_MODE==2], html_checked[WIFI_AP_MODE==3],
-			html_checked[WPS_STA==1],html_checked[WPS_STA==0],SSID_AP, PASS_AP,
-			SSID_STA,
+			SSID_AP, PASS_AP,
+			html_checked[WPS_STA==true],html_checked[WPS_STA==false],SSID_STA,
 			html_checked[SLEEP_SEC==0], html_checked[SLEEP_SEC==25], html_checked[SLEEP_SEC==55], html_checked[SLEEP_SEC==175],
 			html_checked[SLEEP_SEC==595], html_checked[SLEEP_SEC==1795], html_checked[SLEEP_SEC==3595], html_checked[SLEEP_SEC==65535]
 	);

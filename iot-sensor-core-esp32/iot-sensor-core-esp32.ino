@@ -102,6 +102,11 @@ boolean setupWifiSta(){
 			Serial.println("No WPS enabled AP (" + String(wps) +")");
 			return false;
 		}
+		while(millis()-start_ms < TIMEOUT){ 	// WPS 有効中
+			delay(500); 						// 待ち時間処理
+			digitalWrite(PIN_LED,!digitalRead(PIN_LED));	// LEDの点滅
+			Serial.print("*");
+		}
 	}
 	WiFi.begin(SSID_STA,PASS_STA);				// 無線LANアクセスポイントへ接続
 	while(WiFi.status()!=WL_CONNECTED){ 		// 接続に成功するまで待つ
