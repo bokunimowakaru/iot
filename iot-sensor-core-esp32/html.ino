@@ -104,8 +104,8 @@ void html_dataAttrSet(char *res_s){
 			WPS_STA = true;
 			snprintf(s, HTML_S_LEN_MAX,"WPSを設定しました(Wi-Fi再起動後[%d]秒以内有効)",TIMEOUT /1000);
 			_html_cat_res_s(res_s, s);
-			if(WIFI_AP_MODE & 2 != 2){
-				WIFI_AP_MODE &= 2;
+			if((WIFI_AP_MODE & 2) != 2){
+				WIFI_AP_MODE |= 2;
 				_html_cat_res_s(res_s, "Wi-Fiモード(STA)を設定しました");
 				Serial.print(" WIFI_AP_MODE=");
 				Serial.println(WIFI_AP_MODE);
@@ -137,8 +137,8 @@ void html_dataAttrSet(char *res_s){
 					Serial.print(SSID_STA);
 					Serial.print(" PASS_STA=");
 					Serial.println(PASS_STA);
-					if(WIFI_AP_MODE & 2 != 2){
-						WIFI_AP_MODE &= 2;
+					if((WIFI_AP_MODE & 2) != 2){
+						WIFI_AP_MODE |= 2;
 						_html_cat_res_s(res_s, "Wi-Fiモード(STA)を設定しました(同上)");
 						Serial.print(" WIFI_AP_MODE=");
 						Serial.println(WIFI_AP_MODE);
