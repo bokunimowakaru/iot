@@ -12,6 +12,9 @@ WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
 
 uint32_t	html_ip=0;
 char 		html_ip_s[16];
+uint32_t	html_ip_sta=0;
+uint32_t	html_ip_ap=0;
+char 		html_ip_ap_s[16];
 const char	html_checked[2][18]={"","checked=\"checked\""};
 
 boolean html_check_overrun(int len){
@@ -49,6 +52,23 @@ void html_dataAttrSet(char *res_s){
 		if( i >= 1 && i <= 3 && WIFI_AP_MODE != i ){
 			char mode_s[3][7]={"AP","STA","AP+STA"};
 			WIFI_AP_MODE = i;
+			if(i == 2){
+				MDNS_EN = false;
+				sprintf(html_ip_s,"%d.%d.%d.%d",
+					html_ip_sta & 255,
+					html_ip_sta>>8 & 255,
+					html_ip_sta>>16 & 255,
+					html_ip_sta>>24
+				);
+			}else if(!MDNS_EN){
+				sprintf(html_ip_s,"%d.%d.%d.%d",
+					html_ip_ap & 255,
+					html_ip_ap>>8 & 255,
+					html_ip_ap>>16 & 255,
+					html_ip_ap>>24
+				);
+			}else strcpy(html_ip_s,html_ip_ap_s);
+			
 			snprintf(s, HTML_S_LEN_MAX,"Wi-Fiモードを[%s]に設定しました(要Wi-Fi再起動)",mode_s[i-1]);
 			_html_cat_res_s(res_s, s);
 			Serial.print(" WIFI_AP_MODE=");
@@ -889,8 +909,10 @@ String html_ipAdrToString(uint32_t ip){
 	return S;
 }
 
-void html_init(uint32_t ip, const char *domainName_local){
-	html_ip=ip;
+void html_init(const char *domainName_local, uint32_t ip, int32_t ip_ap, int32_t ip_sta){
+	html_ip = ip;
+	html_ip_ap = ip_ap;
+	html_ip_sta = ip_sta;
 	if(MDNS_EN){
 		snprintf(html_ip_s,16,"%s.local",
 			domainName_local
@@ -903,6 +925,9 @@ void html_init(uint32_t ip, const char *domainName_local){
 			ip>>24
 		);
 	}
+	snprintf(html_ip_ap_s,16,"%s.local",
+		domainName_local
+	);
 	server.on("/", html_index);
 	server.on("/wifi", html_wifi);
 	server.on("/sensors", html_sensors);

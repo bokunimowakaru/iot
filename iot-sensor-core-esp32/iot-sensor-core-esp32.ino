@@ -54,7 +54,8 @@ RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
 RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
 RTC_DATA_ATTR boolean	I2C_ACCEM_EN=false;
 
-IPAddress IP;									// IPアドレス
+IPAddress IP;									// AP用IPアドレス
+IPAddress IP_STA;								// STA用IPアドレス
 IPAddress IP_BC;								// ブロードキャストIPアドレス
 Ambient ambient;								// クラウドサーバ Ambient用
 WiFiClient ambClient;							// Ambient接続用のTCPクライアント
@@ -88,7 +89,6 @@ boolean setupWifiAp(){
 
 boolean setupWifiSta(){
 	Serial.println("Start Wi-Fi STA --------"+ Line);
-	delay(500);									// 切換え・設定待ち時間
 	unsigned long start_ms=millis();			// 初期化開始時のタイマー値を保存
 	
 	if(WPS_STA){
@@ -106,6 +106,7 @@ boolean setupWifiSta(){
 			Serial.println("ERROR: failed WPS init (" + String(wps) +")");
 			return false;
 		}
+		delay(500);
 		wps = esp_wifi_wps_start(TIMEOUT);		// WPS接続(blocking time,最大120秒)
 		if(wps != ESP_OK){
 			Serial.println("No WPS enabled AP (" + String(wps) +")");
@@ -145,8 +146,8 @@ boolean setupWifiSta(){
 		Serial.println(WiFi.psk());					// PASSをシリアル表示
 		esp_wifi_wps_disable();
 	}
-	delay(10);
 	Serial.println("Wi-Fi STA Started connection");
+	delay(10);
 	WiFi.begin(SSID_STA,PASS_STA);				// 無線LANアクセスポイントへ接続
 	start_ms=millis();							// 初期化開始時のタイマー値を保存
 	char c;										// 接続状態フラグ
@@ -183,6 +184,7 @@ boolean setupWifiSta(){
 	Serial.print("   Gateway = ");
 	Serial.println(WiFi.gatewayIP());			// ゲートウェイをシリアル表示
 	Serial.println("Station started");
+	delay(10);
 	return true;
 }
 
@@ -313,12 +315,14 @@ void setup(){
 			WiFi.mode(WIFI_AP); 				// 無線LANを[AP]モードに設定
 			setupWifiAp();
 			IP = WiFi.softAPIP();
+			IP_STA = IP;
 			IP_BC = (uint32_t)IP | IPAddress(0,0,0,255);
 			break;
 		case 2:	// WIFI_STA
 			WiFi.mode(WIFI_STA);				// 無線LANを[STA]モードに設定
 			setupWifiSta();
 			IP = WiFi.localIP();
+			IP_STA = IP;
 			IP_BC = (uint32_t)IP | ~(uint32_t)(WiFi.subnetMask());
 			break;
 		case 3:	// WIFI_AP_STA
@@ -326,11 +330,13 @@ void setup(){
 			setupWifiAp();
 			setupWifiSta();
 			IP = WiFi.softAPIP();
+			IP_STA = WiFi.localIP();
 			IP_BC = (uint32_t)(WiFi.localIP()) | IPAddress(0,0,0,255);
 			break;
 		default: // WIFI_OFF
 			WiFi.mode(WIFI_OFF);
 			IP = IPAddress(0,0,0,0);
+			IP_STA = IPAddress(0,0,0,0);
 			IP_BC = IPAddress(255,255,255,255);
 	}
 	if( (uint32_t)IP > 0 ) digitalWrite(PIN_LED,HIGH);
@@ -353,8 +359,10 @@ void setup(){
 	if( (WIFI_AP_MODE & 1) == 1 ){				// WiFi_AP 動作時
 		MDNS_EN=MDNS.begin("iot");
 		if(MDNS_EN) Serial.println("MDNS responder started");
+	}else{
+		MDNS_EN = false;
 	}
-	html_init(IP,"iot");
+	html_init("iot",IP,IPAddress(192,168,254,1),IP_STA);
 	Serial.print("WebServ IP = ");
 	Serial.println( IP );
 	Serial.print("     BC IP = ");
