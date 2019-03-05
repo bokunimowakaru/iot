@@ -21,9 +21,9 @@ const char	html_checked[2][18]={"","checked=\"checked\""};
 
 void html_error(const char *err, const char *html, const char *lcd){
 	if( strlen(html) > 0){
-		strncat(html_error_s, html, HTML_RES_LEN_MAX - strlen(html_error_s) - 5);
+		strncat(html_error_s, html, HTML_ERROR_LEN_MAX - strlen(html_error_s) - 7);
 	}else{
-		strncat(html_error_s, err, HTML_RES_LEN_MAX - strlen(html_error_s) - 5);
+		strncat(html_error_s, err, HTML_ERROR_LEN_MAX - strlen(html_error_s) - 7);
 	}
 	strcat(html_error_s,"<br>");
 	Serial.print("ERROR: ");
@@ -54,10 +54,10 @@ boolean html_check_overrun(int len){
 
 void _html_cat_res_s(char *res_s, const char *s){
 	if( strlen(html_error_s) > 0 ){
-		strncpy(res_s, html_error_s, HTML_ERROR_LEN_MAX - 1);
+		strncpy(res_s, html_error_s, HTML_RES_LEN_MAX - 7);
 		memset(html_error_s,'\0',HTML_ERROR_LEN_MAX);
 	}
-	if( strlen(res_s) > HTML_RES_LEN_MAX - 8 ){
+	if( strlen(res_s) >= HTML_RES_LEN_MAX - 8 ){
 		Serial.println("ERROR: Prevented HTML_RES Buffer Overrun");
 		return;
 	}
@@ -426,6 +426,7 @@ void html_index(){
 				<h3>設定</h3>\
 				<h4><a href=\"wifi\">Wi-Fi 設定</a></h4>\
 				<h4><a href=\"sensors\">センサ設定</a></h4>\
+				<h4><a href=\"display\">LCD表示設定</a></h4>\
 				<h4><a href=\"pinout\">ピン配列表</a></h4>\
 				<h4><a href=\"sendto\">データ送信設定</a></h4>\
 				<hr>\
