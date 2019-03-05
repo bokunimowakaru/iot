@@ -561,6 +561,7 @@ void lcdSetup(){
 */
 
 
+boolean i2c_lcd_Setup(int PIN_SDA=21, int PIN_SCL=22, byte x=8, byte y=2);
 boolean i2c_lcd_Setup(int PIN_SDA, int PIN_SCL,byte x, byte y){
 	_i2c_lcd_ERROR_b = false;
 	i2c_lcd_PORT_SDA = PIN_SDA;
@@ -578,12 +579,4 @@ boolean i2c_lcd_Setup(int PIN_SDA, int PIN_SCL,byte x, byte y){
 	data[0]=0x00; data[1]=0x0C; i2c_lcd_i2c_write(I2C_lcd,data,2);	// DisplayON	C
 	i2c_lcd_print("Hello!  I2C LCD by Wataru Kunino");
 	return !_i2c_lcd_ERROR_b;
-}
-
-boolean i2c_lcd_Setup(int PIN_SDA, int PIN_SCL){
-	return i2c_lcd_Setup(PIN_SDA,PIN_SCL,8,2);
-}
-
-boolean i2c_lcd_Setup(){
-	return i2c_lcd_Setup(21,22,8,2);
 }

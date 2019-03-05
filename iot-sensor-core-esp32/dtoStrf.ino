@@ -1,3 +1,5 @@
+String dtoStrf(double val, int frac = 3);
+
 String dtoStrf(double val,int frac){
 	float delta = 0.5;
 	if( (int)delta == 1 ) delta = 0.0;	// 四捨五入が行われないことを確認
@@ -21,9 +23,6 @@ String dtoStrf(double val,int frac){
 	return Str;
 }
 
-String dtoStrf(double val){
-	return dtoStrf(val, 3);
-}
 
 /* TEST用
 void dtoStrf_test(){

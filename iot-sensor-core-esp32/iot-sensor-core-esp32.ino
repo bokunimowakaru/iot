@@ -80,7 +80,7 @@ boolean setupWifiAp(){
 		Serial.print("SoftAP  IP = "); Serial.println(WiFi.softAPIP());
 		Serial.println("Software AP started");
 	}else{
-		Serial.println("ERROR: Failed to start SoftAP");
+		html_error("Failed to start SoftAP","SoftAP 起動失敗","SoftAP");
 		TimerWakeUp_setSleepTime(TIMEOUT / 1000);
 		sleep();
 	}
@@ -103,13 +103,15 @@ boolean setupWifiSta(){
 		
 		int wps = esp_wifi_wps_enable(&config);	// WPS初期化
 		if(wps != ESP_OK){
-			Serial.println("ERROR: failed WPS init (" + String(wps) +")");
+			html_error("WPS negotiation Failed","WPS 初期化失敗");
+			Serial.println("esp_wifi_wps_enable: " + String(wps));
 			return false;
 		}
 		delay(500);
 		wps = esp_wifi_wps_start(TIMEOUT);		// WPS接続(blocking time,最大120秒)
 		if(wps != ESP_OK){
-			Serial.println("No WPS enabled AP (" + String(wps) +")");
+			html_error("AP not found","WPS 動作中 AP なし","WPSｼｯﾊﾟｲ");
+			Serial.println("esp_wifi_wps_start: " + String(wps));
 			return false;
 		}
 		
@@ -129,14 +131,14 @@ boolean setupWifiSta(){
 		Serial.println();							// 改行をシリアル出力
 		if(ssid.length()>0 && pass.length()>0){
 			if( ssid.length()>16 || pass.length()>64){
-				Serial.println("SORRY, length of SSID or PASS is over.");
+				html_error("too long WPS SSID","WPS SSID 文字列超過");
 			}else{
 				ssid.toCharArray(SSID_STA,17);
 				pass.toCharArray(PASS_STA,65);
 				Serial.println("Stored SSID and PASS to RTC memory.");
 			}
 		}else{
-			Serial.println("ERROR: Failed to get AP SSID or PASS");
+			html_error("WPS negotiation Failed","WPS 認証失敗");
 			esp_wifi_wps_disable();
 			return false;
 		}
@@ -156,7 +158,9 @@ boolean setupWifiSta(){
 		c = debug_wl_status(WiFi.status());
 		Serial.print(c);
 		if(c == '#'){
+			start_ms=millis();
 			while(c == '#'){
+				if(millis()-start_ms > TIMEOUT) break;
 			//	WiFi.disconnect();				// WiFiアクセスポイントを切断する
 				delay(500); 					// 待ち時間処理
 				WiFi.begin(SSID_STA,PASS_STA);
@@ -165,13 +169,12 @@ boolean setupWifiSta(){
 				c = debug_wl_status(WiFi.status());
 				Serial.print(c);
 			}
-			start_ms=millis();
 		}
 		delay(500); 							// 待ち時間処理
 		if(millis()-start_ms>TIMEOUT){			// 待ち時間後の処理
 			WiFi.disconnect();					// WiFiアクセスポイントを切断する
 			Serial.println();					// 改行をシリアル出力
-			Serial.println("No Internet AP");	// 接続が出来なかったときの表示
+			html_error("No Internet AP","AP接続失敗");
 			return false;
 		}
 	}while(c != '!');							// WL_CONNECTEDを検出するまで
@@ -239,11 +242,7 @@ String sendSensorValues(){
 		if( sentToAmbient(payload) ){
 			Serial.println("Done: send to Ambient");
 		}else if( AmbientChannelId > 0 ){
-			Serial.println("ERROR: cannot send to Ambient");
-			if(LCD_EN){
-				i2c_lcd_print("ERROR");
-				i2c_lcd_print2("Ambient");
-			}
+			html_error("Feiled connection, Ambient","Ambientへの接続失敗","Ambient");
 		}
 	}
 	return payload;

@@ -52,6 +52,8 @@ float i2c_adxl_getAcm(int axis){         // 0:x  1:y  2:z
     return in * 0.004 * 9.80665;
 }
 
+boolean i2c_adxl_Setup(int PIN_SDA=21, int PIN_SCL=22, int range=0);
+
 boolean i2c_adxl_Setup(int PIN_SDA, int PIN_SCL, int range){
     /*
     range :0から3
@@ -191,14 +193,6 @@ void i2c_adxl_adxlINT(){
     // i2c_adxl_            |||__________ Link
     // i2c_adxl_            ||___________ 0
     // i2c_adxl_            |____________ 0
-}
-
-boolean i2c_adxl_Setup(int range){
-	return i2c_adxl_Setup(21, 22, range);
-}
-
-boolean i2c_adxl_Setup(){
-	return i2c_adxl_Setup(21, 22, 0);
 }
 
 int i2c_adxl_End(){

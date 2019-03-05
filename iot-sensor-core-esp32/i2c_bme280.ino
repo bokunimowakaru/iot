@@ -341,6 +341,8 @@ int main(int argc,char **argv){
 }
 #endif
 
+boolean i2c_bme280_Setup(int PIN_SDA = 21, int PIN_SCL = 22);
+
 boolean i2c_bme280_Setup(int PIN_SDA, int PIN_SCL){
 	byte reg,data,in;
 	int i;
@@ -385,8 +387,4 @@ boolean i2c_bme280_Setup(int PIN_SDA, int PIN_SCL){
 	}
 	delay(20);
 	return true;
-}
-
-boolean i2c_bme280_Setup(){
-	return i2c_bme280_Setup(21,22);
 }

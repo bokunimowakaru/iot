@@ -1,7 +1,6 @@
-float mvAnalogIn(uint8_t PIN){
-    return mvAnalogIn(PIN, 0.0);            // 動作最小電圧 0.0 ～ 0.1(V)程度
-//  return mvAnalogIn(PIN, 1.075584e-1);
-}
+float mvAnalogIn(uint8_t PIN, float offset = 0.0);
+// 動作最小電圧 0.0 ～ 0.1(V)程度
+// return mvAnalogIn(PIN, 1.075584e-1);
 
 float mvAnalogIn(uint8_t PIN, float offset){
     int in0,in3;

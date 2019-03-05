@@ -192,6 +192,7 @@ void sensors_btnPush(boolean in){
 	sensors_btnPush_b = in;
 }
 
+boolean sensors_btnRead(const String &S = "");
 boolean sensors_btnRead(const String &S){
 	if(BTN_EN>0){
 		boolean btn = (boolean)!digitalRead(PIN_SW);
@@ -203,10 +204,6 @@ boolean sensors_btnRead(const String &S){
 		}
 	}
 	return false;
-}
-
-boolean sensors_btnRead(){
-	return sensors_btnRead("");
 }
 
 void sensors_pirPrev(boolean in){
@@ -268,12 +265,10 @@ boolean sensors_irRead(const String &S){
 	return sensors_irRead(false, S);
 }
 
+boolean sensors_irRead(boolean noUdp = false);
+
 boolean sensors_irRead(boolean noUdp){
 	return sensors_irRead(noUdp);
-}
-
-boolean sensors_irRead(){
-	return sensors_irRead(false);
 }
 
 boolean sensors_csv(String &S, boolean csv_b){

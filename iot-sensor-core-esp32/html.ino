@@ -5,6 +5,7 @@
 #define HTML_MISC_LEN_MAX	1024
 #define HTML_RES_LEN_MAX	256
 #define HTML_S_LEN_MAX		96
+#define HTML_ERROR_LEN_MAX	64
 
 // extern RTC_DATA_ATTR
 
@@ -15,7 +16,27 @@ char 		html_ip_s[16];
 uint32_t	html_ip_sta=0;
 uint32_t	html_ip_ap=0;
 char 		html_ip_ap_s[16];
+char 		html_error_s[HTML_ERROR_LEN_MAX]="";
 const char	html_checked[2][18]={"","checked=\"checked\""};
+
+void html_error(const char *err, const char *html, const char *lcd){
+	if( strlen(html) > 0){
+		strncat(html_error_s, html, HTML_RES_LEN_MAX - strlen(html_error_s) - 5);
+	}else{
+		strncat(html_error_s, err, HTML_RES_LEN_MAX - strlen(html_error_s) - 5);
+	}
+	strcat(html_error_s,"<br>");
+	Serial.print("ERROR: ");
+	Serial.println(err);
+	if(LCD_EN && strlen(lcd) > 0){
+		i2c_lcd_print("ERROR!");
+		i2c_lcd_print2(lcd);
+	}
+}
+
+void html_error(const char *err, const char *html){
+	html_error(err, html, "");
+}
 
 boolean html_check_overrun(int len){
 	Serial.print("done html, ");
@@ -32,6 +53,10 @@ boolean html_check_overrun(int len){
 }
 
 void _html_cat_res_s(char *res_s, const char *s){
+	if( strlen(html_error_s) > 0 ){
+		strncpy(res_s, html_error_s, HTML_ERROR_LEN_MAX - 1);
+		memset(html_error_s,'\0',HTML_ERROR_LEN_MAX);
+	}
 	if( strlen(res_s) > HTML_RES_LEN_MAX - 8 ){
 		Serial.println("ERROR: Prevented HTML_RES Buffer Overrun");
 		return;
@@ -39,8 +64,14 @@ void _html_cat_res_s(char *res_s, const char *s){
 	if( strlen(s) == HTML_S_LEN_MAX ){
 		Serial.println("WARNING: No Enough HTML_S Buffer");
 	}
-	if( strlen(res_s) > 0 ) strcat(res_s,"<br>");
-	strncat(res_s, s, HTML_RES_LEN_MAX - strlen(res_s) - 1);
+	if( strlen(s) > 0 ){
+		strcat(res_s,"<br>");
+		strncat(res_s, s, HTML_RES_LEN_MAX - strlen(res_s) - 1);
+	}
+}
+
+void _html_cat_res_s(char *res_s){
+	_html_cat_res_s(res_s, "");
 }
 
 void html_dataAttrSet(char *res_s){
@@ -358,6 +389,7 @@ void html_index(){
 	/////////////// ------------------------------------------------
 	Serial.println("HTML index -------------------------------------");
 	
+	_html_cat_res_s(res_s);
 	html_dataAttrSet(res_s);
 	if(server.hasArg("SENSORS")){
 		/*
@@ -418,6 +450,7 @@ void html_wifi(){
 	/////////////// ------------------------------------------------
 	Serial.println("HTML Wi-Fi -------------------------------------");
 	
+	_html_cat_res_s(res_s);
 	html_dataAttrSet(res_s);
 	
 	snprintf(s, HTML_INDEX_LEN_MAX,
@@ -580,6 +613,42 @@ void html_sensors(){
 					</p>\
 				</form>\
 				<hr>\
+				<p>by bokunimo.net</p>\
+			</body>\
+		</html>", html_title,
+			html_title,
+				html_checked[BOARD_TYPE==0], html_checked[BOARD_TYPE==1], html_checked[BOARD_TYPE==2],
+				html_checked[!TEMP_EN], html_checked[TEMP_EN], TEMP_ADJ, 
+				html_checked[!HALL_EN], html_checked[HALL_EN], 
+				html_checked[ADC_EN==0], html_checked[ADC_EN==32], html_checked[ADC_EN==33], html_checked[ADC_EN==34], html_checked[ADC_EN==35],
+				html_checked[BTN_EN==0], html_checked[BTN_EN==1], html_checked[BTN_EN==2],
+				html_checked[PIR_EN==0], html_checked[PIR_EN==1],
+				html_checked[IR_IN_EN==0], html_checked[IR_IN_EN==1],html_checked[IR_IN_EN==2], html_checked[IR_IN_EN==3],
+				html_checked[AD_LUM_EN==0], html_checked[AD_LUM_EN==1],
+				html_checked[AD_TEMP_EN==0], html_checked[AD_TEMP_EN==1], html_checked[AD_TEMP_EN==2],
+				html_checked[I2C_HUM_EN==0], html_checked[I2C_HUM_EN==1], html_checked[I2C_HUM_EN==2],
+				html_checked[I2C_ENV_EN==0], html_checked[I2C_ENV_EN==1], html_checked[I2C_ENV_EN==2],
+				html_checked[I2C_ACCEM_EN==0], html_checked[I2C_ACCEM_EN==1]
+	);
+	server.send(200, "text/html", s);
+	html_check_overrun(strlen(s));
+}
+
+void html_display(){
+	char s[HTML_INDEX_LEN_MAX];
+	int i;
+	
+	/////////////// ------------------------------------------------
+	Serial.println("HTML display -----------------------------------");
+	
+	snprintf(s, HTML_INDEX_LEN_MAX,
+		"<html>\
+			<head>\
+				<title>%s 表示設定</title>\
+				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
+			</head>\
+			<body>\
 				<h1>表示設定</h1>\
 				<form method=\"GET\" action=\"/\">\
 					<p>I2C液晶　\
@@ -597,18 +666,6 @@ void html_sensors(){
 			</body>\
 		</html>", html_title,
 			html_title,
-				html_checked[BOARD_TYPE==0], html_checked[BOARD_TYPE==1], html_checked[BOARD_TYPE==2],
-				html_checked[!TEMP_EN], html_checked[TEMP_EN], TEMP_ADJ, 
-				html_checked[!HALL_EN], html_checked[HALL_EN], 
-				html_checked[ADC_EN==0], html_checked[ADC_EN==32], html_checked[ADC_EN==33], html_checked[ADC_EN==34], html_checked[ADC_EN==35],
-				html_checked[BTN_EN==0], html_checked[BTN_EN==1], html_checked[BTN_EN==2],
-				html_checked[PIR_EN==0], html_checked[PIR_EN==1],
-				html_checked[IR_IN_EN==0], html_checked[IR_IN_EN==1],html_checked[IR_IN_EN==2], html_checked[IR_IN_EN==3],
-				html_checked[AD_LUM_EN==0], html_checked[AD_LUM_EN==1],
-				html_checked[AD_TEMP_EN==0], html_checked[AD_TEMP_EN==1], html_checked[AD_TEMP_EN==2],
-				html_checked[I2C_HUM_EN==0], html_checked[I2C_HUM_EN==1], html_checked[I2C_HUM_EN==2],
-				html_checked[I2C_ENV_EN==0], html_checked[I2C_ENV_EN==1], html_checked[I2C_ENV_EN==2],
-				html_checked[I2C_ACCEM_EN==0], html_checked[I2C_ACCEM_EN==1],
 				html_checked[LCD_EN==0], html_checked[LCD_EN==1], html_checked[LCD_EN==2]
 	);
 	server.send(200, "text/html", s);
@@ -931,6 +988,7 @@ void html_init(const char *domainName_local, uint32_t ip, int32_t ip_ap, int32_t
 	server.on("/", html_index);
 	server.on("/wifi", html_wifi);
 	server.on("/sensors", html_sensors);
+	server.on("/display", html_display);
 	server.on("/pinout", html_pinout);
 	server.on("/sendto", html_sendto);
 	server.on("/reboot", html_reboot);
