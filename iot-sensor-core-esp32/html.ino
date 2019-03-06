@@ -20,12 +20,15 @@ char 		html_error_s[HTML_ERROR_LEN_MAX]="";
 const char	html_checked[2][18]={"","checked=\"checked\""};
 
 void html_error(const char *err, const char *html, const char *lcd){
-	if( strlen(html) > 0){
-		strncat(html_error_s, html, HTML_ERROR_LEN_MAX - strlen(html_error_s) - 7);
-	}else{
-		strncat(html_error_s, err, HTML_ERROR_LEN_MAX - strlen(html_error_s) - 7);
-	}
-	strcat(html_error_s,"<br>");
+	int len = HTML_ERROR_LEN_MAX - strlen(html_error_s) - 5;
+	if( len > 0 ){
+		if( strlen(html) > 0){
+			strncat(html_error_s, html, len);
+		}else{
+			strncat(html_error_s, err, len);
+		}
+		strcat(html_error_s,"<br>");
+	}else Serial.println("ERROR: html_error Buffer Overrun");
 	Serial.print("ERROR: ");
 	Serial.println(err);
 	if(LCD_EN && strlen(lcd) > 0){
@@ -61,12 +64,13 @@ void _html_cat_res_s(char *res_s, const char *s){
 		Serial.println("ERROR: Prevented HTML_RES Buffer Overrun");
 		return;
 	}
-	if( strlen(s) == HTML_S_LEN_MAX ){
+	if( strlen(s) >= HTML_S_LEN_MAX ){
 		Serial.println("WARNING: No Enough HTML_S Buffer");
 	}
-	if( strlen(s) > 0 ){
+	int len = HTML_RES_LEN_MAX - strlen(res_s) - 5;
+	if( strlen(s) > 0 && len > 0){
+		strncat(res_s, s, len);
 		strcat(res_s,"<br>");
-		strncat(res_s, s, HTML_RES_LEN_MAX - strlen(res_s) - 1);
 	}
 }
 
@@ -874,6 +878,36 @@ void html_sleep(){
 	sleep();
 }
 
+void html_test(){
+	char s[HTML_INDEX_LEN_MAX];
+	char res_s[HTML_S_LEN_MAX];
+	char *test16 = "this is test, 16";	// 16+1 bytes
+	char *test32 = "I say someting, THIS IS TEST, 32";	// 32+1 bytes
+	
+	/////////////// ------------------------------------------------
+	Serial.println("html_error");
+	for(int i=0; i<5;i++){
+		html_error(test16,test16,test16);
+		Serial.println("len=" + String(strlen(html_error_s)) + ": max=" + String(HTML_ERROR_LEN_MAX));
+	}
+	
+	Serial.println("_html_cat_res_s");
+	for(int i=0; i<9;i++){
+		_html_cat_res_s(res_s,test32);
+		Serial.println("len=" + String(strlen(res_s)) + ": max=" + String(HTML_RES_LEN_MAX) );
+	}
+	Serial.println(res_s);
+	
+	Serial.println("snprintf");
+	snprintf(res_s, 16,"%s",test32);
+	if( 16 - 1 <= strlen(s)) Serial.println("OK");
+	else Serial.println("cannot detect");
+	
+	Serial.println("Test Done");
+	server.send(200, "text/plain", "Test Done");
+}
+
+
 void html_text(){
 	
 	/////////////// ------------------------------------------------
@@ -995,6 +1029,7 @@ void html_init(const char *domainName_local, uint32_t ip, int32_t ip_ap, int32_t
 	server.on("/reboot", html_reboot);
 	server.on("/gpio_init", html_gpio_init);
 	server.on("/sleep", html_sleep);
+	server.on("/test", html_test);
 //	server.on("/text", html_text);
 //	server.on("/demo", html_demo);
 //	server.on("/test.svg", drawGraph);
