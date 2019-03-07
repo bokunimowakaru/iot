@@ -340,9 +340,10 @@ boolean sensors_init_LED(int pin){
 	sensors_pin_reset("IO" + String(PIN_LED),led_s);
 	boolean ret = sensors_pin_set("IO" + String(pin),led_s);
 	if(ret){
-		pinMode(PIN_LED,OUTPUT);					// LEDを接続したポートを出力に
-		digitalWrite(PIN_LED,HIGH);
-	}else sensors_pin_reset("IO" + String(PIN_LED),led_s);
+		pinMode(pin,OUTPUT);					// LEDを接続したポートを出力に
+		digitalWrite(pin,HIGH);
+		PIN_LED = pin;
+	}else sensors_pin_reset("IO" + String(pin),led_s);
 	return ret;
 }
 

@@ -215,11 +215,11 @@ void html_dataAttrSet(char *res_s){
 		}
 	}
 	if(server.hasArg("PIN_LED")){
+		int prev = PIN_LED;
 		i = server.arg("PIN_LED").toInt();
 		if( !sensors_init_LED(i) || (i!=2 && i!=4 && i!=22 && i!=23) ){
 			_html_cat_res_s(res_s, "LEDの設定に失敗しました");
-		}else if( i != PIN_LED ){
-			PIN_LED = i;
+		}else if( i != prev ){
 			snprintf(s, HTML_S_LEN_MAX,"LEDピンを[IO%d]に設定しました",i);
 			_html_cat_res_s(res_s, s);
 		}
