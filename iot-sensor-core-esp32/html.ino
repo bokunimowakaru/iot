@@ -664,12 +664,12 @@ void html_sensors(){
 void html_display(){
 	char s[HTML_INDEX_LEN_MAX];
 	char res_s[HTML_RES_LEN_MAX]="";
-	int led = digitalRead(PIN_LED);
 	
 	/////////////// ------------------------------------------------
 	Serial.println("HTML display -----------------------------------");
 	
 	html_dataAttrSet(res_s);
+	int led = digitalRead(PIN_LED);
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
