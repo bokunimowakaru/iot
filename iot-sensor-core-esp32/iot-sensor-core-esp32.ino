@@ -249,7 +249,6 @@ String sendSensorValues(){
 }
 
 void setup(){
-	pinMode(PIN_LED,OUTPUT);					// LEDを接続したポートを出力に
 	sensors_init();
 	Serial.begin(115200);
 	Serial.println(Line);

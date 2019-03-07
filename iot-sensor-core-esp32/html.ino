@@ -207,11 +207,31 @@ void html_dataAttrSet(char *res_s){
 			if( i != BOARD_TYPE ){
 				BOARD_TYPE = i;
 				snprintf(s, HTML_S_LEN_MAX,"ボードを[%s]に設定しました",sensors_boardName(i));
+				_html_cat_res_s(res_s, s);
 				sensors_init();
 			}
 			Serial.print(" BOARD_TYPE=");
 			Serial.println(BOARD_TYPE);
 		}
+	}
+	if(server.hasArg("PIN_LED")){
+		i = server.arg("PIN_LED").toInt();
+		if( !sensors_init_LED(i) ){
+			_html_cat_res_s(res_s, "LEDの設定に失敗しました");
+		}else{
+			snprintf(s, HTML_S_LEN_MAX,"LEDピンを[IO%d]に設定しました",i);
+			_html_cat_res_s(res_s, s);
+		}
+		Serial.print(" PIN_LED=");
+		Serial.println(PIN_LED);
+	}
+	if(server.hasArg("LED")){
+		i = server.arg("LED").toInt();
+		digitalWrite(PIN_LED,i);
+		Serial.print(" LED=");
+		Serial.println(i);
+		snprintf(s, HTML_S_LEN_MAX,"LEDを[%d]に設定しました",i);
+		_html_cat_res_s(res_s, s);
 	}
 	if(server.hasArg("LCD_EN")){
 		i = server.arg("LCD_EN").toInt();
@@ -429,8 +449,8 @@ void html_index(){
 				<hr>\
 				<h3>設定</h3>\
 				<h4><a href=\"wifi\">Wi-Fi 設定</a></h4>\
-				<h4><a href=\"sensors\">センサ設定</a></h4>\
-				<h4><a href=\"display\">LCD表示設定</a></h4>\
+				<h4><a href=\"sensors\">センサ入力設定</a></h4>\
+				<h4><a href=\"display\">表示出力設定</a></h4>\
 				<h4><a href=\"pinout\">ピン配列表</a></h4>\
 				<h4><a href=\"sendto\">データ送信設定</a></h4>\
 				<hr>\
@@ -538,7 +558,6 @@ void html_wifi(){
 
 void html_sensors(){
 	char s[HTML_INDEX_LEN_MAX];
-	int i;
 	
 	/////////////// ------------------------------------------------
 	Serial.println("HTML sensors -----------------------------------");
@@ -546,12 +565,12 @@ void html_sensors(){
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
-				<title>%s センサ設定</title>\
+				<title>%s センサ入力設定</title>\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
 				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
-				<h1>%s センサ設定</h1>\
+				<h1>%s センサ入力設定</h1>\
 				<form method=\"GET\" action=\"/\">\
 					<p>ボード　\
 					<input type=\"radio\" name=\"BOARD_TYPE\" value=\"0\" %s>ESP\
@@ -641,7 +660,7 @@ void html_sensors(){
 
 void html_display(){
 	char s[HTML_INDEX_LEN_MAX];
-	int i;
+	int led = digitalRead(PIN_LED);
 	
 	/////////////// ------------------------------------------------
 	Serial.println("HTML display -----------------------------------");
@@ -649,13 +668,20 @@ void html_display(){
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
-				<title>%s 表示設定</title>\
+				<title>%s 表示出力設定</title>\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
 				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
-				<h1>表示設定</h1>\
-				<form method=\"GET\" action=\"/\">\
+				<h1>%s 表示出力設定</h1>\
+				<form method=\"GET\" action=\"/display\">\
+					<p>LED　\
+					<input type=\"radio\" name=\"LED\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"LED\" value=\"1\" %s>ON<br>\
+					Pin:<input type=\"radio\" name=\"PIN_LED\" value=\"2\" %s>IO2\
+					<input type=\"radio\" name=\"PIN_LED\" value=\"4\" %s>IO4\
+					<input type=\"radio\" name=\"PIN_LED\" value=\"23\" %s>IO23\
+					</p>\
 					<p>I2C液晶　\
 					<input type=\"radio\" name=\"LCD_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"LCD_EN\" value=\"1\" %s>8x2\
@@ -667,10 +693,15 @@ void html_display(){
 					</p>\
 				</form>\
 				<hr>\
+				<form method=\"GET\" action=\"/\">\
+					<input type=\"submit\" name=\"SENSORS\" value=\"前の画面に戻る\">\
+				</form>\
+				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
 		</html>", html_title,
 			html_title,
+				html_checked[led==0], html_checked[led==1], html_checked[PIN_LED==2], html_checked[PIN_LED==4], html_checked[PIN_LED==23],
 				html_checked[LCD_EN==0], html_checked[LCD_EN==1], html_checked[LCD_EN==2]
 	);
 	server.send(200, "text/html", s);
@@ -881,8 +912,8 @@ void html_sleep(){
 void html_test(){
 	char s[HTML_INDEX_LEN_MAX];
 	char res_s[HTML_S_LEN_MAX];
-	char *test16 = "this is test, 16";	// 16+1 bytes
-	char *test32 = "I say someting, THIS IS TEST, 32";	// 32+1 bytes
+	const char *test16 = "this is test, 16";	// 16+1 bytes
+	const char *test32 = "I say someting, THIS IS TEST, 32";	// 32+1 bytes
 	
 	/////////////// ------------------------------------------------
 	Serial.println("html_error");

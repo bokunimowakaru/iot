@@ -317,6 +317,7 @@ void sensors_init(){
 	sensors_pin_set("EN", "リセットボタン");
 	sensors_pin_set("IO" + String(PIN_SW),"操作ボタン");
 	sensors_pin_set("IO" + String(PIN_LED),"状態表示LED");
+	pinMode(PIN_LED,OUTPUT);					// LEDを接続したポートを出力に
 	
 	for(int i=0;i<sensors_devices_n;i++) sensors_devices_inited[i]=false;
 	
@@ -331,6 +332,18 @@ void sensors_init(){
 	if(I2C_HUM_EN)		sensors_init_I2C_HUM(I2C_HUM_EN);
 	if(I2C_ENV_EN)		sensors_init_I2C_ENV(I2C_ENV_EN);
 	if(I2C_ACCEM_EN)	sensors_init_I2C_ACCEM(1);
+}
+
+boolean sensors_init_LED(int pin){
+	String led_s="状態表示LED";
+	if( pin == PIN_LED ) return true;
+	sensors_pin_reset("IO" + String(PIN_LED),led_s);
+	boolean ret = sensors_pin_set("IO" + String(pin),led_s);
+	if(ret){
+		pinMode(PIN_LED,OUTPUT);					// LEDを接続したポートを出力に
+		digitalWrite(PIN_LED,HIGH);
+	}else sensors_pin_reset("IO" + String(PIN_LED),led_s);
+	return ret;
 }
 
 boolean sensors_init_LCD(int mode){
