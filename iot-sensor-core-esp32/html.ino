@@ -216,9 +216,10 @@ void html_dataAttrSet(char *res_s){
 	}
 	if(server.hasArg("PIN_LED")){
 		i = server.arg("PIN_LED").toInt();
-		if( !sensors_init_LED(i) ){
+		if( !sensors_init_LED(i) || (i!=2 && i!=4 && i!=22 && i!=23) ){
 			_html_cat_res_s(res_s, "LEDの設定に失敗しました");
-		}else{
+		}else if( i != PIN_LED ){
+			PIN_LED = i;
 			snprintf(s, HTML_S_LEN_MAX,"LEDピンを[IO%d]に設定しました",i);
 			_html_cat_res_s(res_s, s);
 		}
@@ -227,11 +228,13 @@ void html_dataAttrSet(char *res_s){
 	}
 	if(server.hasArg("LED")){
 		i = server.arg("LED").toInt();
-		digitalWrite(PIN_LED,i);
-		Serial.print(" LED=");
-		Serial.println(i);
-		snprintf(s, HTML_S_LEN_MAX,"LEDを[%d]に設定しました",i);
-		_html_cat_res_s(res_s, s);
+		if( i != digitalRead(PIN_LED) ){
+			digitalWrite(PIN_LED,i);
+			Serial.print(" LED=");
+			Serial.println(i%2);
+			snprintf(s, HTML_S_LEN_MAX,"LEDを[%d]に設定しました",i%2);
+			_html_cat_res_s(res_s, s);
+		}
 	}
 	if(server.hasArg("LCD_EN")){
 		i = server.arg("LCD_EN").toInt();
@@ -660,11 +663,13 @@ void html_sensors(){
 
 void html_display(){
 	char s[HTML_INDEX_LEN_MAX];
+	char res_s[HTML_RES_LEN_MAX]="";
 	int led = digitalRead(PIN_LED);
 	
 	/////////////// ------------------------------------------------
 	Serial.println("HTML display -----------------------------------");
 	
+	html_dataAttrSet(res_s);
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
@@ -674,23 +679,28 @@ void html_display(){
 			</head>\
 			<body>\
 				<h1>%s 表示出力設定</h1>\
+					<p>%s</p>\
 				<form method=\"GET\" action=\"/display\">\
-					<p>LED　\
-					<input type=\"radio\" name=\"LED\" value=\"0\" %s>OFF\
+				<h3>LED</h3>\
+					<p><input type=\"radio\" name=\"LED\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"LED\" value=\"1\" %s>ON<br>\
-					Pin:<input type=\"radio\" name=\"PIN_LED\" value=\"2\" %s>IO2\
+					ピン=<input type=\"radio\" name=\"PIN_LED\" value=\"2\" %s>IO2\
 					<input type=\"radio\" name=\"PIN_LED\" value=\"4\" %s>IO4\
 					<input type=\"radio\" name=\"PIN_LED\" value=\"23\" %s>IO23\
 					</p>\
-					<p>I2C液晶　\
-					<input type=\"radio\" name=\"LCD_EN\" value=\"0\" %s>OFF\
+				<h3>LED制御</h3>\
+					<p>ON :<a href=\"http://%s/?LED=1\">http://%s/?LED=1</a></p>\
+					<p>OFF:<a href=\"http://%s/?LED=0\">http://%s/?LED=0</a></p>\
+				<h3>I2C液晶</h3>\
+					<p><input type=\"radio\" name=\"LCD_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"LCD_EN\" value=\"1\" %s>8x2\
 					<input type=\"radio\" name=\"LCD_EN\" value=\"2\" %s>16x2\
-					表示=<input type=\"text\" name=\"DISPLAY\" value=\"LCDﾋｮｳｼﾞbyWataru\" size=\"16\">\
 					</p>\
-					<p>表示設定　\
-					<input type=\"submit\" value=\"設定\">\
-					</p>\
+				<h3>I2C液晶制御</h3>\
+					<p>表示:<input type=\"text\" name=\"DISPLAY\" value=\"LCDﾋｮｳｼﾞbyWataru\" size=\"16\"></p>\
+					<p>Hello:<a href=\"http://%s/?DISPLAY=Hello\">http://%s/?DISPLAY=Hello</a></p>\
+				<hr>\
+				<p><input type=\"submit\" value=\"設定\"></p>\
 				</form>\
 				<hr>\
 				<form method=\"GET\" action=\"/\">\
@@ -700,9 +710,11 @@ void html_display(){
 				<p>by bokunimo.net</p>\
 			</body>\
 		</html>", html_title,
-			html_title,
+			html_title, res_s,
 				html_checked[led==0], html_checked[led==1], html_checked[PIN_LED==2], html_checked[PIN_LED==4], html_checked[PIN_LED==23],
-				html_checked[LCD_EN==0], html_checked[LCD_EN==1], html_checked[LCD_EN==2]
+				html_ip_s, html_ip_s, html_ip_s, html_ip_s,
+				html_checked[LCD_EN==0], html_checked[LCD_EN==1], html_checked[LCD_EN==2],
+				html_ip_s, html_ip_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
