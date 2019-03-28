@@ -4,11 +4,7 @@
 
 from sys import argv                    # 本プログラムの引数argvを取得する
 
-print(argv[0])                          # プログラム名を表示する
+for name in argv:                       # 引数を変数nameへ代入
+    print('Hello,', name + '!')         # 変数nameの内容を、文字列Helloに続いて表示
 
-if len(argv) == 1:                      # 取得した引数が1個(プログラム名のみ)のとき
-    print('Hello, World!')              # 文字列 Hello, World! を出力する
-
-else:                                   # そうでないとき(引数がある時)
-    for name in argv[1:]:               # 1番目以降の引数を変数nameへ代入
-        print('Hello,', name + '!')     # 変数nameの内容を、文字列Helloに続いて表示
+# for文の「argv」を「argv[1:]」にするとargv[1]以降の全引数を順次nameへ代入して繰り返す
