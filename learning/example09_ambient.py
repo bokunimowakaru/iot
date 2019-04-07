@@ -11,27 +11,35 @@ import json                                     # JSON変換ライブラリを�
 
 # 温度を取得する
 filename='/sys/class/thermal/thermal_zone0/temp'# 温度ファイル
+
 try:                                            # 例外処理の監視を開始
     fp = open(filename)                         # 温度ファイルを開く
+
 except Exception as e:                          # 例外処理発生時
     print(e)                                    # エラー内容を表示
     exit()                                      # プログラムの終了
+
 temp = float(fp.read()) / 1000                  # ファイルを読み込み1000で除算
 fp.close()                                      # ファイルを閉じる
 print('Temperature =',temp)                     # 温度を表示する
 
 # Ambientへ送信
-url = 'https://ambidata.io/api/v2/channels/'+ambient_chid+'/data'
-                                                # HTTPアクセス先を変数urlへ代入
-head = {"Content-Type":"application/json"}      # ヘッダを作成し、変数headへ代入
-body = {"writeKey" : ambient_wkey, amdient_tag : temp}  # 送信内容を変数bodyへ
-print(body)                                     # 送信内容を表示
+url_s = 'https://ambidata.io/api/v2/channels/'+ambient_chid+'/data'
+                                                # アクセス先を変数url_sへ代入
+head_dict = {'Content-Type':'application/json'} # ヘッダを変数head_dictへ
+body_dict = {'writeKey':ambient_wkey, amdient_tag:temp} # 内容を変数body_dictへ
+
+print(head_dict)                                # 送信ヘッダhead_dictを表示
+print(body_dict)                                # 送信内容body_dictを表示
+
+post = urllib.request.Request(url_s, json.dumps(body_dict).encode(), head_dict)
+                                                # POSTリクエストデータを作成
 
 try:                                            # 例外処理の監視を開始
-    post = urllib.request.Request(url, json.dumps(body).encode(), head)
     res = urllib.request.urlopen(post)          # HTTPアクセスを実行
+
 except Exception as e:                          # 例外処理発生時
-    print(e,url)                                # エラー内容と変数urlを表示
+    print(e,url_s)                              # エラー内容と変数url_sを表示
     exit()                                      # プログラムの終了
 
 res_str = res.read().decode()                   # 受信テキストを変数res_strへ

@@ -5,9 +5,9 @@
 import urllib.request                           # HTTP通信ライブラリを組み込む
 import json                                     # JSON変換ライブラリを組み込む
 
-url = 'https://bokunimo.net/iot/cq/test.json'   # HTTPアクセス先を変数urlへ代入
+url_s = 'https://bokunimo.net/iot/cq/test.json' # アクセス先を変数url_sへ代入
 
-res = urllib.request.urlopen(url)               # HTTPアクセスを実行
+res = urllib.request.urlopen(url_s)             # HTTPアクセスを実行
 res_dict = json.loads(res.read().decode())      # 受信データを変数res_dictへ代入
 
 print('title :', res_dict.get('title'))         # 項目'title'の内容を取得・表示
