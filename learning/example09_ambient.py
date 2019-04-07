@@ -6,7 +6,6 @@ ambient_chid='0000'                 # ここにAmbientで取得したチャネ�
 ambient_wkey='0123456789abcdef'     # ここにはライトキーを入力
 amdient_tag='d1'                    # データ番号d1～d8のいずれかを入力
 
-from sys import argv                            # 本プログラムの引数argvを取得
 import urllib.request                           # HTTP通信ライブラリを組み込む
 import json                                     # JSON変換ライブラリを組み込む
 
