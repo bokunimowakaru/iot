@@ -6,6 +6,7 @@ filename = '/sys/class/thermal/thermal_zone0/temp'      # 温度ファイル
 port     = 1024                                         # UDPポート番号を1024に
 device_s = 'temp._3'                                    # デバイス識別名
 intarval = 30                                           # 送信間隔（秒）
+temp_offset = 17.8                                      # CPUの温度上昇値(要調整)
 
 import socket                                           # ソケット通信ライブラリ
 from sys import argv                                    # 引数argv取得モジュール
@@ -24,7 +25,7 @@ while True:
         sleep(60)                                       # 60秒間の停止
         continue                                        # whileに戻る
 
-    temp_f = float(fp.read()) / 1000                    # 温度値tempの取得
+    temp_f = float(fp.read()) / 1000 - temp_offset      # 温度値tempの取得
     temp_i = round(temp_f)                              # 整数に変換してtemp_iへ
     fp.close()                                          # ファイルを閉じる
     print('Temperature =',temp_i,'('+str(temp_f)+')')   # 温度値を表示する
