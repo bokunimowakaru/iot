@@ -1,99 +1,102 @@
 # IoT Sensor Core ESP32 by Wataru KUNINO  
 
-ESP32-WROOM-32���W���[���ɑΉ������ėp��IoT�Z���T�@������v���O�����ł��B  
-- �X�}�[�g�t�H����p�\�R������ݒ���s�����Ƃ��o���܂��B  
-- �f�B�[�v�X���[�v�ɑΉ����Ă��܂��B  
-- �����̉��x�Z���T�AAD�ϊ���ɐڑ������Z���T�Ȃǂ̓ǂݒl�𑗐M���܂��B  
-- �P2�^�A���J�����d�r2�{��1�N�ȏ�̓��삪�\�ł�(���ӓ_�Q��)�B  
+ESP32-WROOM-32モジュールに対応した汎用のIoTセンサ機器向けプログラムです。  
+- スマートフォンやパソコンから設定を行うことが出来ます。  
+- ディープスリープに対応しています。  
+- 内蔵の温度センサ、AD変換器に接続したセンサなどの読み値を送信します。  
+- 単2型アルカリ乾電池2本で1年以上の動作が可能です(注意点参照)。  
 
-## �C���X�g�[�����@
+## インストール方法
 
-* ESP32�J���{�[�h��Raspberry Pi��USB�֐ڑ����Ă��������B  
+* 下記のコマンドでダウンロードしてください。  
+		git clone https://github.com/bokunimowakaru/iot
 
-* ���L�̃R�}���h��USB�V���A���̃f�o�C�XPath(/dev/ttyUSB*�A�u*�v�͐���)���m�F���Ă��������B  
+* ESP32開発ボードをRaspberry PiのUSBへ接続してください。  
+
+* 下記のコマンドでUSBシリアルのデバイスPath(/dev/ttyUSB*、「*」は数字)を確認してください。  
 		ls -l /dev/serial/by-id/
 
-* ���L�̃R�}���h����͂����ESP32�֏������ނ��Ƃ��o���܂�(/dev/ttyUSB0�̐����������A��L�Ŋm�F����USB�V���A���̃f�o�C�XPath�ɒu��������)�B  
+* 下記のコマンドを入力するとESP32へ書き込むことが出来ます(/dev/ttyUSB0の数字部分を、上記で確認したUSBシリアルのデバイスPathに置き換える)。  
 		cd ~/iot/iot-sensor-core-esp32/target
 		./iot-sensor-core-esp32.sh /dev/ttyUSB0
 
-## �g����[1] �u���E�U�ŃA�N�Z�X����
+## 使い方[1] ブラウザでアクセスする
 
-�{�@���N������ƁA����LAN�A�N�Z�X�|�C���g(AP)�Ƃ��ē��삵�܂��B�X�}�[�g�t�H����Wi-Fi�ݒ肩��uiot-core-esp32�v��T���āA�ڑ����Ă��������B�p�X���[�h�́upassword�v�ł��B
+本機を起動すると、無線LANアクセスポイント(AP)として動作します。スマートフォンのWi-Fi設定から「iot-core-esp32」を探して、接続してください。パスワードは「password」です。
 
-	�{�@AP�ڑ����
+	本機AP接続情報
 		SSID=iot-core-esp32  
 		PASS=password
 
-�ڑ���A�C���^�[�l�b�g�u���E�U�̃A�h���X���͗���[http://iot.local/](http://iot.local/)�܂���[http://192.168.0.1/](http://192.168.0.1/)����͂���ƁA�ݒ��ʂ��\������܂��B
+接続後、インターネットブラウザのアドレス入力欄に[http://iot.local/](http://iot.local/)または[http://192.168.0.1/](http://192.168.0.1/)を入力すると、設定画面が表示されます。
 
-	�A�N�Z�X�pURI
+	アクセス用URI
 		http://iot.local/
 		http://192.168.0.1/
 
-AP���[�h�܂���AP+STA���[�h�œ��삵�Ă���Ƃ��́A�{�@AP�֐ڑ������@��i�X�}�[�g�t�H����p�\�R���j����ݒ���s���Ă��������BSTA���[�h�̎���LAN�֐ڑ������@�킩��ݒ���s���Ă��������B
+APモードまたはAP+STAモードで動作しているときは、本機APへ接続した機器（スマートフォンやパソコン）から設定を行ってください。STAモードの時はLANへ接続した機器から設定を行ってください。
 
-## �g����[2] �Z���T�ݒ�
+## 使い方[2] センサ設定
 
-�u�Z���T�ݒ�v��ʂ��g���āA�g�p����ESP32�J���{�[�h�̑I���ƁA�{�@�ɐڑ�����Z���T�̐ݒ���s���Ă��������B
+「センサ設定」画面を使って、使用するESP32開発ボードの選択と、本機に接続するセンサの設定を行ってください。
 
-	�Z���T�ݒ�
+	センサ設定
 		http://iot.local/sensors
 
-## �g����[3] �s���z��\
+## 使い方[3] ピン配列表
 
-�u�s���z��\�v��ʂŁA�Z���T�̐ڑ�����m�F���Ă��������B
+「ピン配列表」画面で、センサの接続先を確認してください。
 
-	�s���z��̊m�F
+	ピン配列の確認
 		http://iot.local/pinout
 
-�ڑ�����m�F������A�d�����j���[����[GPIO �ċN��]�����s���Ă��������B
+接続先を確認したら、電源メニュー内の[GPIO 再起動]を実行してください。
 
 
 --------------------------------------------------------------------------------
 
-## ���ӓ_
+## 注意点
 
-### ����l�Ɋւ��钍�ӓ_
-* �{�@���瓾��ꂽ����l�͖ڈ��ł��B���茋�ʂ⍪���f�[�^�Ƃ��Ďg�p���邱�Ƃ͏o���܂���B  
-* �������x�Z���T�͌̍����傫���̂ŕ␳���K�v�ł��B���ۂ̎����Ƃ̍���␳�l�֓��͂��Ă��������B������25���ŁA�\����15���̎��́A����10������͂��Ă��������B  
-* �{�@�̉��x�㏸�ƂƂ��ɓ������x�Z���T�̑���l�͏㏸���܂��B30���ȏ�o�߂��Ă���␳���邱�ƂŁA���x�����߂邱�Ƃ��ł��܂��B  
+### 測定値に関する注意点
+* 本機から得られた測定値は目安です。測定結果や根拠データとして使用することは出来ません。  
+* 内蔵温度センサは個体差が大きいので補正が必要です。実際の室温との差を補正値へ入力してください。室温が25℃で、表示が15℃の時は、差の10℃を入力してください。  
+* 本機の温度上昇とともに内蔵温度センサの測定値は上昇します。30分以上経過してから補正することで、精度を高めることができます。  
 
-### ���d�r����Ɋւ��钍�ӓ_
-* �N������AP���[�h�œ��삵�܂��BSTA���[�h�ɔ�ׂāA�N�����ɑ����̓d�͂�v����̂ŁA�V�i�̒P2�A���J�����d�r���g�p���Ă��������B  
-* AP���[�h�ł͊�1�����x�������삵�܂���B�܂��A�d�r�c�ʂ��c�����܂ܓ��삵�Ȃ��Ȃ�܂��B
-* �g���Ȃ��Ȃ����d�r��p��(���T�C�N��)����Ƃ��́A�K���}�C�i�X�ɂ��r�j�[���e�[�v�ȂǂŐ≏���Ă��������B  
-* �����Ԃ̋쓮���s���ɂ́A[Wi-Fi �ݒ�]��[���샂�[�h]��STA���[�h�ɐݒ肵�A[�X���[�v�ݒ�]��[15��]�`[60��]�ɂ���K�v������܂��B�܂��A�����ɂ���ē�����Ԃ��傫���ω����܂��B  
+### 乾電池動作に関する注意点
+* 起動時はAPモードで動作します。STAモードに比べて、起動時に多くの電力を要するので、新品の単2アルカリ乾電池を使用してください。  
+* APモードでは丸1日程度しか動作しません。また、電池残量を残したまま動作しなくなります。
+* 使えなくなった電池を廃棄(リサイクル)するときは、必ずマイナス極をビニールテープなどで絶縁してください。  
+* 長期間の駆動を行うには、[Wi-Fi 設定]の[動作モード]をSTAモードに設定し、[スリープ設定]を[15分]～[60分]にする必要があります。また、条件によって動作期間が大きく変化します。  
 
-### �Z���T�f�o�C�X�ڑ����̒��ӓ_
-* �f�o�C�X��ڑ�����Ƃ��́A�d����؂��Ă��������B
+### センサデバイス接続時の注意点
+* デバイスを接続するときは、電源を切ってください。
 
-### �l���Z���T�̓d���Ɋւ��钍�ӓ_
-* �Ԍ����삳����Ƃ��́A�l���Z���T�̓d����3.3V�ɐڑ����Ă��������B�X���[�v����GPIO����̓d���������r�₦�܂��B
+### 人感センサの電源に関する注意点
+* 間欠動作させるときは、人感センサの電源を3.3Vに接続してください。スリープ時はGPIOからの電源供給が途絶えます。
 
-### ���x�Z���T�̕␳�ɂ���
-* �������x�Z���T��LM61�AMCP9700���g�p����Ƃ��͉��x�l�̕␳���K�v�ł��B�����Ƃ̂�����u�␳�l�v�̓��͗��֋L�����Ă��������B
+### 温度センサの補正について
+* 内蔵温度センサやLM61、MCP9700を使用するときは温度値の補正が必要です。実測とのずれを「補正値」の入力欄へ記入してください。
 
-### �Z�L�����e�B�Ɋւ��钍�ӓ_
-�����p�ɊJ�������\�t�g�E�F�A�ɂ��A���Ƃ��Ĉȉ��̃Z�L�����e�B�ɂ��Ē��ӂ��Ďg�p���Ă��������B
-* AP���[�h([AP+STA]���[�h���܂�)�̓��쒆�́A�u�g�����v�ɋL����SSID(iot-core-esp32)�ƃp�X���[�h(password)�ɂ��{�@�ւ�Wi-Fi�ڑ����\�ł��B�����͈�ʌ��J���Ă���̂ŁA�{�@��Wi-Fi�l�b�g���[�N�֐N��������A�f�[�^�T�󂷂邱�Ƃ��e�Ղȏ�Ԃł��B  
-* �{�@��AP���[�h([AP+STA]���[�h���܂�)�ɂ��Wi-Fi�l�b�g���[�N�֐N�����ꂽ�ꍇ�A�ʐM���e���T�󂳂��\��������܂��B�{�@��[STA]���[�h�ɐݒ肵�A�C���^�[�l�b�g�v���o�C�_����񋟂���Ă���(��ʓI��)���[�^�@�\�t����Wi-Fi�A�N�Z�X�|�C���g�̈Í����ʐM�@�\��p���邱�ƂŁA�N������ɂ����Ȃ�܂��B  
-* �C���^�[�l�b�g�u���E�U������͂���STA���[�h�p��SSID�ƃp�X���[�h�́A�Í��������ɖ{�@�֑��M����܂��B�{�@��Wi-Fi�l�b�g���[�N�ւ̐N�����������ꍇ�ASTA���[�h�p��SSID�ƃp�X���[�h���T�󂳂��\��������܂��BAP���[�h�ł̗��p�p�x�����炷���ƂŁA�T�󂳂�郊�X�N��ጸ���邱�Ƃ��o���܂��B  
-* (�Q�l���) �\�[�X�R�[�hiot-sensor-core-esp32.ino���́uSSID_AP�v�𖢎g�p��SSID�ɕύX���A�uPASS_AP�v��8�����ȏ�̃p�X���[�h��ݒ肷�邱�ƂŁA�{�@��Wi-Fi�l�b�g���[�N�ւ̐N�����X�N��T�󂳂�郊�X�N��ጸ���邱�Ƃ��o���܂�(�{�@��p������Ƃ��̂��Ƃ��l�����A�{�@��p��SSID�ƃp�X���[�h��ݒ肵�ĉ�����)�B  
-* �C���^�[�l�b�g�u���E�U�ɂ���ẮA�p�X���[�h�ۑ��@�\��p�X���[�h�������͋@�\�A�L���b�V��(�߂�{�^����X�V�{�^�����܂�)�ɂ��A�u���E�U�ɕێ����ꂽSSID��p�X���[�h��{�@�ȊO�ɑ��M���Ă��܂��ꍇ������܂��B�ڑ���(iot.local)�����������ǂ������m�F����ȂǁA���̃T�C�g�ւ̌둗�M�ɒ��ӂ��Ă��������B  
-* �Z���T�l�f�[�^�̑��M�ɈÍ�������Ă��Ȃ�UDP��p���Ă���̂ŁA�l�b�g���[�N�ւ̐N�����������ꍇ�ɖT�󂳂��\��������܂��BUDP���M�ݒ��[OFF]�ɂ��邱�ƂŖh�~���邱�Ƃ��o���܂��B  
-* Ambient�փf�[�^���M����Ƃ��̃C���^�[�l�b�g�ʐM�ɈÍ�������Ă��Ȃ�HTTP��p���Ă���̂ŁA���OWi-Fi�A�N�Z�X�|�C���g���g�p���Ă���Ƃ��ȂǂɁA�f�[�^��T�󂳂��\��������܂��BAmbient�ւ̑��M��[OFF]�ɂ��邱�ƂŖh�~���邱�Ƃ��o���܂��B  
-* �������쐬�����\�t�g�E�F�A��AEspressif Systems�Ђ̒񋟂���n�[�h�E�F�A��\�t�g�E�F�A�AArduino IDE�Ɋ܂܂��\�t�g�E�F�A�AWi-Fi��Bluetooth�K�i�ȂǂɐƎ㐫���������Ă���\�����l�����܂��B�Ȃ�ׂ��ŐV�̂��̂��g�p����ƂƂ��ɁA�񋟌�����̍X�V��1�N�ȏ�(�ڈ�)�ɂ킽���Ď��{����Ă��Ȃ��ꍇ�́A�g�p�̒��~���������Ă��������B  
+### セキュリティに関する注意点
+実験用に開発したソフトウェアにつき、一例として以下のセキュリティについて注意して使用してください。
+* APモード([AP+STA]モードを含む)の動作中は、「使い方」に記したSSID(iot-core-esp32)とパスワード(password)による本機へのWi-Fi接続が可能です。これらは一般公開しているので、本機のWi-Fiネットワークへ侵入したり、データ傍受することが容易な状態です。  
+* 本機のAPモード([AP+STA]モードを含む)によるWi-Fiネットワークへ侵入された場合、通信内容が傍受される可能性があります。本機を[STA]モードに設定し、インターネットプロバイダから提供されている(一般的な)ルータ機能付きのWi-Fiアクセスポイントの暗号化通信機能を用いることで、侵入されにくくなります。  
+* インターネットブラウザから入力したSTAモード用のSSIDとパスワードは、暗号化せずに本機へ送信されます。本機のWi-Fiネットワークへの侵入があった場合、STAモード用のSSIDとパスワードが傍受される可能性があります。APモードでの利用頻度を減らすことで、傍受されるリスクを低減することが出来ます。  
+* (参考情報) ソースコードiot-sensor-core-esp32.ino中の「SSID_AP」を未使用のSSIDに変更し、「PASS_AP」に8文字以上のパスワードを設定することで、本機のWi-Fiネットワークへの侵入リスクや傍受されるリスクを低減することも出来ます(本機を廃棄するときのことも考慮し、本機専用のSSIDとパスワードを設定して下さい)。  
+* インターネットブラウザによっては、パスワード保存機能やパスワード自動入力機能、キャッシュ(戻るボタンや更新ボタンを含む)により、ブラウザに保持されたSSIDやパスワードを本機以外に送信してしまう場合があります。接続先(iot.local)が正しいかどうかを確認するなど、他のサイトへの誤送信に注意してください。  
+* センサ値データの送信に暗号化されていないUDPを用いているので、ネットワークへの侵入があった場合に傍受される可能性があります。UDP送信設定を[OFF]にすることで防止することが出来ます。  
+* Ambientへデータ送信するときのインターネット通信に暗号化されていないHTTPを用いているので、公衆Wi-Fiアクセスポイントを使用しているときなどに、データを傍受される可能性があります。Ambientへの送信を[OFF]にすることで防止することが出来ます。  
+* 当方が作成したソフトウェアや、Espressif Systems社の提供するハードウェアやソフトウェア、Arduino IDEに含まれるソフトウェア、Wi-FiやBluetooth規格などに脆弱性が潜伏している可能性も考えられます。なるべく最新のものを使用するとともに、提供元からの更新が1年以上(目安)にわたって実施されていない場合は、使用の中止を検討してください。  
 
-## �����ݒ�l�ɂ���
+## 初期設定値について
 
-�d����؂�A�܂���ESP32�J���{�[�h���EN�{�^���������ƁA�S�Ă̐ݒ肪�����l�ɖ߂�܂��B�����l��ύX�������ꍇ�́A�{�t�H���_���̃\�[�X�R�[�hiot-sensor-core-esp32.ino��RTC_DATA_ATTR����n�܂�s��ύX���AArduino IDE�ŃR���p�C�����Ă��������B�Ⴆ�΁AWi-Fi STA�ڑ����SSID��SSID_STA�A�p�X���[�h��PASS_STA�Őݒ肷�邱�Ƃ��o���܂��B�������A�{�@��p������Ƃ��ɕۑ����e���O���ɗ��o���郊�X�N��A�Ӑ}���Ȃ��l�b�g���[�N�ւ̐N�����X�N�Ȃǂ��l�����܂��B
+電源を切る、またはESP32開発ボード上のENボタンを押すと、全ての設定が初期値に戻ります。初期値を変更したい場合は、本フォルダ内のソースコードiot-sensor-core-esp32.inoのRTC_DATA_ATTRから始まる行を変更し、Arduino IDEでコンパイルしてください。例えば、Wi-Fi STA接続先のSSIDはSSID_STA、パスワードはPASS_STAで設定することが出来ます。ただし、本機を廃棄するときに保存内容が外部に流出するリスクや、意図しないネットワークへの侵入リスクなどが考えられます。
 
-## ���C�Z���X(�S��)
+## ライセンス(全般)
 
-* ���C�Z���X�ɂ��Ă͊e�\�[�X���X�g�Ȃ�тɊe�t�H���_���̃t�@�C���ɋL�ڂ̒ʂ�ł��B  
-* �g�p�E�ύX�E�z�z�͉\�ł����A�����\�����c���Ă��������B  
-* �܂��A�񋟏���z�z�\�t�g�ɂ���Đ����������Ȃ��Q�ɂ��Ă��C��؁C�⏞�������܂���B  
-* ���C�Z���X�����L����Ă��Ȃ��t�@�C���ɂ��Ă��A���l�ł��B  
+* ライセンスについては各ソースリストならびに各フォルダ内のファイルに記載の通りです。  
+* 使用・変更・配布は可能ですが、権利表示を残してください。  
+* また、提供情報や配布ソフトによって生じたいかなる被害についても，一切，補償いたしません。  
+* ライセンスが明記されていないファイルについても、同様です。  
 
 	Copyright (c) 2016-2019 Wataru KUNINO <https://bokunimo.net/>  
