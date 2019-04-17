@@ -17,8 +17,8 @@ ESP32-WROOM-32モジュールに対応した汎用のIoTセンサ機器向けプ
 		ls -l /dev/serial/by-id/
 
 * 下記のコマンドを入力するとESP32へ書き込むことが出来ます(/dev/ttyUSB0の数字部分を、上記で確認したUSBシリアルのデバイスPathに置き換える)。  
-		cd ~/iot/iot-sensor-core-esp32/target
-		./iot-sensor-core-esp32.sh /dev/ttyUSB0
+		cd ~/iot/iot-sensor-core-esp32/target  
+		./iot-sensor-core-esp32.sh /dev/ttyUSB0  
 
 ## 使い方[1] ブラウザでアクセスする
 
@@ -31,8 +31,8 @@ ESP32-WROOM-32モジュールに対応した汎用のIoTセンサ機器向けプ
 接続後、インターネットブラウザのアドレス入力欄に[http://iot.local/](http://iot.local/)または[http://192.168.0.1/](http://192.168.0.1/)を入力すると、設定画面が表示されます。
 
 	アクセス用URI
-		http://iot.local/
-		http://192.168.0.1/
+		http://iot.local/  
+		http://192.168.0.1/  
 
 APモードまたはAP+STAモードで動作しているときは、本機APへ接続した機器（スマートフォンやパソコン）から設定を行ってください。STAモードの時はLANへ接続した機器から設定を行ってください。
 
