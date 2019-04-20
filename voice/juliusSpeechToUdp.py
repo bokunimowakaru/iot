@@ -9,30 +9,23 @@
 import sys
 import socket                                               # UDP送信用ライブラリ
 import subprocess
-from time import sleep
 
-julius_path_main_conf  = "~/julius/dictation-kit-v4.4/main.jconf"
-julius_path_amgmm_conf = "~/julius/dictation-kit-v4.4/am-gmm.jconf"
-julius_com = ['./juliusSpeechToUdp.sh']
-julius_com.append(julius_path_main_conf)
-julius_com.append(julius_path_amgmm_conf)
-# print('julius_com = ',julius_com)
+julius_com = ['./juliusSpeechToUdp.sh']                     # Julius起動スクリプト
 
 device = 'voice_1'                                          # UDP送信用のデバイス名
 port = 1024                                                 # UDPポート番号
 mode = 0
 
 argc = len(sys.argv)                                        # 引数の数をargcへ代入
-print('Usage: '+sys.argv[0]+' main amgmm subpro)')          # タイトル表示
-if argc == 3:                                               # 入力パラメータ数の確認
-    julius_path_main_conf = sys.argv[1]
-    julius_path_amgmm_conf = sys.argv[2]
+print('Usage: '+sys.argv[0]+' (subpro)')                    # タイトル表示
+
 if argc > 1:
     if 'SUBPRO' in sys.argv[argc - 1].upper():
         print('SUBPRO, this subprocess is called by a script')
         mode = 1
 if mode == 0:                                               # 直接、起動した場合
     print('MAINPRO, 開始')
+    print('subprocess =',julius_com[0])                     # スクリプト名を表示
     julius = subprocess.run(julius_com, shell=True)         # Juliusを開始する
     print('MAINPRO, 終了')
     sys.exit()                                              # 終了する

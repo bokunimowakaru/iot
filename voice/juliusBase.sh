@@ -1,6 +1,9 @@
 #!/bin/bash
 # coding: utf-8
 
+# Julius 起動用スクリプト
+# Copyright (c) 2019 Wataru KUNINO
+
 julius_path_main_conf="/home/pi/julius/dictation-kit-v4.4/main.jconf"
 julius_path_amgmm_conf="/home/pi/julius/dictation-kit-v4.4/am-gmm.jconf"
 julius_com="/usr/local/bin/julius"
