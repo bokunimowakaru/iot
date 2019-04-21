@@ -39,7 +39,6 @@ print('SUBPRO, 開始')
 talk('ユリス会話デモを起動しました。')
 while mode:                                                 # modeが1の時に繰返し処理
     for line in sys.stdin:                                  # 標準入力から変数lineへ
-        udp = None                                          # 送信データ用変数udpを定義
         sp = line.find(':')                                 # 変数line内の「:」を探す
         if sp < 4 or len(line) < sp + 2:                    # その位置が条件に合わない時
             continue                                        # forループの先頭に戻る
