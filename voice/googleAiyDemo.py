@@ -37,4 +37,3 @@ while True:
 
 aiy.voice.tts.say('D war, sir yoo nara',lang='en-US')       # 「では、さようなら」を回答
 board.close()                                               # Google AIYキットのGPIO開放
-exit
