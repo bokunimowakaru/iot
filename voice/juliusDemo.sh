@@ -1,11 +1,11 @@
 #!/bin/bash
 # coding: utf-8
 
-# Julius ��b�f��
-# �����u����ɂ��́v�Łu�͂��A����ɂ��́v���A
-# �����u�����C�ł����H�v�Łu�͂��A���C�ł��v���A
-# �����u���Ȃ��̖��O�́H�v�Łu���̖��O��Jurius�ł��v���A
-# �u�A�v�����I�����āv�Łu���悤�Ȃ�v�̉�b���o���܂��B
+# Julius 会話デモ
+# 音声「こんにちは」で「はい、こんにちは」を、
+# 音声「お元気ですか？」で「はい、元気です」を、
+# 音声「あなたの名前は？」で「私の名前はJuriusです」を、
+# 「アプリを終了して」で「さようなら」の会話が出来ます。
 # Copyright (c) 2019 Wataru KUNINO
 
 ./juliusBase.sh | ./juliusDemo.py SUBPROCESS
