@@ -41,6 +41,7 @@ def getNictTime():
     try:                                                    # 例外処理の監視を開始
         res = urllib.request.urlopen(url_s)                 # HTTPアクセスを実行
         res_dict = json.loads(res.read().decode())          # 受信データを変数res_dictへ代入
+        res.close()                                         # HTTPアクセスの終了
         time_f = res_dict.get('st')                         # 項目stの値をtime_fへ代入
     except Exception as e:
         print(e)                                            # エラー内容を表示

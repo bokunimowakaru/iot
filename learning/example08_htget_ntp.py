@@ -17,6 +17,7 @@ except Exception as e:                          # 例外処理発生時
     exit()                                      # プログラムの終了
 
 res_s = res.read().decode()                     # 受信テキストを変数res_sへ
+res.close()                                     # HTTPアクセスの終了
 print('Response:', res_s)                       # 変数res_sの内容を表示
 
 try:

@@ -9,6 +9,7 @@ url_s = 'https://bokunimo.net/iot/cq/test.json' # アクセス先を変数url_s�
 
 res = urllib.request.urlopen(url_s)             # HTTPアクセスを実行
 res_dict = json.loads(res.read().decode())      # 受信データを変数res_dictへ代入
+res.close()                                     # HTTPアクセスの終了
 
 print('title :', res_dict.get('title'))         # 項目'title'の内容を取得・表示
 print('descr :', res_dict.get('descr'))         # 項目'descr'の内容を取得・表示
