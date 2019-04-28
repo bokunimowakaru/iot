@@ -15,7 +15,7 @@ city_id = 270000                                # 大阪の city ID=270000
                                                 # 横浜=140010 千葉=120010
                                                 # 名古屋=230010 福岡=400010
 
-julius_com = ['./juliusBase.sh|./juliusWea.py SUBPROCESS']  # Julius起動スクリプト
+julius_com = ['./juliusBase.sh|./juliusWeath.py SUBPROCESS']# Julius起動スクリプト
 talk_com = ['./aquestalk.sh','']                            # AquesTalk起動スクリプト
 mode = 0                                                    # 通常起動:0, 従属起動:1
 
