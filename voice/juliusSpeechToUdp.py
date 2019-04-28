@@ -30,7 +30,7 @@ if mode == 0:                                               # 直接、起動し
     print('MAINPRO, 終了')
     sys.exit()                                              # 終了する
 
-# 以下は副次起動したときの処理
+# 以下は従属起動したときの処理
 
 print('SUBPRO, 開始')
 while mode:                                                 # modeが1の時に繰返し処理

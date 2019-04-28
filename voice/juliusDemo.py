@@ -12,7 +12,7 @@ import sys
 import subprocess
 julius_com = ['./juliusBase.sh|./juliusDemo.py SUBPROCESS'] # Julius起動スクリプト
 talk_com = ['./aquestalk.sh','']                            # AquesTalk起動スクリプト
-mode = 0                                                    # 通常起動:0, 副次起動:1
+mode = 0                                                    # 通常起動:0, 従属起動:1
 
 argc = len(sys.argv)                                        # 引数の数をargcへ代入
 print('Usage: '+sys.argv[0]+' (subpro)')                    # タイトル表示
@@ -20,7 +20,7 @@ print('Usage: '+sys.argv[0]+' (subpro)')                    # タイトル表示
 if argc > 1:                                                # 引数があるとき
     if 'SUBPRO' in sys.argv[argc - 1].upper():              # 引数がSUBPROの時
         print('SUBPRO, this subprocess is called by a script')
-        mode = 1                                            # 副次起動と判定
+        mode = 1                                            # 従属起動と判定
 if mode == 0:                                               # 直接、起動した場合
     print('MAINPRO, 開始')                                  # 通常起動処理の開始表示
     print('subprocess =',julius_com[0])                     # スクリプト名を表示
@@ -28,14 +28,14 @@ if mode == 0:                                               # 直接、起動し
     print('MAINPRO, 終了')                                  # 通常起動処理の終了表示
     sys.exit()                                              # プログラムを終了する
 
-# 以下は副次起動したときの処理
+# 以下は従属起動したときの処理
 
 def talk(text):                                             # 関数talkを定義
     talk_com[1] = '"' + text + '"'                          # メッセージを"で括る
     print('subprocess =',talk_com)                          # メッセージを表示
     subprocess.run(talk_com)                                # AquesTalk Piを起動する
 
-print('SUBPRO, 開始')                                       # 副次起動処理の開始
+print('SUBPRO, 開始')                                       # 従属起動処理の開始
 talk('ユリス会話デモを起動しました。')                      # 起動メッセージの出力
 while mode:                                                 # modeが1の時に繰返し処理
     for line in sys.stdin:                                  # 標準入力から変数lineへ
@@ -60,6 +60,6 @@ while mode:                                                 # modeが1の時に�
                 talk('私の名前はユリスです')                # 「私の名前は～」を回答
             if 'さようなら' in voice or 'さよなら' in voice :
                 talk('終了するときは、アプリを終了してと話してください')
-print('SUBPRO, 終了')                                       # 副次起動処理の終了表示
+print('SUBPRO, 終了')                                       # 従属起動処理の終了表示
 talk('はい終了します。さようならと言ってください。では、さようなら。')
 sys.exit()
