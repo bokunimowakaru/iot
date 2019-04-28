@@ -39,7 +39,7 @@ def talk(text):                                             # 関数talkを定�
     print('subprocess =',talk_com)                          # メッセージを表示
     subprocess.run(talk_com)                                # AquesTalk Piを起動する
 
-def getKnowledge(word):
+def getKnowledge(keyword):
     url_s = 'http://ja.wikipedia.org/w/api.php?'
     url_s += 'format=json' + '&'
     url_s += 'action=query' + '&'
@@ -47,7 +47,7 @@ def getKnowledge(word):
     url_s += 'exintro' + '&'
     url_s += 'explaintext' + '&'
     url_s += 'titles='
-    url_s += urllib.parse.quote(word)
+    url_s += urllib.parse.quote(keyword)
     try:                                                    # 例外処理の監視を開始
         res = urllib.request.urlopen(url_s)                 # HTTPアクセスを実行
         res_dict = json.loads(res.read().decode())          # 受信データを変数res_dictへ代入
@@ -79,18 +79,25 @@ while mode:                                                 # modeが1の時に�
             if '終了' in voice:                             # 音声「終了」を認識したとき
                 mode = 0                                    # 変数modeに0を代入
                 break                                       # forループを抜ける
-            if 'ネット で 'in voice\
-            and ' を 調べ'in voice:                         # 音声「ネットで…を検索」
+            if 'ネット で 'in voice:                        # 音声「ネットで…」
+                ep = 0
                 sp = voice.find('ネット で ')
-                ep = voice.find(' を 調べ')
-                if ' の 意味 ' in voice:
-                    ep = voice.find(' の 意味 ')
-                if sp < 0 or ep <= sp:
-                    break
-                else:
-                    words_list = voice[sp+6:ep].split(" ")
-                    for word in words_list:
-                        talk( word + 'の意味は' + getKnowledge(word) + 'です。')
+                if ' を 調べ'in voice:
+                    ep = voice.find(' を 調べ')
+                if ' を 検索'in voice:
+                    ep = voice.find(' を 検索')
+                if ep > 0:
+                    if ' の 意味 ' in voice:
+                        ep = voice.find(' の 意味 ')
+                    if sp < 0 or ep <= sp:
+                        break
+                    else:
+                        words_list = voice[sp+6:ep].split(" ")
+                        keyword = ''
+                        for word in words_list:
+                            if len(word) > 1:
+                                keyword += word
+                        talk( keyword + 'の意味は' + getKnowledge(keyword) + 'です。')
 print('SUBPRO, 終了')                                       # 従属起動処理の終了表示
 talk('はい終了します。さようならと言ってください。では、さようなら。')
 sys.exit()
