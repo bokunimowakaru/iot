@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-# Julius 百科事典
-# 「インターネットで●●を調べて」でWikipediaから情報を取得して、回答します。
-# 「インターネットで『パイソン』の意味を調べて」
+# Julius 天気情報
+# 「今日の天気は？」「天気を調べて」で天気を回答します。
 # Copyright (c) 2019 Wataru KUNINO
 
 import urllib.request                           # HTTP通信ライブラリを組み込む
-import urllib.parse
 import json                                     # JSON変換ライブラリを組み込む
 import sys
 import subprocess
 
-julius_com = ['./juliusBase.sh|./juliusWikip.py SUBPROCESS']# Julius起動スクリプト
+city_id = 270000                                # 大阪の city ID=270000
+                                                # 東京=130010 京都=260010
+                                                # 横浜=140010 千葉=120010
+                                                # 名古屋=230010 福岡=400010
+
+julius_com = ['./juliusBase.sh|./juliusWea.py SUBPROCESS']  # Julius起動スクリプト
 talk_com = ['./aquestalk.sh','']                            # AquesTalk起動スクリプト
 mode = 0                                                    # 通常起動:0, 従属起動:1
 
@@ -37,31 +40,21 @@ def talk(text):                                             # 関数talkを定�
     print('subprocess =',talk_com)                          # メッセージを表示
     subprocess.run(talk_com)                                # AquesTalk Piを起動する
 
-def getKnowledge(keyword):
-    url_s = 'http://ja.wikipedia.org/w/api.php?'
-    url_s += 'format=json' + '&'
-    url_s += 'action=query' + '&'
-    url_s += 'prop=extracts' + '&'
-    url_s += 'exintro' + '&'
-    url_s += 'explaintext' + '&'
-    url_s += 'titles='
-    url_s += urllib.parse.quote(keyword)
+def getWeather():
+    url_s = 'http://weather.livedoor.com/forecast/webservice/json/v1?city='
+    url_s += str(city_id)
     try:                                                    # 例外処理の監視を開始
         res = urllib.request.urlopen(url_s)                 # HTTPアクセスを実行
         res_dict = json.loads(res.read().decode())          # 受信データを変数res_dictへ代入
         res.close()                                         # HTTPアクセスの終了
-        pages_dict = res_dict['query']['pages']
-        pageid = list(pages_dict.keys())
-        extract = pages_dict[pageid[0]]['extract']
+        telop = res_dict['forecasts'][0]['telop']
     except Exception as e:
         print(e)                                            # エラー内容を表示
         return 'エラー'                                     # エラーを回答
-    if extract != '':                                       # 内容が空で無い時
-        return extract                                      # 内容を回答
-    return '不明'                                           # NICT時間を応答
+    return telop                                            # 天気を回答
 
 print('SUBPRO, 開始')                                       # 従属起動処理の開始
-talk('ユリス百科事典を起動しました。')                      # 起動メッセージの出力
+talk('ユリス天気情報を起動しました。')                      # 起動メッセージの出力
 while mode:                                                 # modeが1の時に繰返し処理
     for line in sys.stdin:                                  # 標準入力から変数lineへ
         sp = line.find(':')                                 # 変数line内の「:」を探す
@@ -77,25 +70,8 @@ while mode:                                                 # modeが1の時に�
             if '終了' in voice:                             # 音声「終了」を認識したとき
                 mode = 0                                    # 変数modeに0を代入
                 break                                       # forループを抜ける
-            if 'ネット で 'in voice:                        # 音声「ネットで…」
-                ep = 0
-                sp = voice.find('ネット で ')
-                if ' を 調べ'in voice:
-                    ep = voice.find(' を 調べ')
-                if ' を 検索'in voice:
-                    ep = voice.find(' を 検索')
-                if ep > 0:
-                    if ' の 意味 ' in voice:
-                        ep = voice.find(' の 意味 ')
-                    if sp < 0 or ep <= sp:
-                        break
-                    else:
-                        words_list = voice[sp+6:ep].split(" ")
-                        keyword = ''
-                        for word in words_list:
-                            if len(word) > 1:
-                                keyword += word
-                        talk( keyword + 'の意味は' + getKnowledge(keyword) + 'です。')
+            if '天気'in voice:                              # 音声「天気」を認識したとき
+                talk( '今日の天気は' + getWeather() + 'です。')
 print('SUBPRO, 終了')                                       # 従属起動処理の終了表示
 talk('はい終了します。さようならと言ってください。では、さようなら。')
 sys.exit()
