@@ -10,7 +10,7 @@ import sys
 import socket                                               # UDP送信用ライブラリ
 import subprocess
 
-julius_com = ['./juliusSpeechToUdp.sh']                     # Julius起動スクリプト
+julius_com = ['./juliusBase.sh|./juliusSpeechToUdp.py SUBPROCESS']
 
 device = 'voice_1'                                          # UDP送信用のデバイス名
 port = 1024                                                 # UDPポート番号
@@ -26,11 +26,12 @@ if argc > 1:
 if mode == 0:                                               # 直接、起動した場合
     print('MAINPRO, 開始')
     print('subprocess =',julius_com[0])                     # スクリプト名を表示
-    julius = subprocess.run(julius_com, shell=True)         # Juliusを開始する
+    subprocess.run(julius_com,shell=True,stdin=subprocess.PIPE) # Juliusを開始する
     print('MAINPRO, 終了')
     sys.exit()                                              # 終了する
 
-# 以下は juliusSpeechToUdp.sh から呼び出された時に実行する
+# 以下は副次起動したときの処理
+
 print('SUBPRO, 開始')
 while mode:                                                 # modeが1の時に繰返し処理
     for line in sys.stdin:                                  # 標準入力から変数lineへ
@@ -63,5 +64,5 @@ while mode:                                                 # modeが1の時に�
                 sock.sendto(udp,('255.255.255.255',port))           # UDP送信
                 sock.close()                                        # ソケットの切断
 print('SUBPRO, 終了')
-print('さようなら') 
+print('はい終了します。さようならと言ってください。では、さようなら。') 
 sys.exit()

@@ -10,7 +10,7 @@
 
 import sys
 import subprocess
-julius_com = ['./juliusDemo.sh']                            # Julius起動スクリプト
+julius_com = ['./juliusBase.sh|./juliusDemo.py SUBPROCESS'] # Julius起動スクリプト
 talk_com = ['./aquestalk.sh','']                            # AquesTalk起動スクリプト
 mode = 0                                                    # 通常起動:0, 副次起動:1
 
@@ -24,11 +24,11 @@ if argc > 1:                                                # 引数があると
 if mode == 0:                                               # 直接、起動した場合
     print('MAINPRO, 開始')                                  # 通常起動処理の開始表示
     print('subprocess =',julius_com[0])                     # スクリプト名を表示
-    julius = subprocess.run(julius_com, shell=True)         # Juliusを開始する
+    subprocess.run(julius_com,shell=True,stdin=subprocess.PIPE) # Juliusを開始する
     print('MAINPRO, 終了')                                  # 通常起動処理の終了表示
     sys.exit()                                              # プログラムを終了する
 
-# 以下は juliusSpeechToUdp.sh から呼び出された時に実行する
+# 以下は副次起動したときの処理
 
 def talk(text):                                             # 関数talkを定義
     talk_com[1] = '"' + text + '"'                          # メッセージを"で括る
@@ -61,5 +61,5 @@ while mode:                                                 # modeが1の時に�
             if 'さようなら' in voice or 'さよなら' in voice :
                 talk('終了するときは、アプリを終了してと話してください')
 print('SUBPRO, 終了')                                       # 副次起動処理の終了表示
-talk('ではさようなら')
+talk('はい終了します。さようならと言ってください。では、さようなら。')
 sys.exit()

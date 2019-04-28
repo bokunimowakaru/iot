@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-# Julius 音声時計
-# 音声「今何時？」でインターネットから時刻を取得して、回答します。
+# Julius 基本モジュール
+# 音声「こんにちは」で「はい、こんにちは」を、
+# 音声「お元気ですか？」で「はい、元気です」を、
+# 音声「あなたの名前は？」で「私の名前はJuriusです」を、
+# 「アプリを終了して」で「さようなら」を出力します。
 # Copyright (c) 2019 Wataru KUNINO
 
-import urllib.request                           # HTTP通信ライブラリを組み込む
-import json                                     # JSON変換ライブラリを組み込む
-import datetime                                 # 日時変換ライブラリを組み込む
 import sys
 import subprocess
-
-url_s = 'https://ntp-a1.nict.go.jp/cgi-bin/json'            # NICTアクセス先
-julius_com = ['./juliusBase.sh|./juliusClock.py SUBPROCESS']# Julius起動スクリプト
-talk_com = ['./aquestalk.sh','']                            # AquesTalk起動スクリプト
+julius_com = ['./juliusBase.sh|./juliusBase.py SUBPROCESS'] # Julius起動スクリプト
 mode = 0                                                    # 通常起動:0, 副次起動:1
 
 argc = len(sys.argv)                                        # 引数の数をargcへ代入
@@ -32,27 +29,8 @@ if mode == 0:                                               # 直接、起動し
 
 # 以下は副次起動したときの処理
 
-def talk(text):                                             # 関数talkを定義
-    talk_com[1] = '"' + text + '"'                          # メッセージを"で括る
-    print('subprocess =',talk_com)                          # メッセージを表示
-    subprocess.run(talk_com)                                # AquesTalk Piを起動する
-
-def getNictTime():
-    try:                                                    # 例外処理の監視を開始
-        res = urllib.request.urlopen(url_s)                 # HTTPアクセスを実行
-        res_dict = json.loads(res.read().decode())          # 受信データを変数res_dictへ代入
-        res.close()                                         # HTTPアクセスの終了
-        time_f = res_dict.get('st')                         # 項目stの値をtime_fへ代入
-    except Exception as e:
-        print(e)                                            # エラー内容を表示
-        return datetime.datetime.now()                      # 内蔵時計の値を応答
-    print('time_f =', time_f)                               # time_fの内容を表示
-    time = datetime.datetime.fromtimestamp(time_f)          # 日時形式に変換
-    print('time =', time)                                   # 日時を表示
-    return time                                             # NICT時間を応答
-
 print('SUBPRO, 開始')                                       # 副次起動処理の開始
-talk('ユリス音声時計を起動しました。')                      # 起動メッセージの出力
+print('Julius 基本モジュールを起動しました。')              # 起動メッセージの出力
 while mode:                                                 # modeが1の時に繰返し処理
     for line in sys.stdin:                                  # 標準入力から変数lineへ
         sp = line.find(':')                                 # 変数line内の「:」を探す
@@ -68,13 +46,14 @@ while mode:                                                 # modeが1の時に�
             if '終了' in voice:                             # 音声「終了」を認識したとき
                 mode = 0                                    # 変数modeに0を代入
                 break                                       # forループを抜ける
-            if '何 時' in voice:                            # 音声「何 時」認識時
-                time = getNictTime()                        # NICTから日時を取得
-                print('time =', time)                       # timeの内容を表示
-                talk( str(time.hour) + '時' + str(time.minute) + '分です' )
-            if '今日' in voice or '日付' in voice:          # 音声「今日」または「日付」
-                time = getNictTime()                        # NICTから日時を取得
-                talk( str(time.month) + '月' + str(time.day) + '日です' )
+            if 'こんにちは' in voice:                       # 音声「こんにちは」認識時
+                print('はいこんにちは')                     # 「はい、こんにちは」を回答
+            if '元気' in voice:                             # 音声「元気」認識時
+                print('はい元気です')                       # 「はい、元気です」を回答
+            if '名前' in voice:                             # 音声「元気」認識時
+                print('私の名前はユリスです')               # 「私の名前は～」を回答
+            if 'さようなら' in voice or 'さよなら' in voice :
+                print('終了するときは、アプリを終了してと話してください')
 print('SUBPRO, 終了')                                       # 副次起動処理の終了表示
-talk('はい終了します。さようならと言ってください。では、さようなら。')
+print('終了します。さようならと言ってください。ではさようなら。')
 sys.exit()
