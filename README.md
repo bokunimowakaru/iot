@@ -1,2 +1,2 @@
-# �{�N�ɂ��킩��IoT
-	<https://bokunimo.net/>
+# ボクにもわかるIoT
+<https://bokunimo.net/>
