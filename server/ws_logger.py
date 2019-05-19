@@ -6,7 +6,7 @@
 ################################################################################
 # 下記のライブラリが必要です
 # pip3 install websocket-client
-    '''
+'''
     Name: websocket-client
     Version: 0.56.0
     Summary: WebSocket client for Python. hybi13 is supported.
@@ -16,7 +16,7 @@
     License: BSD
     Location: /home/pi/.local/lib/python3.5/site-packages
     Requires: six
-    '''
+'''
 
 import sys
 import websocket

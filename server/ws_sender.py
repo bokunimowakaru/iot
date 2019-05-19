@@ -27,10 +27,12 @@ module_id = 'u00000000000'
 module_ch = 1
 
 argc = len(sys.argv)                                    # 引数の数をargcへ代入
-print('WebSocket Sender (usage:',sys.argv[0],'talken)') # タイトル表示
+print('WebSocket Sender (usage:',sys.argv[0],'talken id)') # タイトル表示
 
-if argc == 2:                                           # 入力パラメータ数の確認
+if argc >= 2:                                           # 入力パラメータ数の確認
     talken = sys.argv[1]                                # トークンを設定
+if argc >= 3:                                           # 入力パラメータ数の確認
+    module_id = sys.argv[2]                             # IDを設定
 
 url += talken                                           # トークンを連結
 sock = websocket.create_connection(url)                 # ソケットを作成
