@@ -36,11 +36,7 @@ print('Listening,',url)                                 # URL表示
 sock = websocket.create_connection(url)                 # ソケットを作成
 while sock:                                             # 作成に成功したとき
     payload=sock.recv()                                 # WebSocketを取得
-    str=''                                              # 表示用の文字列変数str
-    for c in payload:                                   # WebSocket内
-        if ord(c) >= ord(' '):                          # 表示可能文字
-            str += c                                    # 文字列strへ追加
     date=datetime.datetime.today()                      # 日付を取得
     print(date.strftime('%Y/%m/%d %H:%M'), end='')      # 日付を出力
-    print(', '+str)                                     # 受信データを出力
+    print(', '+payload)                                 # 受信データを出力
 sock.close()                                            # ソケットの切断
