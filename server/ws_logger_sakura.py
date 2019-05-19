@@ -26,7 +26,6 @@ import json                                     # JSON変換ライブラリを�
 
 url = 'wss://api.sakura.io/ws/v1/'
 talken = '00000000-0000-0000-0000-000000000000'         # sakura.ioのTalkenを記入
-buf_n= 128                                              # 受信バッファ容量(バイト)
 argc = len(sys.argv)                                    # 引数の数をargcへ代入
 print('WebSocket Logger (usage:',sys.argv[0],'talken)') # タイトル表示
 keepalive = 0
