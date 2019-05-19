@@ -31,7 +31,7 @@ print('WebSocket Logger (usage:',sys.argv[0],'talken)') # タイトル表示
 if argc == 2:                                           # 入力パラメータ数の確認
     talken = sys.argv[1]                                # トークンを設定
 
-url += talken
+url += talken                                           # トークンを連結
 print('Listening,',url)                                 # URL表示
 sock = websocket.create_connection(url)                 # ソケットを作成
 while sock:                                             # 作成に成功したとき
