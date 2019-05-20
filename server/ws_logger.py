@@ -23,14 +23,14 @@ import websocket
 import datetime
 
 url = 'wss://api.sakura.io/ws/v1/'
-talken = '00000000-0000-0000-0000-000000000000'         # sakura.ioのTalkenを記入
+token = '00000000-0000-0000-0000-000000000000'         # sakura.ioのtokenを記入
 argc = len(sys.argv)                                    # 引数の数をargcへ代入
-print('WebSocket Logger (usage:',sys.argv[0],'talken)') # タイトル表示
+print('WebSocket Logger (usage:',sys.argv[0],'token)') # タイトル表示
 
 if argc == 2:                                           # 入力パラメータ数の確認
-    talken = sys.argv[1]                                # トークンを設定
+    token = sys.argv[1]                                # トークンを設定
 
-url += talken                                           # トークンを連結
+url += token                                           # トークンを連結
 print('Listening,',url)                                 # URL表示
 sock = websocket.create_connection(url)                 # ソケットを作成
 while sock:                                             # 作成に成功したとき
