@@ -28,7 +28,6 @@ url = 'wss://api.sakura.io/ws/v1/'
 token = '00000000-0000-0000-0000-000000000000'          # sakura.ioのtokenを記入
 argc = len(sys.argv)                                    # 引数の数をargcへ代入
 print('WebSocket Logger (usage:',sys.argv[0],'token)')  # タイトル表示
-keepalive = 0
 
 if argc >= 2:                                           # 入力パラメータ数の確認
     token = sys.argv[1]                                 # トークンを設定
@@ -40,6 +39,7 @@ try:
 except Exception as e:                                  # 例外処理発生時
     print(e)                                            # エラー内容を表示
     exit()                                              # プログラムの終了
+print('CONNECTED')
 while sock:                                             # 作成に成功したとき
     res=sock.recv()                                     # WebSocketを取得
     date=datetime.datetime.today()                      # 日付を取得
@@ -48,9 +48,6 @@ while sock:                                             # 作成に成功した�
     res_dict = json.loads(res)                          # 辞書型の変数res_dictへ
     res_type = res_dict.get('type')                     # res_dict内のtypeを取得
     if res_type == 'keepalive':                         # typeがkeepaliveのとき
-        if keepalive == 0:
-            print('CONNECTED')
-            keepalive=1
         continue
     if res_type != 'channels':                          # typeがchannelsでないとき
         continue
