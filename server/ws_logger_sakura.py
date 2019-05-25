@@ -25,17 +25,21 @@ import json                                     # JSON変換ライブラリを�
 
 
 url = 'wss://api.sakura.io/ws/v1/'
-token = '00000000-0000-0000-0000-000000000000'         # sakura.ioのtokenを記入
+token = '00000000-0000-0000-0000-000000000000'          # sakura.ioのtokenを記入
 argc = len(sys.argv)                                    # 引数の数をargcへ代入
-print('WebSocket Logger (usage:',sys.argv[0],'token)') # タイトル表示
+print('WebSocket Logger (usage:',sys.argv[0],'token)')  # タイトル表示
 keepalive = 0
 
-if argc == 2:                                           # 入力パラメータ数の確認
-    token = sys.argv[1]                                # トークンを設定
+if argc >= 2:                                           # 入力パラメータ数の確認
+    token = sys.argv[1]                                 # トークンを設定
 
-url += token                                           # トークンを連結
+url += token                                            # トークンを連結
 print('Listening,',url)                                 # URL表示
-sock = websocket.create_connection(url)                 # ソケットを作成
+try:
+    sock = websocket.create_connection(url)             # ソケットを作成
+except Exception as e:                                  # 例外処理発生時
+    print(e)                                            # エラー内容を表示
+    exit()                                              # プログラムの終了
 while sock:                                             # 作成に成功したとき
     res=sock.recv()                                     # WebSocketを取得
     date=datetime.datetime.today()                      # 日付を取得
@@ -59,7 +63,8 @@ while sock:                                             # 作成に成功した�
         data_ch   = data['channel']
         data_time  = data['datetime']
         data_type_s= 'Unknown'
-        if data_type.lower() == 'i':
+        data_value = None
+        if data_type.lower() == 'l' or data_type.lower() == 'i':
             data_type_s= 'Integer'
             data_value = data['value']
         if data_type == 'b':

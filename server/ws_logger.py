@@ -23,18 +23,22 @@ import websocket
 import datetime
 
 url = 'wss://api.sakura.io/ws/v1/'
-token = '00000000-0000-0000-0000-000000000000'         # sakura.ioのtokenを記入
+token = '00000000-0000-0000-0000-000000000000'          # sakura.ioのtokenを記入
 argc = len(sys.argv)                                    # 引数の数をargcへ代入
-print('WebSocket Logger (usage:',sys.argv[0],'token)') # タイトル表示
+print('WebSocket Logger (usage:',sys.argv[0],'token)')  # タイトル表示
 
-if argc == 2:                                           # 入力パラメータ数の確認
-    token = sys.argv[1]                                # トークンを設定
+if argc >= 2:                                           # 入力パラメータ数の確認
+    token = sys.argv[1]                                 # トークンを設定
 
-url += token                                           # トークンを連結
+url += token                                            # トークンを連結
 print('Listening,',url)                                 # URL表示
-sock = websocket.create_connection(url)                 # ソケットを作成
+try:
+    sock = websocket.create_connection(url)             # ソケットを作成
+except Exception as e:                                  # 例外処理発生時
+    print(e)                                            # エラー内容を表示
+    exit()                                              # プログラムの終了
 while sock:                                             # 作成に成功したとき
-    payload=sock.recv()                                 # WebSocketを取得
+    payload = sock.recv()                               # WebSocketを取得
     date=datetime.datetime.today()                      # 日付を取得
     print(date.strftime('%Y/%m/%d %H:%M'), end='')      # 日付を出力
     print(', '+payload)                                 # 受信データを出力
