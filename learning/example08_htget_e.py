@@ -17,9 +17,9 @@ res_s = res.read().decode()                     # 受信テキストを変数res
 res.close()                                     # HTTPアクセスの終了
 print('Response:', res_s)                       # 変数res_sの内容を表示
 
-try:
+try:                                            # 例外処理の監視を開始
     res_dict = json.loads(res_s)                # 辞書型の変数res_dictへ代入
-except Exception as e:
+except Exception as e:                          # 例外処理発生時
     print(e)                                    # エラー内容を表示
     exit()                                      # プログラムの終了
 
