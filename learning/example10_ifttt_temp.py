@@ -52,5 +52,5 @@ while True:                                         # 永久ループ
     res_str = res.read().decode()                   # 受信テキストを変数res_strへ
     res.close()                                     # HTTPアクセスの終了
     print('Response:', res_str)                     # 変数res_strの内容を表示
-    sleep(5)                                        # プログラムの一時停止(5秒)
+    sleep(60)                                       # プログラムの一時停止(60秒)
     continue                                        # whileの先頭に戻る
