@@ -7,7 +7,6 @@ ifttt_event='notify'                                        # イベント名を
 
 from sys import argv                                # 本プログラムの引数argvを取得
 from time import sleep                              # sleepコマンドを組み込む
-
 import urllib.request                               # HTTP通信ライブラリを組み込む
 import json                                         # JSON変換ライブラリを組み込む
 
