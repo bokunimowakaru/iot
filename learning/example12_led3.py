@@ -3,8 +3,8 @@
 # Example 12 カラー Lチカ
 
 port_R = 17                             # 赤色LED用 GPIO ポート番号
-port_G = 22                             # 緑色LED用 GPIO ポート番号
-port_B = 27                             # 青色LED用 GPIO ポート番号
+port_G = 27                             # 緑色LED用 GPIO ポート番号
+port_B = 22                             # 青色LED用 GPIO ポート番号
 
 ports = [port_R, port_G, port_B]
 colors= ['消灯','赤色','緑色','黄色','青色','赤紫色','藍緑色','白色']
