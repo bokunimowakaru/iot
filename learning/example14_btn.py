@@ -2,7 +2,7 @@
 # coding: utf-8
 # Example 14 ボタン
 
-port = 4                                # GPIO ポート番号
+port = 26                               # GPIO ポート番号
 
 from RPi import GPIO                    # ライブラリRPi内のGPIOモジュールの取得
 from time import sleep                  # スリープ実行モジュールの取得
@@ -12,7 +12,7 @@ print(argv[0])                          # プログラム名を表示する
 if len(argv) >= 2:                      # 引数があるとき
     port = int(argv[1])                 # 整数としてportへ代入
 GPIO.setmode(GPIO.BCM)                  # ポート番号の指定方法の設定
-GPIO.setup(port, GPIO.IN)               # ポート番号portのGPIOを入力に設定
+GPIO.setup(port, GPIO.IN, pull_up_down=GPIO.PUD_UP) # GPIO 26 を入力に設定
 
 try:                                    # キー割り込みの監視を開始
     while True:                         # 繰り返し処理

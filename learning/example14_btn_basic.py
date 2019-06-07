@@ -2,7 +2,7 @@
 # coding: utf-8
 # Example 14 ボタン BASIC
 
-port = 4                                # GPIO ポート番号
+port = 26                               # GPIO ポート番号
 b = 0                                   # GPIO 出力値
 
 from RPi import GPIO                    # ライブラリRPi内のGPIOモジュールの取得
@@ -10,7 +10,7 @@ from time import sleep                  # スリープ実行モジュールの�
 
 GPIO.setmode(GPIO.BCM)                  # ポート番号の指定方法の設定
 GPIO.setwarnings(False)                 # ポート使用中などの警告表示を無効に
-GPIO.setup(port, GPIO.IN)               # ポート番号portのGPIOを入力に設定
+GPIO.setup(port, GPIO.IN, pull_up_down=GPIO.PUD_UP) # GPIO 26 を入力に設定
 
 while True:                             # 繰り返し処理
     b = GPIO.input(port)                # GPIO入力値を変数bへ代入
