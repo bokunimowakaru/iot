@@ -37,7 +37,7 @@ while True:                                 # 繰り返し処理
     udp_bytes = (udp_s + '\n').encode()                 # バイト列に変換
 
     try:                                                # 作成部
-        sock.sendto(udp_bytes,('255.255.255.255',port)) # UDPブロードキャスト送信
+        sock.sendto(udp_bytes,('255.255.255.255',1024)) # UDPブロードキャスト送信
     except Exception as e:                              # 例外処理発生時
         print(e)                                        # エラー内容を表示
 
