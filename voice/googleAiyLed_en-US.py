@@ -65,4 +65,4 @@ while True:
         sock.sendto(udp,('255.255.255.255',port))           # UDPブロードキャスト送信
         sock.close()                                        # ソケットの切断
 board.close()                                               # Google AIYキットのGPIO開放
-exit
+exit()

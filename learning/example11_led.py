@@ -24,4 +24,4 @@ try:                                    # キー割り込みの監視を開始
 except KeyboardInterrupt:               # キー割り込み発生時
     print('\nKeyboardInterrupt')        # キーボード割り込み表示
     GPIO.cleanup(port)                  # GPIOを未使用状態に戻す
-    exit
+    exit()

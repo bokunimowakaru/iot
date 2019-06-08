@@ -64,7 +64,7 @@ while sock:                                             # 作成に成功した�
                 + s\
                 + '"}]}'
             print(payload)
-            exit
+            exit()
 
         json_s = '{"type":"channels","module":"'\
             + module_id\
