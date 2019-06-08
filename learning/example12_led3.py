@@ -11,7 +11,6 @@ colors= ['消灯','赤色','緑色','黄色','青色','赤紫色','藍緑色','�
 color = colors.index('白色')            # 初期カラー番号の取得（白色=7）
 
 from RPi import GPIO                    # ライブラリRPi内のGPIOモジュール取得
-from time import sleep                  # スリープ実行モジュールの取得
 from sys import argv                    # 本プログラムの引数argvを取得する
 
 print(argv[0])                          # プログラム名を表示する

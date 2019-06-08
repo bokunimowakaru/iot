@@ -3,19 +3,14 @@
 # Example 15 Raspberry Piを使ったIoT 温度計
 
 filename = '/sys/class/thermal/thermal_zone0/temp'      # 温度ファイル
-port     = 1024                                         # UDPポート番号を1024に
+udp_to = '255.255.255.255'                              # UDPブロードキャスト
+udp_port = 1024                                         # UDPポート番号
 device_s = 'temp._3'                                    # デバイス識別名
 intarval = 30                                           # 送信間隔（秒）
 temp_offset = 17.8                                      # CPUの温度上昇値(要調整)
 
 import socket                                           # ソケット通信ライブラリ
-from sys import argv                                    # 引数argv取得モジュール
 from time import sleep                                  # スリープ実行モジュール
-
-if len(argv) == 2:                                      # 入力パラメータ数の確認
-    i = int(argv[1])                                    # 整数にしてiへ代入
-    if i > 0 and i < 65536:                             # ポート1～65535の時
-        port = i                                        # 引数1をUDPポート番号に
 
 while True:
     try:                                                # 例外処理の監視を開始
@@ -38,7 +33,7 @@ while True:
     udp_bytes = (udp_s + '\n').encode()                 # バイト列に変換
 
     try:                                                # 作成部
-        sock.sendto(udp_bytes,('255.255.255.255',port)) # UDPブロードキャスト送信
+        sock.sendto(udp_bytes,(udp_to,udp_port))        # UDPブロードキャスト送信
 
     except Exception as e:                              # 例外処理発生時
         print(e)                                        # エラー内容を表示

@@ -4,15 +4,15 @@
 
 port = 26                               # GPIO ポート番号
 
-from RPi import GPIO                    # ライブラリRPi内のGPIOモジュールの取得
+from RPi import GPIO                    # GPIOモジュールの取得
 from time import sleep                  # スリープ実行モジュールの取得
-from sys import argv                    # 本プログラムの引数argvを取得する
+from sys import argv                    # 本プログラムの引数argvを取得
 
 print(argv[0])                          # プログラム名を表示する
 if len(argv) >= 2:                      # 引数があるとき
     port = int(argv[1])                 # 整数としてportへ代入
 GPIO.setmode(GPIO.BCM)                  # ポート番号の指定方法の設定
-GPIO.setup(port, GPIO.IN, pull_up_down=GPIO.PUD_UP) # GPIO 26 を入力に設定
+GPIO.setup(port, GPIO.IN, pull_up_down=GPIO.PUD_UP) # GPIO 26 を入力に
 
 try:                                    # キー割り込みの監視を開始
     while True:                         # 繰り返し処理
@@ -22,4 +22,4 @@ try:                                    # キー割り込みの監視を開始
 except KeyboardInterrupt:               # キー割り込み発生時
     print('\nKeyboardInterrupt')        # キーボード割り込み表示
     GPIO.cleanup(port)                  # GPIOを未使用状態に戻す
-    exit()
+    exit()                              # プログラムの終了
