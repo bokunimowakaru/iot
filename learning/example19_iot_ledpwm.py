@@ -20,8 +20,8 @@ def wsgi_app(environ, start_response):          # HTTPアクセス受信時の�
     query = environ.get('QUERY_STRING')         # 変数queryにHTTPクエリを代入
     keys = ['R=','G=','B=']                     # Query内の検索キーをkeysへ代入
     for i in range( len(keys) ):                # 検索キーのindexを変数iへ
-        sp = query.find(keys[i])                # 変数query内の「=」を探す
-        if sp >= 0 and sp + 2 < len(query):     # 「=」の発見位置が有効範囲内
+        sp = query.find(keys[i])                # 変数query内を検索する
+        if sp >= 0 and sp + 2 < len(query):     # 発見位置が有効範囲内
             if query[sp+2].isdigit():           # 取得値が1桁の数値の時
                 color[i] = int( query[sp+2] )   # 取得値(数値)を変数colorへ
                 color[i] %= 10                  # 輝度数(10段階)の0～9に正規化
