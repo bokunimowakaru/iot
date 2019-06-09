@@ -19,15 +19,16 @@ def wsgi_app(environ, start_response):          # HTTPアクセス受信時の�
     query = environ.get('QUERY_STRING')         # 変数queryにHTTPクエリを代入
     sp = query.find('=')                        # 変数query内の「=」を探す
     if sp >= 0 and sp + 1 < len(query):         # 「=」の発見位置が有効範囲内
-        color = int( query[sp+1:] )             # 取得値(数値)を変数colorへ
-        color %= len(colors)                    # 色数(8色)に対してcolorは0～7
+        if query[sp+1:].isdigit():              # 取得値が数値の時
+            color = int( query[sp+1:] )         # 取得値(数値)を変数colorへ
+            color %= len(colors)                # 色数(8色)に対してcolorは0～7
     print('Color =',color,colors[color])        # 色番号と色名を表示
     for i in range( len(ports) ):               # 各ポート番号のindexを変数iへ
         port = ports[i]                         # ポート番号をportsから取得
         b = (color & ( 1 << i) ) >> i           # 該当LEDへの出力値を変数bへ
         print('GPIO'+str(port),'=',b)           # ポート番号と変数bの値を表示
         GPIO.output(port, b)                    # ポート番号portのGPIOを出力に
-    ok = 'Color=' + str(color) + ' (' + colors[color] + ')' # 応答メッセージ作成
+    ok = 'Color=' + str(color) + ' (' + colors[color] + ')\r\n' # 応答文を作成
     ok = ok.encode('utf-8')                     # バイト列へ変換
     start_response('200 OK', [('Content-type', 'text/plain; charset=utf-8')])
     return [ok]                                 # 応答メッセージを返却

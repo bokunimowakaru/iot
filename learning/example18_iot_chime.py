@@ -24,7 +24,7 @@ def chime():                                    # チャイム（スレッド用
 def wsgi_app(environ, start_response):          # HTTPアクセス受信時の処理
     thread = threading.Thread(target=chime)     # 関数chimeをスレッド化
     thread.start()                              # スレッドchimeの起動
-    ok = 'OK'                                   # 応答メッセージ作成
+    ok = 'OK\r\n'                               # 応答メッセージ作成
     ok = ok.encode()                            # バイト列へ変換
     start_response('200 OK', [('Content-type', 'text/plain; charset=utf-8')])
     return [ok]                                 # 応答メッセージを返却
