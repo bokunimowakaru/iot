@@ -25,7 +25,7 @@ def wsgi_app(environ, start_response):          # HTTPアクセス受信時の�
     print('Color =',color,colors[color])        # 色番号と色名を表示
     for i in range( len(ports) ):               # 各ポート番号のindexを変数iへ
         port = ports[i]                         # ポート番号をportsから取得
-        b = (color & ( 1 << i) ) >> i           # 該当LEDへの出力値を変数bへ
+        b = (color >> i) & 1                    # 該当LEDへの出力値を変数bへ
         print('GPIO'+str(port),'=',b)           # ポート番号と変数bの値を表示
         GPIO.output(port, b)                    # ポート番号portのGPIOを出力に
     ok = 'Color=' + str(color) + ' (' + colors[color] + ')\r\n' # 応答文を作成

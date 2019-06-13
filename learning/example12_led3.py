@@ -27,6 +27,6 @@ print('Color =',color,colors[color])    # 色番号と色名を表示
 
 for i in range( len(ports) ):           # 各ポート番号の参照indexを変数iへ
     port = ports[i]                     # ポート番号をportsから取得
-    b = (color & ( 1 << i) ) >> i       # 該当LEDへの出力値を変数bへ
+    b = (color >> i) & 1                # 該当LEDへの出力値を変数bへ
     print('GPIO'+str(port),'=',b)       # ポート番号と変数bの値を表示
     GPIO.output(port, b)                # ポート番号portのGPIOを出力に設定
