@@ -6,7 +6,7 @@ filename = '/sys/class/thermal/thermal_zone0/temp'      # 温度ファイル
 udp_to = '255.255.255.255'                              # UDPブロードキャスト
 udp_port = 1024                                         # UDPポート番号
 device_s = 'temp._3'                                    # デバイス識別名
-intarval = 30                                           # 送信間隔（秒）
+interval = 30                                           # 送信間隔（秒）
 temp_offset = 17.8                                      # CPUの温度上昇値(要調整)
 
 import socket                                           # ソケット通信ライブラリ
@@ -39,4 +39,4 @@ while True:
         print(e)                                        # エラー内容を表示
 
     sock.close()                                        # ソケットの切断
-    sleep(intarval)                                     # 送信間隔の待ち時間処理
+    sleep(interval)                                     # 送信間隔の待ち時間処理

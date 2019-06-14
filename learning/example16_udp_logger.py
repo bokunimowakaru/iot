@@ -6,7 +6,7 @@
 import socket
 import datetime
 
-print('Listening UDP port', 1024, '...')                # ポート番号1024表示
+print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
 try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # ソケットを作成
     sock.bind(('', 1024))                               # ソケットに接続
@@ -18,4 +18,4 @@ while sock:                                             # 永遠に繰り返す
     if udp.isprintable():                               # 全文字が表示可能
         date=datetime.datetime.today()                  # 日付を取得
         print(date.strftime('%Y/%m/%d %H:%M'), end='')  # 日付を出力
-        print(', ' + udp)                               # 受信データを出力
+        print(', ' + udp, flush=True)                   # 受信データを出力

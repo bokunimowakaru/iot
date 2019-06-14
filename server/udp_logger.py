@@ -31,5 +31,5 @@ while sock:                                             # 永遠に繰り返す
             s += c                                      # 文字列sへ追加
     date=datetime.datetime.today()                      # 日付を取得
     print(date.strftime('%Y/%m/%d %H:%M'), end='')      # 日付を出力
-    print(', ' + s)                                     # 受信データを出力
+    print(', ' + s, flush=True)                         # 受信データを出力
 sock.close()                                            # ソケットの切断
