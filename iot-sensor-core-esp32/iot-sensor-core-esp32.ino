@@ -22,7 +22,7 @@ RTC_DATA_ATTR byte 		PIN_PIR		= 26;		// GPIO 26に人感センサを接続
 RTC_DATA_ATTR byte		PIN_IR_IN	= 26;		// GPIO 26にIRセンサを接続
 RTC_DATA_ATTR byte		PIN_IR_OUT	= 2;		// GPIO 2(24番ピン)赤外線LEDの接続ポート
 RTC_DATA_ATTR byte 		PIN_VDD		= 25;		// GPIO 25をHIGH出力に設定(不可=0,2,15,12)
-RTC_DATA_ATTR byte 		PIN_GND		= 27;		// GPIO 17をLOW出力に設定
+RTC_DATA_ATTR byte 		PIN_GND		= 27;		// GPIO 27をLOW出力に設定
 RTC_DATA_ATTR byte 		PIN_LUM		= 33;		// GPIO 33に照度センサを接続
 RTC_DATA_ATTR byte 		PIN_TEMP	= 33;		// GPIO 33に温度センサを接続
 RTC_DATA_ATTR byte 		WIFI_AP_MODE= 1;		// Wi-Fi APモード ※2:STAモード

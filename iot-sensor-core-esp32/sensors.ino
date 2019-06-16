@@ -424,9 +424,9 @@ boolean sensors_init_BTN(int mode){
 boolean sensors_init_PIR(int enable){
 	boolean ret = true;		// ピン干渉なし
 	if( IR_IN_EN ) return false;	// IR と排他 ∵VDD=26/GND=14
-	PIN_VDD = 26;
-//	PIN_PIR = 26;
-	PIN_GND = 14;
+	PIN_VDD = 25;
+	PIN_PIR = 26;
+	PIN_GND = 27;
 	if( enable > 0 ){
 		if(	sensors_pin_set("IO" + String(PIN_GND),"人感_GND") &&
 			sensors_pin_set("IO" + String(PIN_PIR),"人感_OUT") &&
@@ -451,10 +451,10 @@ boolean sensors_init_PIR(int enable){
 
 boolean sensors_init_IR_IN(int mode){
 	boolean ret = true;		// ピン干渉なし
-	if( PIR_EN ) return false;	// PIR と排他 ∵VDD=12/GND=14
-//	PIN_IR_IN = 26;
-	PIN_GND = 14;
-	PIN_VDD = 12;
+	if( PIR_EN ) return false;	// PIR と排他 ∵VDD=14/GND=27
+	PIN_IR_IN = 26;
+	PIN_GND = 27;
+	PIN_VDD = 14;
 	if( mode > 0 ){
 		if(	sensors_pin_set("IO" + String(PIN_GND),"赤外線_GND") &&
 			sensors_pin_set("IO" + String(PIN_IR_IN),"赤外線_OUT") &&
