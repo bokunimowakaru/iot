@@ -952,7 +952,7 @@ String sensors_get(){
 	}
 	
 	if(UDP_MODE & 2) sensors_sendUdp(DEVICE, payload);
-	if(LCD_EN){
+	if(LCD_EN && payload.length() > 0){
 		i2c_lcd_print_S( &payload );
 	}
 	return payload;
