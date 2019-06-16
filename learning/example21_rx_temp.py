@@ -18,7 +18,8 @@ def get_val(s):                                         # データを数値に�
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
 try:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # ソケットを作成
+    sock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)# ソケットを作成
+    sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)    # オプション
     sock.bind(('', 1024))                               # ソケットに接続
 except Exception as e:                                  # 例外処理発生時
     print(e)                                            # エラー内容を表示
