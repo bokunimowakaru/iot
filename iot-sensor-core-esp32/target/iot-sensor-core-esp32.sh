@@ -18,5 +18,5 @@ if [ ! -e "./esptool.py" ]; then
 	wget https://raw.githubusercontent.com/espressif/esptool/master/LICENSE
 	\mv -f LICENSE esptool_LICENSE.txt
 fi
-./esptool.py --chip esp32 --port ${1} --baud 256000 --before default_reset --after hard_reset write_flash -z --flash_mode qio --flash_freq 80m --flash_size detect 0xe000 boot_app0.bin 0x1000 bootloader_qio_80m.bin 0x10000 iot-sensor-core-esp32.ino.bin 0x8000 iot-sensor-core-esp32.ino.partitions.bin
+./esptool.py --chip esp32 --port ${1} --baud 256000 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0xe000 boot_app0.bin 0x1000 bootloader_qio_80m.bin 0x10000 iot-sensor-core-esp32.ino.bin 0x8000 iot-sensor-core-esp32.ino.partitions.bin
 echo "Done"
