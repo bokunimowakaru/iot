@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # coding: utf-8
-# Example 21 IoT温度計から温度値を受信し、表示する
+# Example 23 IoT人感センサを受信する
 
 import socket
 
 def check_dev_name(s):                                  # デバイス名を取得
     if s.isprintable() and len(s) == 7 \
-        and s[0:4] == 'temp' and s[5] == '_':           # IoT温度計に一致する時
+        and s[0:5] == 'pir_s' and s[5] == '_':          # IoT人感センサに一致
         return s                                        # デバイス名を応答
     return None                                         # Noneを応答
 
@@ -31,12 +31,13 @@ while sock:                                             # 永遠に繰り返す
     dev = check_dev_name(vals[0])                       # デバイス名を取得
     if dev and len(vals) >= 2:                          # 取得成功かつ項目2以上
         val = get_val(vals[1])                          # データ1番目を取得
-        print('device =',vals[0],', temperature =',val) # 取得値を表示
+        if val:                                         # val=1のとき
+            print('device =',vals[0],', pir =',val)     # 取得値を表示
 
 '''
-pi@raspberrypi:~/iot/learning $ ./example21_rx_temp.py
+pi@raspberrypi:~/iot/learning $ ./example23_rx_pir.py
 Listening UDP port 1024 ...
-device = temp0_2 , temperature = 16.0
-device = temp0_2 , temperature = 16.0
-device = temp0_2 , temperature = 16.0
+device = pir_s_2 , pir = 1.0
+device = pir_s_2 , pir = 1.0
+device = pir_s_2 , pir = 1.0
 '''

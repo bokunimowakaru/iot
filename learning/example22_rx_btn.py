@@ -21,3 +21,9 @@ while sock:                                             # 永遠に繰り返す
         else:                                           # その他のとき
             b = 0                                       # 変数bに0を代入
         print(udp, ', b =', b)                          # 取得値を表示
+'''
+pi@raspberrypi:~/iot/learning $ ./example22_rx_btn.py
+Listening UDP port 1024 ...
+Ping , b = 1
+Pong , b = 0
+'''

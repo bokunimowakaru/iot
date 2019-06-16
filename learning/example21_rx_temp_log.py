@@ -28,6 +28,7 @@ except Exception as e:                                  # 例外処理発生時
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
 try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # ソケットを作成
+    sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)    # オプション
     sock.bind(('', 1024))                               # ソケットに接続
 except Exception as e:                                  # 例外処理発生時
     print(e)                                            # エラー内容を表示
@@ -52,3 +53,11 @@ except KeyboardInterrupt:                               # キー割り込み発�
     sock.close()                                        # ソケットの終了
     fp.close()                                          # ファイルを閉じる
     exit()                                              # プログラムの終了
+
+'''
+pi@raspberrypi:~/iot/learning $ ./example21_rx_temp_log.py
+Listening UDP port 1024 ...
+2019/06/16 12:52, temp0_2,16 -> temp.csv, temperature = 16.0
+2019/06/16 12:52, temp0_2,16 -> temp.csv, temperature = 16.0
+2019/06/16 12:53, temp0_2,16 -> temp.csv, temperature = 16.0
+'''
