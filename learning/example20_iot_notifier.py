@@ -23,26 +23,25 @@ import threading                                # スレッド用ライブラリ
 
 def chime():                                    # チャイム（スレッド用）
     global pwm_bell                             # グローバル変数pwmを取得
-    global mutex
-    if not(mutex):
-        mutex = True
-        pwm_bell.ChangeFrequency(ping_f)        # PWM周波数の変更
-        pwm_bell.start(50)                      # PWM出力を開始。デューティ50％
-        sleep(0.3)                              # 0.3秒の待ち時間処理
-        pwm_bell.ChangeFrequency(pong_f)        # PWM周波数の変更
-        sleep(0.3)                              # 0.3秒の待ち時間処理
-        pwm_bell.stop()                         # PWM出力停止
-        mutex = False
+    global mutex                                # グローバル変数mutexを取得
+    mutex.acquire()                             # mutex状態に設定(排他処理開始)
+    pwm_bell.ChangeFrequency(ping_f)            # PWM周波数の変更
+    pwm_bell.start(50)                          # PWM出力を開始。デューティ50％
+    sleep(0.5)                                  # 0.5秒の待ち時間処理
+    pwm_bell.ChangeFrequency(pong_f)            # PWM周波数の変更
+    sleep(0.5)                                  # 0.5秒の待ち時間処理
+    pwm_bell.stop()                             # PWM出力停止
+    mutex.release()                             # mutex状態の開放(排他処理終了)
 
 def chime_cb(port):                             # チャイム（スレッド用）
-    global mutex
-    if not(mutex):
-        thread = threading.Thread(target=chime) # 関数chimeをスレッド化
-        thread.start()                          # スレッドchimeの起動
-
-def wsgi_app(environ, start_response):          # HTTPアクセス受信時の処理
     thread = threading.Thread(target=chime)     # 関数chimeをスレッド化
     thread.start()                              # スレッドchimeの起動
+
+def wsgi_app(environ, start_response):          # HTTPアクセス受信時の処理
+    path = environ.get('PATH_INFO')             # 変数pathに要求パス位置を代入
+    if path == '/':                             # リクエスト先がルートのとき
+        thread = threading.Thread(target=chime) # 関数chimeをスレッド化
+        thread.start()                          # スレッドchimeの起動
     global pwm                                  # グローバル変数pwmを取得
     global color                                # グローバル変数colorの取得
     color = [9,9,9]                             # 白色を代入
@@ -99,7 +98,8 @@ GPIO.setup(port_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # port_btnを入力に�
 btn = GPIO.add_event_detect(port_btn, GPIO.FALLING, chime_cb, bouncetime=600)
 udp_th = threading.Thread(target=udp_app)       # 関数udp_appをスレッド化
 udp_run = True
-udp_th.start()                                  # スレッドchimeの起動
+udp_th.start()                                  # スレッドudp_thの起動
+mutex = threading.Lock()                        # 排他処理用のオブジェクト生成
 
 try:
     httpd = make_server('', 80, wsgi_app)       # TCPポート80でHTTPサーバ実体化
