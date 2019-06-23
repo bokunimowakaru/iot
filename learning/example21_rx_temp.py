@@ -26,17 +26,17 @@ except Exception as e:                                  # 例外処理発生時
     exit()                                              # プログラムの終了
 
 while sock:                                             # 永遠に繰り返す
-    udp = sock.recv(64).decode().strip()                # UDPパケットを取得
-    vals = udp.split(',')                               # 「,」で分割
+    udp, udp_from = sock.recvfrom(64)                   # UDPパケットを取得
+    vals = udp.decode().strip().split(',')              # 「,」で分割
     dev = check_dev_name(vals[0])                       # デバイス名を取得
     if dev and len(vals) >= 2:                          # 取得成功かつ項目2以上
         val = get_val(vals[1])                          # データ1番目を取得
-        print('device =',vals[0],', temperature =',val) # 取得値を表示
+        print('device =',vals[0],udp_from[0],', temperature =',val) # 表示
 
 '''
 pi@raspberrypi:~/iot/learning $ ./example21_rx_temp.py
 Listening UDP port 1024 ...
-device = temp0_2 , temperature = 16.0
-device = temp0_2 , temperature = 16.0
-device = temp0_2 , temperature = 16.0
+device = temp0_2 192.168.0.8 , temperature = 16.0
+device = temp0_2 192.168.0.8 , temperature = 16.0
+device = temp0_2 192.168.0.8 , temperature = 16.0
 '''

@@ -25,12 +25,14 @@ except Exception as e:                                  # 例外処理発生時
     print(e)                                            # エラー内容を表示
     exit()                                              # プログラムの終了
 while sock:                                             # 永遠に繰り返す
-    udp = sock.recv(buf_n).decode()                     # UDPパケットを取得
+    udp, udp_from = sock.recvfrom(buf_n)                # UDPパケットを取得
+    udp = udp.decode()                                  # UDPデータを文字列に変換
     s=''                                                # 表示用の文字列変数s
     for c in udp:                                       # UDPパケット内
         if ord(c) >= ord(' ') and ord(c) <= ord('~'):   # 表示可能文字
             s += c                                      # 文字列sへ追加
     date=datetime.datetime.today()                      # 日付を取得
-    print(date.strftime('%Y/%m/%d %H:%M'), end='')      # 日付を出力
+    print(date.strftime('%Y/%m/%d %H:%M')+', ', end='') # 日付を出力
+    print(udp_from[0], end='')                          # 送信元アドレスを出力
     print(', ' + s, flush=True)                         # 受信データを出力
 sock.close()                                            # ソケットの切断

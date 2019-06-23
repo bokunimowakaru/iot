@@ -35,14 +35,15 @@ except Exception as e:                                  # 例外処理発生時
 
 try:
     while sock:                                         # 永遠に繰り返す
-        udp = sock.recv(64).decode().strip()            # UDPパケットを取得
-        vals = udp.split(',')                           # 「,」で分割
+        udp, udp_from = sock.recvfrom(64)               # UDPパケットを取得
+        vals = udp.decode().strip().split(',')          # 「,」で分割
         num = len(vals)                                 # データ数の取得
         dev = check_dev_name(vals[0])                   # デバイス名を取得
         if not dev or num < 2:                          # 不適合orデータなし
             continue                                    # whileに戻る
         date=datetime.datetime.today()                  # 日付を取得
-        s = date.strftime('%Y/%m/%d %H:%M')+', '+dev    # 日付を変数sへ代入
+        s = date.strftime('%Y/%m/%d %H:%M') + ', '      # 日付を変数sへ代入
+        s += udp_from[0] + ', ' + dev                   # 送信元の情報を追加
         for i in range(1,num):                          # データ回数の繰り返し
             val = get_val(vals[i])                      # データを取得
             s += ', '                                   # 「,」を追加
@@ -58,7 +59,8 @@ except KeyboardInterrupt:                               # キー割り込み発�
 '''
 pi@raspberrypi:~/iot/learning $ ./example24_rx_sens.py
 Listening UDP port 1024 ...
-2019/06/16 15:22, temp0_2, 16.0
-2019/06/16 15:22, pir_s_2, 1.0
-2019/06/16 15:22, humid_2, 30.0, 52.0
+2019/06/16 15:22, 192.168.0.8, temp0_2, 16.0
+2019/06/16 15:22, 192.168.0.8, pir_s_2, 1.0
+2019/06/16 15:22, 192.168.0.7, temp0_2, 16.0
+2019/06/16 15:22, 192.168.0.7, humid_2, 30.0, 52.0
 '''
