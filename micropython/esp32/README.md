@@ -15,13 +15,8 @@
 ## ライセンス MicroPython
 
 * MicroPythonのライセンスについては、下記およびesptool_LICENSE.txtをご覧ください。  
-
 		The MIT License (MIT)  
-
 		Copyright (c) 2013-2019 Damien P. George  
-
-		A short and simple permissive license with conditions only requiring preservation of copyright and license notices.  
-		Licensed works, modifications, and larger works may be distributed under different terms and without source code.  
 		<https://github.com/micropython/micropython>
 
 ## ライセンス esptool.py
@@ -33,12 +28,10 @@
 
 
 ## ライセンス(全般)
-
 * ライセンスについては各ソースリストならびに各フォルダ内のファイルに記載の通りです。  
 * 使用・変更・配布は可能ですが、権利表示を残してください。  
 * また、提供情報や配布ソフトによって生じたいかなる被害についても，一切，補償いたしません。  
 * ライセンスが明記されていないファイルについても、同様です。  
-
-	Copyright (c) 2016-2019 Wataru KUNINO <https://bokunimo.net/>
+		Copyright (c) 2016-2019 Wataru KUNINO <https://bokunimo.net/>
 
 
