@@ -26,16 +26,6 @@ from sys import argv
 import getpass
 from time import sleep
 
-def payval(num, bytes=1, sign=False):
-    global val
-    a = 0
-    for i in range(0, bytes):
-        a += (256 ** i) * int(val[(num - 2 + i) * 2 : (num - 1 + i) * 2],16)
-    if sign:
-        if a >= 2 ** (bytes * 8 - 1):
-            a -= 2 ** (bytes * 8)
-    return a
-
 scanner = btle.Scanner()
 while True:
     # BLE受信処理
