@@ -26,8 +26,10 @@ while True:                                 # 繰り返し処理
         pyb.delay(100)                      # 0.1秒間の待ち時間処理
     b = int(not( b ))                       # 変数bの値を論理反転
     if b == 1:                              # b=0:ボタン押下時
+        pyb.LED(2).on()
         udp_s = 'Ping'                      # 変数udp_sへ文字列「Ping」を代入
     else:                                   # b=1:ボタン開放時
+        pyb.LED(2).off()
         udp_s = 'Pong'                      # 変数udp_sへ文字列「Pong」を代入
     print('B1 User', '=', b, udp_s)         # 変数b、udp_sの値を表示
 
