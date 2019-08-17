@@ -3,7 +3,7 @@ from microbit import *
 
 radio.on()
 print('Ready Router')
-display.scroll('Rdy')
+display.scroll('Router')
 while True:
 	tx = ''
 	line = uart.readline()
