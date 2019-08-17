@@ -2,7 +2,7 @@ import radio
 from microbit import *
 
 radio.on()
-print('Ready Tx Rx')
+print('Ready Router')
 display.scroll('Rdy')
 while True:
 	tx = ''
