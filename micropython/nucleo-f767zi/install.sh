@@ -23,15 +23,14 @@ if [ $? != 0 ]; then
 		echo "MicroPython のダウンロードに失敗しました"
 		exit
 	fi
-	git reset --hard origin/master
-	cd ..
+else
+	cd micropython/
+	git fetch origin pull/3808/head:local-branch-name
+	git checkout local-branch-name
+	git cherry-pick 309fe39dbb14b1f715ea09c4b9de235a099c01b0
+		# Thu Feb 28 15:30:48 2019 +1100
+	git submodule update --init
 fi
-cd micropython/
-git fetch origin pull/3808/head:local-branch-name
-git checkout local-branch-name
-git cherry-pick 309fe39dbb14b1f715ea09c4b9de235a099c01b0
-	# Thu Feb 28 15:30:48 2019 +1100
-git submodule update --init
 
 echo
 echo "MicroPython をビルド(コンパイル)します"
