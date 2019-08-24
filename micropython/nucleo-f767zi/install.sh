@@ -13,24 +13,45 @@ sudo apt-get install gcc-arm-none-eabi
 # sudo apt-get install binutils-arm-none-eabi
 
 echo
-echo "MicroPython をインストールします"
+echo "MicroPython をダウンロードします"
 sleep 5
 cd
 git clone http://github.com/micropython/micropython.git
+if [ $? != 0 ]; then
+	cd micropython
+	if [ $? != 0 ]; then
+		echo "MicroPython のダウンロードに失敗しました"
+		exit
+	fi
+	git reset --hard origin/master
+	cd ..
+fi
 cd micropython/
 git fetch origin pull/3808/head:local-branch-name
 git checkout local-branch-name
 git cherry-pick 309fe39dbb14b1f715ea09c4b9de235a099c01b0
+	# Thu Feb 28 15:30:48 2019 +1100
 git submodule update --init
+
+echo
+echo "MicroPython をビルド(コンパイル)します"
+sleep 5
 make -C mpy-cross
+if [ $? != 0 ]; then
+	echo "mpy-cross のビルド(コンパイル)に失敗しました。"
+	exit
+fi
+
 make -C ports/stm32 MICROPY_HW_ENABLE_ETH_RMII=1 BOARD=NUCLEO_F767ZI
+if [ $? != 0 ]; then
+	echo "ports/stm32 のビルド(コンパイル)に失敗しました。"
+	exit
+fi
 
 echo
 cd ports/stm32/build-NUCLEO_F767ZI
 pwd
 ls -l firmware.*
-
-# make -C ports/stm32 MICROPY_HW_ENABLE_ETH_RMII=1 BOARD=NUCLEO_F767ZI deploy-stlink
 
 echo
 echo "dfu-util をインストールします"
