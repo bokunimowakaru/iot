@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PWD=`pwd`
+WORKD=`pwd`
 echo "NUCLEO-F767ZI 用 MicroPython のファームウェアを作成し、書き込みます"
 echo "参考文献： https://blog.boochow.com/article/459702269.html"
 echo "ご注意：動作保証はありません"
@@ -78,7 +78,10 @@ while true; do
 	echo "再度、ファームウェアを書き込みますか？"
 done
 
-cd $PWD
+cd $WORKD
+if [ -e "lcd.py" ]; then
+	rm lcd.py
+fi
 echo "MicroPython用 LCDライブラリをダウンロードします"
 wget https://raw.githubusercontent.com/wjdp/micropython-lcd/master/lcd.py
 
