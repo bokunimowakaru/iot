@@ -63,3 +63,4 @@ while sock:                                             # 永遠に繰り返す
     pyb.LED(2).off()
 sock.close()                                            # ソケットの切断
 pyb.LED(1).off()
+lcd.clear()
