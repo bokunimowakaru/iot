@@ -1,13 +1,13 @@
 # coding: utf-8
-# IoTボタン for MicroPython
+# IoTボタンμ for MicroPython (よりメモリの節約が可能なusocketを使用)
 # Copyright (c) 2018-2019 Wataru KUNINO
 
 udp_to = '255.255.255.255'                  # UDPブロードキャストアドレス
 udp_port = 1024                             # UDPポート番号
 
 import network                              # ネットワーク通信ライブラリ
-import socket                               # ソケット通信ライブラリ
-
+import usocket                              # μソケット通信ライブラリ
+#      ~~~~~~~
 pyb.LED(1).on()                             # LED(緑色)を点灯
 eth = network.Ethernet()                    # Ethernetのインスタンスethを生成
 try:                                        # 例外処理の監視を開始
@@ -33,8 +33,8 @@ while True:                                 # 繰り返し処理
         udp_s = 'Pong'                      # 変数udp_sへ文字列「Pong」を代入
     print('B1 User', '=', b, udp_s)         # 変数b、udp_sの値を表示
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)     # ソケット作成
-
+    sock = usocket.socket(usocket.AF_INET,usocket.SOCK_DGRAM) # μソケット作成
+    #      ~~~~~~~        ~~~~~~~         ~~~~~~~
     udp_bytes = (udp_s + '\n').encode()                 # バイト列に変換
 
     try:

@@ -1,5 +1,5 @@
 # coding: utf-8
-# IoT 温度計 for MicroPython
+# IoT 温度計μ for MicroPython (よりメモリの節約が可能なusocketを使用)
 # Copyright (c) 2018-2019 Wataru KUNINO
 
 # Error ENOMEM や EADDRINUSE が出た場合はハードウェアリセットを実行してください
@@ -12,8 +12,8 @@ interval = 10                                           # 送信間隔（秒）
 temp_offset = 8.0                                       # CPU温度上昇値(要調整)
 
 import network                                          # ネットワーク通信
-import socket                                           # ソケット通信
-
+import usocket                                          # μソケット通信
+#      ~~~~~~~
 pyb.LED(1).on()                                         # LED(緑色)を点灯
 eth = network.Ethernet()                                # Ethernet用のethを生成
 try:                                                    # 例外処理の監視を開始
@@ -33,8 +33,8 @@ while True:
     temp_i = round(temp)                                # 整数に変換してtemp_iへ
     print('Temperature =',temp_i,'('+str(temp)+')')     # 温度値を表示する
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)     # ソケット作成
-
+    sock = usocket.socket(usocket.AF_INET,usocket.SOCK_DGRAM) # μソケット作成
+    #      ~~~~~~~        ~~~~~~~         ~~~~~~~
     udp_s = device_s + ', ' + str(temp_i)               # 表示用の文字列変数udp
     print('send :', udp_s)                              # 受信データを出力
     udp_bytes = (udp_s + '\n').encode()                 # バイト列に変換
