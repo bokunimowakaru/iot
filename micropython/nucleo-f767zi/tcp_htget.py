@@ -34,14 +34,12 @@ except Exception as e:                      # 例外処理発生時
 body = '<head>'
 while True:
     res = sock.readline().decode()
+    print(res.strip())
     if len(res) <= 0:
         break
     if res == '\n' or res == '\r\n':
         body = '<body>'
         break
-    else:
-        body = '<head>'
-    print(res.strip())
 if body != '<body>':
     print('no body data')
     sock.close()
