@@ -44,4 +44,5 @@ if [ $? -ne 0 ]; then
 	exit
 fi
 echo "ESP32への書き込みが完了しました。"
+echo "ライセンスesptool_LICENSE.txtとmicropython_LICENSE.txtを確認してから使用してください。"
 echo "Done"
