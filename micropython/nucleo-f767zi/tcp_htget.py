@@ -21,6 +21,7 @@ except Exception as e:                      # 例外処理発生時
 
 try:                                        # 例外処理の監視を開始
     addr = socket.getaddrinfo(host_s, 80)[0][-1]
+    print(host_s, '=', addr)
     sock = socket.socket()
     sock.connect(addr)
     req = 'GET ' + path_s + ' HTTP/1.0\r\n'
@@ -62,5 +63,5 @@ print('state :', res_dict.get('state'))         # 項目'state'の内容を取�
 print('url   :', res_dict.get('url'))           # 項目'url'内容を取得・表示
 print('date  :', res_dict.get('date'))          # 項目'date'内容を取得・表示
 
-sock.close()
-pyb.LED(1).off()                                # LED(緑色)を消灯
+sock.close()                                # ソケットの終了
+pyb.LED(1).off()                            # LED(緑色)を消灯
