@@ -3,12 +3,14 @@
 echo "ESP32 へ MicroPython を書き込みます (usage: ${0} port)"
 if [ ${#} -ne 1 ]; then
 	cat README.md
-	echo "ERROR: シリアルポートのデバイスPath(/dev/ttyUSB*)を入力してください"
-	exit
+	PORT="/dev/ttyUSB0"
+	echo "シリアルポート" ${PORT} "を使用します。"
+else
+	PORT=${1}
 fi
-if [ ! -e ${1} ]; then
+if [ ! -e ${PORT} ]; then
 	cat README.md
-	echo "ERROR: 有効なデバイスPath(/dev/ttyUSB*)を入力してください"
+	echo "ERROR: 引数に有効なデバイスPath(/dev/ttyUSB*)を入力してください"
 	exit
 fi
 if [ ! -e "./esptool.py" ]; then
@@ -28,14 +30,14 @@ if [ ! -e ${filename} ]; then
 fi
 
 echo "ESP32を初期化します。"
-./esptool.py --chip esp32 --port /dev/ttyUSB0 erase_flash
+./esptool.py --chip esp32 --port ${PORT} erase_flash
 if [ $? -ne 0 ]; then
 	cat README.md
 	echo "初期化に失敗しました。"
 	exit
 fi
 echo "ESP32へ書き込みます"
-./esptool.py --chip esp32 --port ${1} --baud 460800 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 ${filename}
+./esptool.py --chip esp32 --port ${PORT} --baud 460800 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 ${filename}
 if [ $? -ne 0 ]; then
 	cat README.md
 	echo "書き込みに失敗しました。"
