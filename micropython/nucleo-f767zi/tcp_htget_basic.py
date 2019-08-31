@@ -49,4 +49,5 @@ print('state :', res_dict.get('state'))         # 項目'state'の内容を取�
 print('url   :', res_dict.get('url'))           # 項目'url'内容を取得・表示
 print('date  :', res_dict.get('date'))          # 項目'date'内容を取得・表示
 
+sock.close()
 pyb.LED(1).off()                                # LED(緑色)を消灯
