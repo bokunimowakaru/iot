@@ -16,7 +16,7 @@ temp_offset = 30.0                          # CPU温度上昇値(要調整)
 import network                              # ネットワーク通信ライブラリ
 import urequests                            # HTTP通信ライブラリ
 from sys import exit                        # ライブラリsysからexitを組み込む
-from machine import Pin                     # ライブラリmachineのPinを組み込む
+from machine import Pin, deepsleep          # GPIO用Pinとディープスリープを組込
 from time import sleep                      # ライブラリtimeからsleepを組み込む
 from esp32 import raw_temperature
 
@@ -55,3 +55,4 @@ except Exception as e:                      # 例外処理発生時
 sta_if.disconnect()                         # Wi-Fiの切断
 sta_if.active(False)                        # Wi-Fiの停止
 led.value(0)                                # LEDを消灯
+# deepsleep(30000)                          # 30秒間スリープ
