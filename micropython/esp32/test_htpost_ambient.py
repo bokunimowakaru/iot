@@ -1,21 +1,28 @@
 # coding: utf-8
-# IoT連携の基本 HTTP GET μrequests for MicroPython (μrequests使用)
+# IoT連携 Ambientへ送信 HTTP POST μrequests for MicroPython (μrequests使用)
 # Copyright (c) 2019 Wataru KUNINO
 
 # ご注意：ESP32マイコンのWi-FiをONにします。
 # 　　　　使い方を誤ると、電波法に違反する場合があります。
 # 　　　　作成者は一切の責任を負いません。
 
+wifi_ssid = '<AP_name>'                     # Wi-FiアクセスポイントのSSIDを記入
+wifi_pass = '<password>'                    # パスワードを記入
+ambient_chid='0000'                         # Ambientで取得したチャネルIDを入力
+ambient_wkey='0123456789abcdef'             # ここにはライトキーを入力
+amdient_tag='d1'                            # データ番号d1～d8のいずれかを入力
+temp_offset = 30.0                          # CPU温度上昇値(要調整)
+
 import network                              # ネットワーク通信ライブラリ
 import urequests                            # HTTP通信ライブラリ
 from sys import exit                        # ライブラリsysからexitを組み込む
 from machine import Pin                     # ライブラリmachineのPinを組み込む
 from time import sleep                      # ライブラリtimeからsleepを組み込む
+from esp32 import raw_temperature
 
-wifi_ssid = '<AP_name>'                     # Wi-FiアクセスポイントのSSIDを記入
-wifi_pass = '<password>'                    # パスワードを記入
-
-url = 'http://bokunimo.net/iot/cq/test.json'# アクセス先のURL
+url = 'http://ambidata.io/api/v2/channels/'+ambient_chid+'/data' # アクセス先
+head = {'Content-Type':'application/json'}  # ヘッダを変数head_dictへ
+body = {'writeKey':ambient_wkey, amdient_tag:0.0}  # 内容を変数bodyへ
 
 led = Pin(2, Pin.OUT)                       # GPIO出力用インスタンスledを生成
 led.value(1)                                # LEDを点灯
@@ -29,21 +36,21 @@ while not sta_if.isconnected():             # Check for successful connection
     led.value(not led.value())
     sleep(0.5)                              # 0.5秒間の待ち時間処理(低速点滅)
 
+# 温度を取得する
+temp = (raw_temperature() - 32) * 5 / 9     # 温度を取得
+temp = round(temp - temp_offset, 1)         # 温度補正と小数第二位以下の丸め処理
+print('Temperature =',temp)                 # 温度を表示する
+body[amdient_tag] = temp                    # 辞書型変数body内に埋め込む
+
+# Ambientへ送信する
 try:                                        # 例外処理の監視を開始
-    res = urequests.get(url)                # HTTPリクエストを送信し、受信する
+    res = urequests.post(url, json=body, headers=head)  # HTTPリクエストを送信
+    print('HTTP Status Code =', res.status_code)
 except Exception as e:                      # 例外処理発生時
     print(e)                                # エラー内容を表示
     sta_if.disconnect()                     # Wi-Fiの切断
     sta_if.active(False)                    # Wi-Fiの停止
     exit()
-
-res_dict = res.json()                       # 受信データを変数res_dictへ代入
-print('--------------------------------------') # -----------------------------
-print('title :', res_dict.get('title'))         # 項目'title'の内容を取得・表示
-print('descr :', res_dict.get('descr'))         # 項目'descr'の内容を取得・表示
-print('state :', res_dict.get('state'))         # 項目'state'の内容を取得・表示
-print('url   :', res_dict.get('url'))           # 項目'url'内容を取得・表示
-print('date  :', res_dict.get('date'))          # 項目'date'内容を取得・表示
 
 sta_if.disconnect()                         # Wi-Fiの切断
 sta_if.active(False)                        # Wi-Fiの停止
