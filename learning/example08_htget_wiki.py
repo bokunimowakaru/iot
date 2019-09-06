@@ -42,7 +42,7 @@ for pageid in pages_dict:                       # pages_dict内の全要素
     # extract = pages_dict[pageid]['extract']
     pageid_dict = pages_dict.get(pageid)        # pages_dict内の要素を取得
     extract = pageid_dict.get('extract')        # pageid_dict内のextractを取得
-    if extract == None or extract == '':        # 要素または内容が無かったとき
+    if extract is None or extract == '':        # 要素または内容が無かったとき
         print('見つかりませんでした。',pageid)  # 見つかりませんでしたと表示
     else:                                       # 見つかったとき
         print(extract.split('\n')[0])           # 内容の改行までを表示

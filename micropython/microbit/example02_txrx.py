@@ -15,6 +15,6 @@ while True:
 		radio.send(tx)
 		display.show(tx)
 	recv = radio.receive()
-	if recv != None:
+	if recv is not None:
 		print('Rx:',recv)
 		display.scroll(recv)

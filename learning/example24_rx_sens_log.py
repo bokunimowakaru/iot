@@ -54,7 +54,7 @@ try:
         for i in range(1,num):                          # データ回数の繰り返し
             val = get_val(vals[i])                      # データを取得
             s += ', '                                   # 「,」を追加
-            if val != None:                             # データがある時
+            if val is not None:                         # データがある時
                 s += str(val)                           # データを変数sに追加
         filename = dev + '.csv'                         # ファイル名を作成
         print(s, '-> ' + filename, flush=True)          # 受信データを表示

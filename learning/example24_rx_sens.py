@@ -5,7 +5,7 @@
 sensors = [\
     'temp0','hall0','adcnv','btn_s','pir_s','illum',\
     'temp.','humid','press','envir','accem','rd_sw',\
-    'press','e_co2'\
+    'press','e_co2','meter'\
 ]                                                       # 対応センサリスト
 
 import socket
@@ -39,7 +39,7 @@ try:
         vals = udp.decode().strip().split(',')          # 「,」で分割
         num = len(vals)                                 # データ数の取得
         dev = check_dev_name(vals[0])                   # デバイス名を取得
-        if not dev or num < 2:                          # 不適合orデータなし
+        if dev is None or num < 2:                      # 不適合orデータなし
             continue                                    # whileに戻る
         date=datetime.datetime.today()                  # 日付を取得
         s = date.strftime('%Y/%m/%d %H:%M') + ', '      # 日付を変数sへ代入
@@ -47,7 +47,7 @@ try:
         for i in range(1,num):                          # データ回数の繰り返し
             val = get_val(vals[i])                      # データを取得
             s += ', '                                   # 「,」を追加
-            if val != None:                             # データがある時
+            if val is not None:                         # データがある時
                 s += str(val)                           # データを変数sに追加
         print(s, flush=True)                            # 受信データを表示
 
