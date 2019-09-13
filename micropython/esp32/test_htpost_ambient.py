@@ -6,6 +6,12 @@
 # 　　　　使い方を誤ると、電波法に違反する場合があります。
 # 　　　　作成者は一切の責任を負いません。
 
+# インストール方法
+# (1) wifi_ssidとwifi_pass、ambient_chid、ambient_wkeyの4項目を設定する
+# (2) プログラム末尾のdeepsleepを有効にする（#を消してインデントを無くす）
+# (3) ファイル名をmain.pyに変更する
+# (4) WebREPLで転送する
+
 wifi_ssid = '<AP_name>'                     # Wi-FiアクセスポイントのSSIDを記入
 wifi_pass = '<password>'                    # パスワードを記入
 ambient_chid='0000'                         # Ambientで取得したチャネルIDを入力
