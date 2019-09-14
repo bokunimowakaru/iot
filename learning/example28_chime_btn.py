@@ -16,7 +16,7 @@ port = 4                                        # GPIO ポート番号
 ping_f = 554                                    # チャイム音の周波数1
 pong_f = 440                                    # チャイム音の周波数2
 
-import socket
+import socket                                   # IP通信用モジュールの組み込み
 from RPi import GPIO                            # GPIOモジュールの取得
 from time import sleep                          # スリープ実行モジュールの取得
 import threading                                # スレッド用ライブラリの取得

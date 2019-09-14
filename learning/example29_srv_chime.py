@@ -15,9 +15,8 @@
 
 ip_chime = '127.0.0.1'                          # IoTチャイムのIPアドレス
 
-import socket
+import socket                                   # IP通信用モジュールの組み込み
 import urllib.request                           # HTTP通信ライブラリを組み込む
-
 url_s = 'http://' + ip_chime                    # アクセス先を変数url_sへ代入
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
