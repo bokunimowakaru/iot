@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 # coding: utf-8
-# Example 22 IoTボタンを受信する
+
+# Example 28 IoTボタンでチャイム音・玄関呼び鈴システム
+# IoTボタンが送信するUDPを受信し、チャイム音を鳴り分ける
+
+# 接続図
+#           [IoTボタン] ------> [本機]
+#           ボタン操作          チャイム音
+
+# 機器構成
+#   本機        GPIOポート4にブザー
+#   IoTボタン   example14_iot_btn.py
 
 port = 4                                        # GPIO ポート番号
 ping_f = 554                                    # チャイム音の周波数1
