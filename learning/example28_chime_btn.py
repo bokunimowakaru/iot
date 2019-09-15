@@ -55,11 +55,12 @@ while sock:                                             # 永遠に繰り返す
         GPIO.cleanup(port)                              # GPIOを未使用状態に戻す
         exit()                                          # プログラムの終了
     udp = udp.decode().strip()                          # データを文字列へ変換
-    if udp.isprintable() and len(udp) <= 4:             # 4文字以下で表示可能
-        if udp == 'Ping':                               # 「Ping」に一致する時
-            b = 1                                       # 変数bに1を代入
-        else:                                           # その他のとき
-            b = 0                                       # 変数bに0を代入
-        print(udp_from[0], ',', udp, ', b =', b)        # 取得値を表示
-        thread = threading.Thread(target=chime, args=([udp]))     # 関数chime
+    if not udp.isprintable() or len(udp) != 4:          # 4文字以下で表示可能
+        continue
+    print('device =', udp, udp_from[0])                 # 取得値を表示
+    if udp == 'Ping':                                   # 「Ping」に一致する時
+        thread = threading.Thread(target=chime, args=([udp]))   # スレッド生成
+        thread.start()                                  # スレッドchimeの起動
+    if udp == 'Pong':                                   # 「Pong」に一致する時
+        thread = threading.Thread(target=chime, args=([udp]))   # スレッド生成
         thread.start()                                  # スレッドchimeの起動

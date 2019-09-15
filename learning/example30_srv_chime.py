@@ -18,6 +18,20 @@ url_s = 'http://' + ip_chime                    # アクセス先を変数url_s�
 
 import socket                                   # IP通信用モジュールの組み込み
 import urllib.request                           # HTTP通信ライブラリを組み込む
+import threading                                # スレッド用ライブラリの取得
+
+def chime():                                            # チャイム（スレッド用）
+    global url_s                                        # グローバル変数の取得
+    try:
+        urllib.request.urlopen(url_s)                   # IoTチャイムへ鳴音指示
+    except urllib.error.URLError:                       # 例外処理発生時
+        print('URLError :',url_s)                       # エラー表示
+        # ポート8080へのアクセス用 (下記の5行)
+        url_s = 'http://' + ip_chime + ':8080'          # ポートを8080に変更
+        try:
+           urllib.request.urlopen(url_s)                # 再アクセス
+        except urllib.error.URLError:                   # 例外処理発生時
+           url_s = 'http://' + ip_chime                 # ポートを戻す
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
 try:
@@ -31,19 +45,7 @@ except Exception as e:                                  # 例外処理発生時
 while sock:                                             # 永遠に繰り返す
     udp, udp_from = sock.recvfrom(64)                   # UDPパケットを取得
     udp = udp.decode().strip()                          # データを文字列へ変換
-    if udp.isprintable() and len(udp) <= 4:             # 4文字以下で表示可能
-        if udp == 'Ping':                               # 「Ping」に一致する時
-            b = 1                                       # 変数bに1を代入
-            try:
-                urllib.request.urlopen(url_s)           # IoTチャイムへ鳴音指示
-            except urllib.error.URLError:               # 例外処理発生時
-                print('URLError :',url_s)               # エラー表示
-                # ポート8080へのアクセス用 (下記の5行)
-                url_s = 'http://' + ip_chime + ':8080'  # ポートを8080に変更
-                try:
-                   urllib.request.urlopen(url_s)        # 再アクセス
-                except urllib.error.URLError:           # 例外処理発生時
-                   url_s = 'http://' + ip_chime         # ポートを戻す
-        else:                                           # その他のとき
-            b = 0                                       # 変数bに0を代入
-        print(udp_from[0], ',', udp, ', b =', b)        # 取得値を表示
+    if udp == 'Ping':                                   # 「Ping」に一致する時
+        print('device = Ping',udp_from[0])              # 取得値を表示
+        thread = threading.Thread(target=chime)         # 関数chimeスレッド生成
+        thread.start()                                  # スレッドchimeの起動
