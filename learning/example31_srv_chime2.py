@@ -27,7 +27,7 @@ import urllib.request                                   # HTTP通信ライブラ
 import threading                                        # スレッド用ライブラ
 
 def chime(level):                                       # チャイム（スレッド用）
-    if level <= 0 or level > 3:                         # 範囲外の値の時に
+    if level is None or level < 0 or level > 3:         # 範囲外の値の時に
         return                                          # 何もせずに戻る
     global url_s                                        # グローバル変数の取得
     url_b_s = url_s + '/?B=' + str(level)               # レベルの設定
@@ -73,7 +73,7 @@ while sock:                                             # 永遠に繰り返す
     udp = udp.decode().strip()                          # データを文字列へ変換
     if udp == 'Ping':                                   # 「Ping」に一致する時
         print('device = Ping',udp_from[0])              # 取得値を表示
-        thread = threading.Thread(target=chime, args=([2])) # 関数chime
+        thread = threading.Thread(target=chime, args=([0]))     # 関数chime
         thread.start()                                  # スレッドchimeの起動
         continue                                        # whileへ戻る
     vals = udp.split(',')                               # 「,」で分割
