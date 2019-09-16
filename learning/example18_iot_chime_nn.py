@@ -27,24 +27,24 @@ def chime(level):                               # チャイム（スレッド用
         pwm.stop()                              # PWM出力停止
         mutex.release()                         # mutex状態の開放(排他処理終了)
         return                                  # 戻る
-    if level >= 1:                                      # 警告レベル1以上のとき
+    if level >= 1:                              # 警告レベル1以上のとき
         mutex.acquire()                         # mutex状態に設定(排他処理開始)
-        pwm.ChangeFrequency(ping_f)                     # PWM周波数の変更
-        pwm.start(50)                                   # PWM出力を開始。50％
-        sleep(0.1)                                      # 0.1秒の待ち時間処理
-        pwm.stop()                                      # PWM出力停止取得
+        pwm.ChangeFrequency(pingAlt_f)          # PWM周波数の変更
+        pwm.start(50)                           # PWM出力を開始。50％
+        sleep(0.1)                              # 0.1秒の待ち時間処理
+        pwm.stop()                              # PWM出力停止取得
         mutex.release()                         # mutex状態の開放(排他処理終了)
-    if level >= 2:                                      # 警告レベル2以上のとき
+    if level >= 2:                              # 警告レベル2以上のとき
         mutex.acquire()                         # mutex状態に設定(排他処理開始)
-        pwm.ChangeFrequency(pong_f)                     # PWM周波数の変更
-        pwm.start(50)                                   # PWM出力を開始。50％
-        sleep(0.2)                                      # 0.2秒の待ち時間処理
-        pwm.stop()                                      # PWM出力停止
+        pwm.ChangeFrequency(pongAlt_f)          # PWM周波数の変更
+        pwm.start(50)                           # PWM出力を開始。50％
+        sleep(0.2)                              # 0.2秒の待ち時間処理
+        pwm.stop()                              # PWM出力停止
         mutex.release()                         # mutex状態の開放(排他処理終了)
-    if level >= 3:                                      # 警告レベル3のとき
-        for i in range(23):                             # 下記を23回繰り返す
-            sleep(0.1)                                  # 0.1秒の待ち時間処理
-            chime(2)                                    # レベル2と同じ鳴音処理
+    if level >= 3:                              # 警告レベル3のとき
+        for i in range(23):                     # 下記を23回繰り返す
+            sleep(0.1)                          # 0.1秒の待ち時間処理
+            chime(2)                            # レベル2と同じ鳴音処理
 
 def wsgi_app(environ, start_response):          # HTTPアクセス受信時の処理
     level = 0
