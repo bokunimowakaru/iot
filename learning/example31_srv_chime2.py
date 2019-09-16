@@ -15,37 +15,33 @@
 #   本機            IoTボタンが押されたときにIoTチャイムへ鳴音指示
 #   IoTボタン       example14_iot_btn.py
 #   IoT温度センサ   example15_iot_temp.py
-#   IoTチャイム     example18_iot_chime_n.py
+#   IoTチャイム     example18_iot_chime_nn.py
 
-ip_chime = '127.0.0.1'                          # IoTチャイムのIPアドレス
-sensors = ['temp.','temp0','humid','press','envir'] # 対応センサのデバイス名
-temp_lv = [ 28 , 30 , 32 ]                      # 警告レベル 3段階
-url_s = 'http://' + ip_chime                    # アクセス先を変数url_sへ代入
+ip_chime = '127.0.0.1'                                  # IoTチャイムのアドレス
+sensors = ['temp.','temp0','humid','press','envir']     # 対応センサ名
+temp_lv = [ 28 , 30 , 32 ]                              # 警告レベル 3段階
+url_s = 'http://' + ip_chime                            # アクセス先
 
-import socket                                   # IP通信用モジュールの組み込み
-import urllib.request                           # HTTP通信ライブラリを組み込む
-from time import sleep                          # スリープ実行モジュールの取得
-import threading                                # スレッド用ライブラリの取得
+import socket                                           # IP通信用モジュール
+import urllib.request                                   # HTTP通信ライブラリ
+import threading                                        # スレッド用ライブラ
 
 def chime(level):                                       # チャイム（スレッド用）
     if level <= 0 or level > 3:                         # 範囲外の値の時に
         return                                          # 何もせずに戻る
-    bells = level                                       # ベル数をレベル
-    if level >= 3:                                      # レベル3のとき
-        bells = 10                                      # ベル数を10に設定
-    global url_s
-    for i in range(bells):
+    global url_s                                        # グローバル変数の取得
+    url_b_s = url_s + '/?B=' + str(level)               # レベルの設定
+    try:
+        urllib.request.urlopen(url_b_s)                 # IoTチャイムへ鳴音指示
+    except urllib.error.URLError:                       # 例外処理発生時
+        print('URLError :',url_s)                       # エラー表示
+        # ポート8080へのアクセス用 (下記の5行)
+        url_s = 'http://' + ip_chime + ':8080'          # ポートを8080に変更
+        url_b_s = url_s + '/?B=' + str(level)           # レベルの設定
         try:
-            urllib.request.urlopen(url_s)               # IoTチャイムへ鳴音指示
+           urllib.request.urlopen(url_b_s)              # 再アクセス
         except urllib.error.URLError:                   # 例外処理発生時
-            print('URLError :',url_s)                   # エラー表示
-            # ポート8080へのアクセス用 (下記の5行)
-            url_s = 'http://' + ip_chime + ':8080'      # ポートを8080に変更
-            try:
-               urllib.request.urlopen(url_s)            # 再アクセス
-            except urllib.error.URLError:               # 例外処理発生時
-               url_s = 'http://' + ip_chime             # ポートを戻す
-        sleep(1)                                        # 1秒の待ち時間処理
+           url_s = 'http://' + ip_chime                 # ポートを戻す
 
 def check_dev_name(s):                                  # デバイス名を取得
     if not s.isprintable():                             # 表示可能な文字列で無い
