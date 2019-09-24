@@ -32,7 +32,7 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         fp.close()                                  # ファイルを閉じる
         start_response('200 OK', Res_Png)           # PNG形式での応答を設定
 
-    if path == '/' or path[0:6] == 'index.':        # リクエスト先がルート
+    if path == '/' or path[0:7] == '/index.':       # リクエスト先がルート
         fp = open('html/index.html', 'r')           # HTMLファイルを開く
         res = fp.read().encode()                    # HTML本文を変数へ代入
         fp.close()                                  # ファイルを閉じる
