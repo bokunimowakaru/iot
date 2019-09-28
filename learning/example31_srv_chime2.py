@@ -80,7 +80,7 @@ while sock:                                             # 永遠に繰り返す
     dev = check_dev_name(vals[0])                       # デバイス名を取得
     if dev and len(vals) >= 2:                          # 取得成功かつ項目2以上
         val = get_val(vals[1])                          # データ1番目を取得
-        level = 0                                       # 温度超過レベル用の変数
+        level = -1                                      # 温度超過レベル用の変数
         for temp in temp_lv:                            # 警告レベルを取得
             if val >= temp:                             # 温度が警告レベルを超過
                 level = temp_lv.index(temp) + 1         # レベルを代入
