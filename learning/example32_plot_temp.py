@@ -60,7 +60,6 @@ try:
         if dev is None or num < 2:                      # 不適合orデータなし
             continue                                    # whileに戻る
         date=datetime.datetime.today()                  # 日付を取得
-        time.append(date)
         s = date.strftime('%Y/%m/%d %H:%M') + ', '      # 日付を変数sへ代入
         s += udp_from[0] + ', ' + dev                   # 送信元の情報を追加
         for i in range(1,num):                          # データ回数の繰り返し
@@ -69,6 +68,7 @@ try:
             if val is not None:                         # データがある時
                 s += str(val)                           # データを変数sに追加
         print(s, flush=True)                            # 受信データを表示
+        time.append(date)                               # 配列変数に時刻を追加
         value.append(get_val(vals[1]))                  # 配列変数に温度値を追加
         if len(time) >= 2:                              # 配列数が2のとき
             plotter(time,value)                         # グラフ表示を実行
