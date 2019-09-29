@@ -14,7 +14,7 @@ matplotlib.use('Agg')                                   # CLI利用
 import matplotlib.pyplot as plt                         # Pyplotの組み込み
 
 def plotter(time,value,line_color):                     # グラフ描画
-    plt.plot(time,value,color=line_color)                     # グラフ線を追加する
+    plt.plot(time,value,line_color)                     # グラフ線を追加する
     ymin = plt.ylim()[0]                                # 現在の下限値を取得
     ymax = plt.ylim()[1]                                # 現在の上限値を取得
     if value[1] < ymin:                                 # 下限値を下回った時
@@ -72,15 +72,15 @@ try:
             if val is not None:                         # データがある時
                 s += str(val)                           # データを変数sに追加
         print(s, flush=True)                            # 受信データを表示
-        if dev not in devices:
-            devices.append(dev)
-            time.append([])
-            value.append([])
-        dev_n = devices.index(dev)
-        time[dev_n].append(date)
-        value[dev_n].append(get_val(vals[1]))
+        if dev not in devices:                          # デバイス名が未登録
+            devices.append(dev)                         # 変数devicesへ追加
+            time.append([])                             # timeの配列数を増やす
+            value.append([])                            # valueの配列数を増やす
+        dev_n = devices.index(dev)                      # デバイス配列番号を取得
+        time[dev_n].append(date)                        # timeへ受信日時を追加
+        value[dev_n].append(get_val(vals[1]))           # valueへセンサ値を追加
         if len(time[dev_n]) >= 2:                       # 配列数が2のとき
-            color = colors[dev_n % len(colors)]
+            color = colors[dev_n % len(colors)]         # グラフの色を決定
             plotter(time[dev_n],value[dev_n],color)     # グラフ表示を実行
             del time[dev_n][0]                          # 古い保持内容を削除
             del value[dev_n][0]                         # 古い保持内容を削除
