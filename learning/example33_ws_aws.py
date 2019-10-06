@@ -65,3 +65,17 @@ while sock:                                             # 作成に成功した�
     else:                                               # 上記以外を受信
         print(', json =', res_dict)                     # 受信データ列を表示
 sock.close()                                            # ソケットの切断
+
+'''
+pi@raspberrypi4:~/iot/learning $ ./example33_ws_aws.py
+WebSocket Logger
+Listening, wss://w1za4078ci.execute-api.us-west-2.amazonaws.com/Prod
+2019/10/06 18:48, sokets = 3
+2019/10/06 18:50, sokets = 3
+2019/10/06 18:51, sokets = 4, total = 68
+2019/10/06 18:52, sokets = 4
+2019/10/06 18:52, data = ホームページを更新しました
+2019/10/06 18:54, sokets = 4
+2019/10/06 18:55, data = 36.5
+2019/10/06 18:56, sokets = 4
+'''
