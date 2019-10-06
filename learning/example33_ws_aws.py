@@ -35,7 +35,6 @@ if API_ID == '**********':
     API_ID = res_dict.get('api_id')
     REGION = res_dict.get('region')
     STAGE  = res_dict.get('stage')
-    KEY    = res_dict.get('key')
     res.close()
 
 print('WebSocket Logger')                               # タイトル表示
@@ -48,11 +47,22 @@ except Exception as e:                                  # 例外処理発生時
     exit()                                              # プログラムの終了
 while sock:                                             # 作成に成功したとき
     payload = sock.recv().strip()                       # WebSocketを取得
-    date=datetime.datetime.today()                      # 日付を取得
+    date = datetime.datetime.today()                    # 日付を取得
     print(date.strftime('%Y/%m/%d %H:%M'), end='')      # 日付を出力
     try:
         res_dict = json.loads(payload)
-        print(',', res_dict.get('message'))             # 受信データを出力
     except Exception:
         print(',', payload)                             # 受信データを出力
+        continue
+    if res_dict.get('type') == "notify":
+        print(', sokets =',res_dict.get('sokets'), end='')
+        print(', total =',res_dict.get('total'))
+    elif res_dict.get('type') == "keepalive":
+        print(', sokets =',res_dict.get('sokets'))
+    elif res_dict.get('type') == "message":
+        print(', message =',res_dict.get('data'))
+    elif res_dict.get('type') == "value":
+        print(', value =',res_dict.get('data'))
+    else:
+        print(', json =', res_dict)                     # 受信データを出力
 sock.close()                                            # ソケットの切断
