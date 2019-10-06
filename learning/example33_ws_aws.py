@@ -67,7 +67,7 @@ while sock:                                             # 作成に成功した�
 sock.close()                                            # ソケットの切断
 
 '''
-pi@raspberrypi4:~/iot/learning $ ./example33_ws_aws.py
+pi@raspberrypi:~/iot/learning $ ./example33_ws_aws.py
 WebSocket Logger
 Listening, wss://w1za4078ci.execute-api.us-west-2.amazonaws.com/Prod
 2019/10/06 18:48, sokets = 3
