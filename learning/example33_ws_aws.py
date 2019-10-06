@@ -22,20 +22,19 @@
 API_ID = '**********'                                   # AWS API Gatewayで取得
 REGION = 'us-west-2'                                    # AWSのリージョン
 STAGE  = 'Prod'                                         # デプロイ時のステージ名
-KEY    = 'message'                                      # API ルート選択
 
 import websocket                                        # WebSocketライブラリ
 import datetime                                         # 日時ライブラリ
 import urllib.request                                   # HTTP通信ライブラリ
 import json                                             # JSON変換ライブラリ
 
-if API_ID == '**********':
+if API_ID == '**********':                              # 設定値のダウンロード
     res = urllib.request.urlopen('https://bokunimo.net/iot/cq/test_ws_aws.json')
-    res_dict = json.loads(res.read().decode().strip())
-    API_ID = res_dict.get('api_id')
-    REGION = res_dict.get('region')
-    STAGE  = res_dict.get('stage')
-    res.close()
+    res_dict = json.loads(res.read().decode().strip())  # 設定値を辞書型変数へ
+    API_ID = res_dict.get('api_id')                     # AWS API GatewayのID
+    REGION = res_dict.get('region')                     # AWSのリージョン
+    STAGE  = res_dict.get('stage')                      # デプロイ時のステージ名
+    res.close()                                         # HTTPリクエスト終了
 
 print('WebSocket Logger')                               # タイトル表示
 url = 'wss://' + API_ID + '.execute-api.' + REGION + '.amazonaws.com/' + STAGE
@@ -50,19 +49,19 @@ while sock:                                             # 作成に成功した�
     date = datetime.datetime.today()                    # 日付を取得
     print(date.strftime('%Y/%m/%d %H:%M'), end='')      # 日付を出力
     try:
-        res_dict = json.loads(payload)
+        res_dict = json.loads(payload)                  # 辞書型変数へ代入
     except Exception:
         print(',', payload)                             # 受信データを出力
-        continue
-    if res_dict.get('type') == "notify":
-        print(', sokets =',res_dict.get('sokets'), end='')
-        print(', total =',res_dict.get('total'))
-    elif res_dict.get('type') == "keepalive":
-        print(', sokets =',res_dict.get('sokets'))
-    elif res_dict.get('type') == "message":
-        print(', message =',res_dict.get('data'))
-    elif res_dict.get('type') == "value":
-        print(', value =',res_dict.get('data'))
-    else:
-        print(', json =', res_dict)                     # 受信データを出力
+        continue                                        # while繰り返し
+    if res_dict.get('type') == "notify":                # 受信種別に応じた処理
+        print(', sokets =',res_dict.get('sokets'), end='')  # 現在の接続数を表示
+        print(', total =',res_dict.get('total'))            # 累計の接続数を表示
+    elif res_dict.get('type') == "keepalive":           # 接続継続確認を受信
+        print(', sokets =',res_dict.get('sokets'))          # 現在の接続数を表示
+    elif res_dict.get('type') == "message":             # メッセージを受信
+        print(', message =',res_dict.get('data'))           # データを表示
+    elif res_dict.get('type') == "value":               # 数値を受信
+        print(', value =',res_dict.get('data'))             # データを表示
+    else:                                               # 上記以外を受信
+        print(', json =', res_dict)                     # 受信データ列を表示
 sock.close()                                            # ソケットの切断
