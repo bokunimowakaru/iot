@@ -22,6 +22,7 @@
 API_ID = '**********'                                   # AWS API Gatewayで取得
 REGION = 'us-west-2'                                    # AWSのリージョン
 STAGE  = 'Prod'                                         # デプロイ時のステージ名
+keys = ['type','sockets','total','message','value','device','url']  # 受信項目名
 
 import websocket                                        # WebSocketライブラリ
 import datetime                                         # 日時ライブラリ
@@ -52,18 +53,13 @@ while sock:                                             # 作成に成功した�
         res_dict = json.loads(payload)                  # 辞書型変数へ代入
     except Exception:
         print(',', payload)                             # 受信データを出力
-        continue                                        # while繰り返し
-    if res_dict.get('type') == "notify":                # 受信種別に応じた処理
-        print(', sokets =',res_dict.get('sokets'), end='')  # 現在の接続数を表示
-        print(', total =',res_dict.get('total'))            # 累計の接続数を表示
-    elif res_dict.get('type') == "keepalive":           # 接続継続確認を受信
-        print(', sokets =',res_dict.get('sokets'))          # 現在の接続数を表示
-    elif res_dict.get('type') == "message":             # メッセージを受信
-        print(', message =',res_dict.get('data'))           # データを表示
-    elif res_dict.get('type') == "value":               # 数値を受信
-        print(', value =',res_dict.get('data'))             # データを表示
-    else:                                               # 上記以外を受信
-        print(', json =', res_dict)                     # 受信データ列を表示
+        continue                                        # whileの先頭に戻る
+    for key in keys:                                    # 受信項目を繰り返し処理
+        val = res_dict.get(key)                         # 辞書型変数から索引検索
+        if val is not None:                             # 指定項目がある時
+            val = str(val).strip()                      # 文字列変換と両端処理
+            print(',', key, '=', val, end='')           # 値を表示
+    print()                                             # 改行
 sock.close()                                            # ソケットの切断
 
 '''
