@@ -40,31 +40,31 @@ if API_ID == '**********':                              # 設定値のダウン�
 print('WebSocket Logger')                               # タイトル表示
 url = 'wss://' + API_ID + '.execute-api.' + REGION + '.amazonaws.com/' + STAGE
 print('Listening,',url)                                 # URL表示
-while True:
+
+try:
+    sock = websocket.create_connection(url)             # ソケットを作成
+except Exception as e:                                  # 例外処理発生時
+    print(e)                                            # エラー内容を表示
+    exit()                                              # プログラムの終了
+while sock:                                             # 作成に成功したとき
     try:
-        sock = websocket.create_connection(url)         # ソケットを作成
-    except Exception as e:                              # 例外処理発生時
-        print(e)                                        # エラー内容を表示
-        exit()                                          # プログラムの終了
-    while sock:                                         # 作成に成功したとき
-        try:
-            payload = sock.recv().strip()               # WebSocketを取得
-        except websocket.WebSocketConnectionClosedException as e:
-            sock.close()                                # ソケットの切断
-            break                                       # while sockを抜ける
-        date = datetime.datetime.today()                # 日付を取得
-        print(date.strftime('%Y/%m/%d %H:%M'), end='')  # 日付を出力
-        try:
-            res_dict = json.loads(payload)              # 辞書型変数へ代入
-        except Exception:
-            print(',', payload)                         # 受信データを出力
-            continue                                    # whileの先頭に戻る
-        for key in keys:                                # 受信項目を繰り返し処理
-            val = res_dict.get(key)                     # 辞書型変数から索引検索
-            if val is not None:                         # 指定項目がある時
-                val = str(val).strip()                  # 文字列変換と両端処理
-                print(',', key, '=', val, end='')       # 値を表示
-        print()                                         # 改行
+        payload = sock.recv().strip()                   # WebSocketを取得
+    except websocket.WebSocketConnectionClosedException as e:
+        sock.close()                                    # ソケットの切断
+        break                                           # while sockを抜ける
+    date = datetime.datetime.today()                    # 日付を取得
+    print(date.strftime('%Y/%m/%d %H:%M'), end='')      # 日付を出力
+    try:
+        res_dict = json.loads(payload)                  # 辞書型変数へ代入
+    except Exception:
+        print(',', payload)                             # 受信データを出力
+        continue                                        # whileの先頭に戻る
+    for key in keys:                                    # 受信項目を繰り返し処理
+        val = res_dict.get(key)                         # 辞書型変数から索引検索
+        if val is not None:                             # 指定項目がある時
+            val = str(val).strip()                      # 文字列変換と両端処理
+            print(',', key, '=', val, end='')           # 値を表示
+    print()                                             # 改行
 
 '''
 pi@raspberrypi:~/iot/learning $ ./example33_ws_aws.py
