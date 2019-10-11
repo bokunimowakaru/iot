@@ -4,37 +4,30 @@
 
 # sudo apt-get install python3-picamera
 
-
-from wsgiref.simple_server import make_server
-import picamera
+from wsgiref.simple_server import make_server   # HTTPサーバ用ライブラリ
+import picamera                                 # Piカメラ用ライブラリ
 import datetime                                 # 日時・時刻用ライブラリ
 import threading                                # スレッド用ライブラリの取得
 
 def wsgi_app(environ, start_response):          # HTTPアクセス受信時の処理
     global mutex                                # グローバル変数mutexを取得
     path  = environ.get('PATH_INFO')            # リクエスト先のパスを代入
-    if path == '/cam.jpg':                      # リクエスト先がimage.jpg
+    if path == '/cam.jpg':                      # リクエスト先がcam.jpg
         mutex.acquire()                         # mutex状態に設定(排他処理開始)
-        camera.capture('cam.jpg')
+        camera.capture('cam.jpg')               # Piカメラ撮影とファイル保存
         fp = open('cam.jpg', 'rb')              # 画像ファイルを開く
         res = fp.read()                         # 画像データを変数へ代入
         fp.close()                              # ファイルを閉じる
         mutex.release()                         # mutex状態の開放(排他処理終了)
-        start_response(
-            '200 OK',
-            [('Content-type', 'image/jpeg')]
-        )
-    else:
-        res = 'Not Found\r\n'.encode()
-        start_response(
-            '404 Not Found', 
-            [('Content-type', 'text/plain; charset=utf-8')]
-    )
-    return [res]
+        start_response('200 OK', [('Content-type', 'image/jpeg')])      # OK応答
+    else:                                       # cam.jpg以外へのアクセス
+        res = 'Not Found\r\n'.encode()          # 「Not Found」を応答
+        start_response('404 Not Found',[('Content-type','text/plain')]) # エラー
+    return [res]                                # コンテンツの応答
 
-camera = picamera.PiCamera()
-camera.resolution = (640, 480)
-camera.rotation = 90
+camera = picamera.PiCamera()                    # Piカメラのオブジェクトを生成
+camera.resolution = (640, 480)                  # 撮影解像度を640x480に設定
+camera.rotation = 90                            # 画像の回転角度を90度に設定
 mutex = threading.Lock()                        # 排他処理用のオブジェクト生成
 
 try:
