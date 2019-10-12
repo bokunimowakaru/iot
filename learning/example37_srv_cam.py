@@ -36,36 +36,36 @@ def chime(ip):                                          # IoTチャイム
 
 def cam(ip):                                            # IoTカメラ
     url_s = 'http://' + ip                              # アクセス先をurl_sへ
-    s = '/cam.jpg'
+    s = '/cam.jpg'                                      # 文字列変数sにクエリを
     try:
         res = urllib.request.urlopen(url_s + s)         # IoTカメラで撮影を実行
-        if res.headers['content-type'].find('image/jpeg') < 0:
-            res = None
+        if res.headers['content-type'].lower().find('image/jpeg') < 0:
+            res = None                                  # JPEGで無いときにNone
     except urllib.error.URLError:                       # 例外処理発生時
-        res = None
-    if res is None:
+        res = None                                      # エラー時にNoneを代入
+    if res is None:                                     # resがNoneのとき
         url_s = 'http://' + ip + ':8080'                # ポートを8080に変更
         try:
             res = urllib.request.urlopen(url_s + s)     # 再アクセス
-            if res.headers['content-type'].find('image/jpeg') < 0:
-                res = None
+            if res.headers['content-type'].lower().find('image/jpeg') < 0:
+                res = None                              # JPEGで無いときにNone
         except urllib.error.URLError:                   # 例外処理発生時
-            res = None
-    if res is None:
+            res = None                                  # エラー時にNoneを代入
+    if res is None:                                     # resがNoneのとき
             print('URLError :',url_s)                   # エラー表示
-            return None
-    data = res.read()
-    date = datetime.datetime.today().strftime('%d%H%M')
-    filename = 'cam_' + ip[-1] + '_' + date + '.jpg'
+            return None                                 # 関数を終了する
+    data = res.read()                                   # コンテンツ(JPEG)を読む
+    date = datetime.datetime.today().strftime('%d%H%M') # 12日18時20分 → 121820
+    filename = 'cam_' + ip[-1] + '_' + date + '.jpg'    # ファイル名の作成
     try:
         fp = open(filename, 'wb')                       # 保存用ファイルを開く
     except Exception as e:                              # 例外処理発生時
         print(e)                                        # エラー内容を表示
-        return
-    fp.write(data)
-    fp.close()
-    print('filename =',filename)
-    return filename
+        return None                                     # 関数を終了する
+    fp.write(data)                                      # 写真ファイルを保存する
+    fp.close()                                          # ファイルを閉じる
+    print('filename =',filename)                        # 保存ファイルを表示する
+    return filename                                     # ファイル名を応答する
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
 try:
@@ -81,10 +81,10 @@ while sock:                                             # 永遠に繰り返す
     udp = udp.decode().strip()                          # データを文字列へ変換
     if udp == 'Ping':                                   # 「Ping」に一致する時
         print('device = Ping',udp_from[0])              # 取得値を表示
-        for ip in ip_chimes:                          # 各機器のIPアドレスをipへ
-            chime(ip)                          # 各IoTカラーLEDに色を送信
-        for ip in ip_cams:                          # 各機器のIPアドレスをipへ
-            cam(ip)                          # 各IoTカラーLEDに色を送信
+        for ip in ip_chimes:                            # 各機器のIPアドレスをip
+            chime(ip)                                   # IoTチャイムを鳴らす
+        for ip in ip_cams:                              # 各機器のIPアドレスをip
+            cam(ip)                                     # IoTカメラで撮影する
 
 '''
 実行例
