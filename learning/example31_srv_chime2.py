@@ -20,28 +20,25 @@
 ip_chime = '127.0.0.1'                                  # IoTチャイムのアドレス
 sensors = ['temp.','temp0','humid','press','envir']     # 対応センサ名
 temp_lv = [ 28 , 30 , 32 ]                              # 警告レベル 3段階
-url_s = 'http://' + ip_chime                            # アクセス先
 
 import socket                                           # IP通信用モジュール
 import urllib.request                                   # HTTP通信ライブラリ
-import threading                                        # スレッド用ライブラ
 
 def chime(level):                                       # チャイム（スレッド用）
     if level is None or level < 0 or level > 3:         # 範囲外の値の時に
         return                                          # 何もせずに戻る
-    global url_s                                        # グローバル変数の取得
-    url_b_s = url_s + '/?B=' + str(level)               # レベルの設定
+    url_s = 'http://' + ip_chime                        # アクセス先
+    s = '/?B=' + str(level)                             # レベルを文字列変数sへ
     try:
-        urllib.request.urlopen(url_b_s)                 # IoTチャイムへ鳴音指示
+        urllib.request.urlopen(url_s + s)               # IoTチャイムへ鳴音指示
     except urllib.error.URLError:                       # 例外処理発生時
         print('URLError :',url_s)                       # エラー表示
         # ポート8080へのアクセス用 (下記の5行)
         url_s = 'http://' + ip_chime + ':8080'          # ポートを8080に変更
-        url_b_s = url_s + '/?B=' + str(level)           # レベルの設定
         try:
-           urllib.request.urlopen(url_b_s)              # 再アクセス
+            urllib.request.urlopen(url_s + s)           # 再アクセス
         except urllib.error.URLError:                   # 例外処理発生時
-           url_s = 'http://' + ip_chime                 # ポートを戻す
+            url_s = 'http://' + ip_chime                # ポートを戻す
 
 def check_dev_name(s):                                  # デバイス名を取得
     if not s.isprintable():                             # 表示可能な文字列で無い
@@ -73,8 +70,7 @@ while sock:                                             # 永遠に繰り返す
     udp = udp.decode().strip()                          # データを文字列へ変換
     if udp == 'Ping':                                   # 「Ping」に一致する時
         print('device = Ping',udp_from[0])              # 取得値を表示
-        thread = threading.Thread(target=chime, args=([0]))     # 関数chime
-        thread.start()                                  # スレッドchimeの起動
+        chime(0)                                        # chimeの起動
         continue                                        # whileへ戻る
     vals = udp.split(',')                               # 「,」で分割
     dev = check_dev_name(vals[0])                       # デバイス名を取得
@@ -89,5 +85,34 @@ while sock:                                             # 永遠に繰り返す
             ', temperature =',val,\
             ', level =',level\
         )                                               # 温度取得結果を表示
-        thread = threading.Thread(target=chime, args=([level])) # 関数chime
-        thread.start()                                  # スレッドchimeの起動
+        chime(level)                                    # chimeの起動
+'''
+実行例
+--------------------------------------------------------------------------------
+pi@raspberrypi:~ $ cd ~/iot/learning/
+pi@raspberrypi:~/iot/learning $ ./example31_srv_chime2.py
+Listening UDP port 1024 ... 
+device = Ping 192.168.0.3
+device = temp._3 192.168.0.3 , temperature = 28.0 , level = 1 
+--------------------------------------------------------------------------------
+pi@raspberrypi:~ $ cd ~/iot/learning/
+pi@raspberrypi:~/iot/learning $ ./example14_iot_btn.py
+./example14_iot_btn.py
+GPIO26 = 0 Ping
+GPIO26 = 1 Pong
+--------------------------------------------------------------------------------
+pi@raspberrypi:~ $ cd ~/iot/learning/
+pi@raspberrypi:~/iot/learning $ ./example15_iot_temp.py
+Temperature = 28 (27.704)
+send : temp._3, 28 
+pi@raspberrypi:~ $ cd ~/iot/learning/
+--------------------------------------------------------------------------------
+pi@raspberrypi:~/iot/learning $ sudo ./example18_iot_chime_nn.py
+HTTP port 80
+level = 0
+127.0.0.1 - - [16/Sep/2019 19:05:20] "GET /?B=0 HTTP/1.1" 200 9
+level = 1
+127.0.0.1 - - [16/Sep/2019 19:05:29] "GET /?B=1 HTTP/1.1" 200 9
+--------------------------------------------------------------------------------
+'''
+
