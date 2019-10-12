@@ -23,7 +23,7 @@ Raspberry Pi用 赤外線リモコン受信プログラム  raspi_ir_in
     戻り値
         0       正常終了
         -1      異常終了
-                                        Copyright (c) 2015-2016 Wataru KUNINO
+                                        Copyright (c) 2015-2019 Wataru KUNINO
                                         https://bokunimo.net/raspi/
 *******************************************************************************/
 
@@ -47,7 +47,9 @@ FILE *fgpio;
 char buf[S_NUM];            // ir_read.c内のdigitalReadで使用するために確保
 char gpio[]="/sys/class/gpio/gpio00/value";
 char dir[] ="/sys/class/gpio/gpio00/direction";
-char wipi[]="/usr/local/bin/gpio -g mode 00 up/down/tri";   // wipi[28-29]
+//// wipi[]="/usr/local/bin/gpio -g mode 00 up/down/tri";   // wipi[28-29]
+char wipi[]="/usr/bin/gpio -g mode 00 up/down/tri";   // wipi[28-29]
+//// 6文字減る　2019/10
 
 #include "ir_read.c"
 
@@ -141,7 +143,7 @@ int main(int argc,char **argv){
     /* ポート番号の設定 */
     gpio[20]='\0';
     dir[20]='\0';
-    wipi[28]='\0';
+    wipi[28-6]='\0';
     sprintf(gpio,"%s%d/value",gpio,port);
     sprintf(dir,"%s%d/direction",dir,port);
     sprintf(wipi,"%s %d tri",wipi,port);
