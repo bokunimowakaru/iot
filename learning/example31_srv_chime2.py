@@ -38,7 +38,7 @@ def chime(level):                                       # チャイム（スレ�
         try:
             urllib.request.urlopen(url_s + s)           # 再アクセス
         except urllib.error.URLError:                   # 例外処理発生時
-            url_s = 'http://' + ip_chime                # ポートを戻す
+            print('URLError :',url_s)                   # エラー表示
 
 def check_dev_name(s):                                  # デバイス名を取得
     if not s.isprintable():                             # 表示可能な文字列で無い
