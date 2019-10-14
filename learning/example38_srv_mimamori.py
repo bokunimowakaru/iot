@@ -28,13 +28,15 @@
 MAIL_ID   = '************@gmail.com'    ## 要変更 ##    # GMailのアカウント
 MAIL_PASS = '************'              ## 要変更 ##    # パスワード
 MAILTO    = 'watt@bokunimo.net'         ## 要変更 ##    # メールの宛先
+RC_CODE   = '48,a5,50,88,13'            ## 要変更 ##    # テレビのリモコン信号
 
 MONITOR_START =  7  #(時)                               # 監視開始時刻
 MONITOR_END   = 21  #(時)                               # 監視終了時刻
 MON_INTERVAL  =  1  #(分)                               # 監視処理の実行間隔
 ALLOWED_TERM  =  4  #(時間)                             # 警報指定時間(22以下)
 ALLOWED_TEMP  = 35  #(℃)                               # 警報指定温度
-sensors = ['temp.','temp0','humid','press','envir']     # 対応センサのデバイス名
+REPORT_TIME   =  9  #(時)                               # 報告メール送信時刻
+sensors = ['ir_in','temp.','temp0','humid','press','envir'] # 対応センサ名
 temp_lv = [ 28 , 30 , 32 ]                              # 警告レベル 3段階
 
 import socket                                           # IP通信用モジュール
@@ -54,13 +56,13 @@ def mimamori(interval):
     time_remo = TIME_REMO + datetime.timedelta(hours=ALLOWED_TERM)
     time_sens = TIME_SENS + datetime.timedelta(hours=ALLOWED_TERM)
     if time_remo < time_now:                            # リモコン送信時刻を超過
-        delta = time_now - TIME_REMO
-        msg = 'リモコン操作が' + str(delta.hours) + '時間ありません'
-        mail(MAILTO,'i.myMimamoriPi 警告',msg)
+        s = str(round((time_now - TIME_REMO).seconds / 60 / 60,1))
+        msg = 'リモコン操作が' + s + '時間ありません'   # メール本文の作成
+        mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
     if time_sens < time_now:                            # センサ送信時刻を超過
-        delta = time_now - TIME_SENS
-        msg = 'センサからの送信が' + str(delta.hours) + '時間ありません'
-        mail(MAILTO,'i.myMimamoriPi 警告',msg)
+        s = str(round((time_now - TIME_REMO).seconds / 60 / 60,1))
+        msg = 'センサの信号が' + s + '時間ありません'   # メール本文の作成
+        mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
 
 def mail(att, subject, text):                           # メール送信用関数
     try:
@@ -75,7 +77,8 @@ def mail(att, subject, text):                           # メール送信用関�
         smtp.close()                                    # 送信終了
         print('Mail:', att, subject, text)              # メールの内容を表示
     except Exception as e:                              # 例外処理発生時
-        print(e)                                        # エラー内容を表示
+        print('ERROR, Mail:',e)                         # エラー内容を表示
+    #   raise e                                         # Exceptionを応答する
 
 def check_dev_name(s):                                  # デバイス名を取得
     if not s.isprintable():                             # 表示可能な文字列で無い
@@ -96,7 +99,7 @@ def get_val(s):                                         # データを数値に�
 TIME_REMO = datetime.datetime.now()
 TIME_SENS = TIME_REMO
 TIME_TEMP = TIME_REMO
-mail(MAILTO,'i.myMimamoriPi','ソフトが起動しました')    # メール送信
+mail(MAILTO,'i.myMimamoriPi','起動しました')            # メール送信
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
 try:
@@ -104,35 +107,47 @@ try:
     sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)    # オプション
     sock.bind(('', 1024))                               # ソケットに接続
 except Exception as e:                                  # 例外処理発生時
-    print(e)                                            # エラー内容を表示
+    print('ERROR, Sock:',e)                             # エラー内容を表示
     exit()                                              # プログラムの終了
 mimamori(MON_INTERVAL * 60)                             # 関数mimamoriを起動
 
 while sock:                                             # 永遠に繰り返す
     try:
         udp, udp_from = sock.recvfrom(64)               # UDPパケットを取得
+        udp = udp.decode().strip()                      # 文字列に変換
     except KeyboardInterrupt:                           # キー割り込み発生時
         print('\nKeyboardInterrupt')                    # キーボード割り込み表示
+        print('Please retype [Ctrl]+[C], 再操作してください')
         exit()                                          # プログラムの終了
     if udp == 'Ping':                                   # 「Ping」に一致する時
-        print('device = Ping',udp_from[0])              # 取得値を表示
+        print('Ping',udp_from[0])              # 取得値を表示
         mail(MAILTO,'i.myMimamoriPi 通知','ボタンが押されました')
         continue                                        # whileへ戻る
-    vals = udp.decode().strip().split(',')              # 「,」で分割
+    vals = udp.split(',')                               # 「,」で分割
     dev = check_dev_name(vals[0])                       # デバイス名を取得
-    if dev is None or len(vals) < 2:                            # 取得なし,又は項目1以下
+    if dev is None or len(vals) < 2:                    # 取得なし,又は項目1以下
         continue                                        # whileへ戻る
+
+    now = datetime.datetime.now()                       # 現在時刻を代入
+    print(now.strftime('%Y/%m/%d %H:%M')+', ', end='')  # 日付を出力
+    # 赤外線リモコン用の処理
+    if dev[0:5] == 'ir_in':
+        print(vals[0],udp_from[0],',',vals[1:], end='')
+        if udp.find(RC_CODE) >= 8:
+            TIME_REMO = now                             # リモコン取得時刻を更新
+            print(' = TV RC')                           # テレビリモコン表示
+        else:
+            print()                                     # 改行
+        continue                                        # whileへ戻る
+
+    # 温度センサ用の処理
     val = get_val(vals[1])                              # データ1番目を取得
     level = 0                                           # 温度超過レベル用の変数
     for temp in temp_lv:                                # 警告レベルを取得
         if val >= temp:                                 # 温度が警告レベルを超過
             level = temp_lv.index(temp) + 1             # レベルを代入
-    print(
-        'device =',vals[0],udp_from[0],\
-        ', temperature =',val,\
-        ', level =',level\
-    )                                                   # 温度取得結果を表示
-    TIME_SENS = datetime.datetime.now()                 # センサ取得時刻を代入
+    print(vals[0],udp_from[0],',temperature =',val,',level =',level)
+    TIME_SENS = now                                     # センサ取得時刻を更新
     if level > 0:                                       # 警告レベル1以上のとき
         time_temp = TIME_TEMP + datetime.timedelta(minutes = 5 ** (3 - level))
         if time_temp < datetime.datetime.now():
@@ -143,7 +158,12 @@ while sock:                                             # 永遠に繰り返す
 '''
 実行例
 --------------------------------------------------------------------------------
-
+pi@raspberrypi4:~/iot/learning $ ./example38_srv_mimamori.py
+Mail: watt@bokunimo.net i.myMimamoriPi 起動しました
+Listening UDP port 1024 ...
+2019/10/14 17:39, temp0_2 192.168.0.7 ,temperature = 26.0 ,level = 0
+2019/10/14 17:40, temp0_2 192.168.0.7 ,temperature = 26.0 ,level = 0
+2019/10/14 17:40, ir_in_2 192.168.0.7 , ['48', 'a5', '50', '88', '13', '17', 'de'] = TV RC
 
 --------------------------------------------------------------------------------
 '''
