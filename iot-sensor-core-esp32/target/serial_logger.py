@@ -34,7 +34,12 @@ while com:
         rx = rx.decode()
     except Exception as e:                              # 例外処理発生時
         print('ERROR:',e)                               # エラー内容を表示
-        continue
+        try:
+            rx = rx[0:93].decode()
+        except Exception as e:                          # 例外処理発生時
+            print('ERROR:',e)                           # エラー内容を表示
+            break #### デバッグ用 ####
+            continue
     s=''                                                # 表示用の文字列変数s
     for c in rx:
         if ord(c) >= ord(' ') and ord(c) <= ord('~') or ord(c) == ord('\n'):
@@ -44,3 +49,4 @@ com.close()
 
 ##### ToDo
 # UnicodeDecodeError: 'utf-8' codec can't decode bytes in position 94-95: unexpected end of data
+# 上記の場合 rx[0:93] まではデコードできる！？
