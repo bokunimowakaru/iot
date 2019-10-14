@@ -30,10 +30,17 @@ while com:
     if len(rx) > buf_n - 1:
         print('buffer over run, len =',len(rx))
         continue
-    rx = rx.decode()
+    try:
+        rx = rx.decode()
+    except Exception as e:                              # 例外処理発生時
+        print('ERROR:',e)                               # エラー内容を表示
+        continue
     s=''                                                # 表示用の文字列変数s
     for c in rx:
         if ord(c) >= ord(' ') and ord(c) <= ord('~') or ord(c) == ord('\n'):
             s += c                                      # 文字列sへ追加
     print(s,end='')
 com.close()
+
+##### ToDo
+# UnicodeDecodeError: 'utf-8' codec can't decode bytes in position 94-95: unexpected end of data
