@@ -8,7 +8,7 @@
 import sys
 import serial
 
-buf_n= 128                                              # 受信バッファ容量(バイト)
+buf_n= 1024                                             # 受信バッファ容量(バイト)
 argc = len(sys.argv)                                    # 引数の数をargcへ代入
 
 print('Serial Logger (usage: '+sys.argv[0]+' /dev/ttyUSBx)')       # タイトル表示
@@ -27,10 +27,13 @@ while com:
     rx = com.read(buf_n)
     if len(rx) == 0:
         continue
+    if len(rx) > buf_n - 1:
+        print('buffer over run, len =',len(rx))
+        continue
     rx = rx.decode()
     s=''                                                # 表示用の文字列変数s
     for c in rx:
-        if ord(c) >= ord(' ') and ord(c) <= ord('~'):   # 表示可能文字
+        if ord(c) >= ord(' ') and ord(c) <= ord('~') or ord(c) == ord('\n'):
             s += c                                      # 文字列sへ追加
-    print(s)
+    print(s,end='')
 com.close()
