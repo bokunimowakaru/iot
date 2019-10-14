@@ -71,6 +71,7 @@ def mimamori(interval):
         s = str(round((time_now - TIME_REMO).seconds / 60 / 60,1))
         msg = 'リモコン操作が' + s + '時間ありません'   # メール本文の作成
         mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
+#   print('next',t.getName(),'=',time_now +datetime.timedelta(seconds=interval))
 
 def mail(att, subject, text):                           # メール送信用関数
     try:
@@ -104,9 +105,7 @@ def get_val(s):                                         # データを数値に�
         return float(s)                                 # 小数値を応答
     return None                                         # Noneを応答
 
-TIME_REMO = datetime.datetime.now()
-TIME_TEMP = TIME_REMO
-TIME_SENS = TIME_REMO
+TIME_REMO = TIME_TEMP = TIME_SENS = datetime.datetime.now()
 REPORT_STAT = 1
 COUNT_REMO = 0
 mail(MAILTO,'i.myMimamoriPi','起動しました')            # メール送信
