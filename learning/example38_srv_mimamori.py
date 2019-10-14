@@ -30,9 +30,8 @@ MAIL_PASS = '************'              ## 要変更 ##    # パスワード
 MAILTO    = 'watt@bokunimo.net'         ## 要変更 ##    # メールの宛先
 RC_CODE   = '48,a5,50,88,13'            ## 要変更 ##    # テレビのリモコン信号
 
-MONITOR_START =  7  #(時)                               # 監視開始時刻
-MONITOR_END   = 21  #(時)                               # 監視終了時刻
-MON_INTERVAL  =  1  #(分)                               # 監視処理の実行間隔
+MONITOR_START =  9  #(時)                               # 監視開始時刻
+MON_INTERVAL  = 10  #(分)                               # 監視処理の実行間隔
 ALLOWED_TERM  =  4  #(時間)                             # 警報指定時間(22以下)
 ALLOWED_TEMP  = 32  #(℃)                               # 警報指定温度
 REPORT_TIME   =  9  #(時)                               # 定期報告時刻
@@ -65,7 +64,7 @@ def mimamori(interval):
         s = str(round((time_now - TIME_REMO).seconds / 60 / 60,1))
         msg = 'センサの信号が' + s + '時間ありません'   # メール本文の作成
         mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
-    if time_now.hour < MONITOR_START or time_now.hour >= MONITOR_END:
+    if time_now.hour < MONITOR_START:                   # AM0時～9時は送信しない
         return
     time_remo = TIME_REMO + datetime.timedelta(hours=ALLOWED_TERM)
     if time_remo < time_now:                            # リモコン送信時刻を超過
