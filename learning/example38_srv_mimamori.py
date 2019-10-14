@@ -34,10 +34,10 @@ MONITOR_START =  7  #(時)                               # 監視開始時刻
 MONITOR_END   = 21  #(時)                               # 監視終了時刻
 MON_INTERVAL  =  1  #(分)                               # 監視処理の実行間隔
 ALLOWED_TERM  =  4  #(時間)                             # 警報指定時間(22以下)
-ALLOWED_TEMP  = 35  #(℃)                               # 警報指定温度
-REPORT_TIME   =  9  #(時)                               # 報告メール送信時刻
+ALLOWED_TEMP  = 32  #(℃)                               # 警報指定温度
+REPORT_TIME   =  9  #(時)                               # 定期報告時刻
 sensors = ['ir_in','temp.','temp0','humid','press','envir'] # 対応センサ名
-temp_lv = [ 28 , 30 , 32 ]                              # 警告レベル 3段階
+temp_lv = [ALLOWED_TEMP-4, ALLOWED_TEMP-2 , ALLOWED_TEMP ]  # 警告レベル 3段階
 
 import socket                                           # IP通信用モジュール
 import urllib.request                                   # HTTP通信ライブラリ
@@ -49,19 +49,28 @@ from email.mime.text import MIMEText                    # メール形式ライ�
 def mimamori(interval):
     t = threading.Timer(interval, mimamori, [interval]) # 遅延起動スレッドを生成
     t.start()                                           # (60秒後に)スレッド起動
-    time_now = datetime.datetime.now()
-    if time_now.hour < MONITOR_START or time_now.hour >= MONITOR_END:
-        return
-    global TIME_REMO, TIME_SENS
-    time_remo = TIME_REMO + datetime.timedelta(hours=ALLOWED_TERM)
+    global TIME_REMO, TIME_SENS, REPORT_STAT, COUNT_REMO    # グローバル変数
+    time_now = datetime.datetime.now()                  # 現在時刻の取得
+    if time_now.hour != REPORT_TIME:                    # 定期報告時刻で無いとき
+        REPORT_STAT = 0
+    else:
+        if REPORT_STAT == 0:                            # 未報告のとき
+            REPORT_STAT = 1                             # 報告済みに変更
+            s = str(COUNT_REMO)
+            COUNT_REMO = 0
+            msg = '昨日のリモコン操作は' + s + '回でした。' # メール本文の作成
+            mail(MAILTO,'i.myMimamoriPi 定期報告',msg)  # メール送信関数を実行
     time_sens = TIME_SENS + datetime.timedelta(hours=ALLOWED_TERM)
-    if time_remo < time_now:                            # リモコン送信時刻を超過
-        s = str(round((time_now - TIME_REMO).seconds / 60 / 60,1))
-        msg = 'リモコン操作が' + s + '時間ありません'   # メール本文の作成
-        mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
     if time_sens < time_now:                            # センサ送信時刻を超過
         s = str(round((time_now - TIME_REMO).seconds / 60 / 60,1))
         msg = 'センサの信号が' + s + '時間ありません'   # メール本文の作成
+        mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
+    if time_now.hour < MONITOR_START or time_now.hour >= MONITOR_END:
+        return
+    time_remo = TIME_REMO + datetime.timedelta(hours=ALLOWED_TERM)
+    if time_remo < time_now:                            # リモコン送信時刻を超過
+        s = str(round((time_now - TIME_REMO).seconds / 60 / 60,1))
+        msg = 'リモコン操作が' + s + '時間ありません'   # メール本文の作成
         mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
 
 def mail(att, subject, text):                           # メール送信用関数
@@ -97,8 +106,10 @@ def get_val(s):                                         # データを数値に�
     return None                                         # Noneを応答
 
 TIME_REMO = datetime.datetime.now()
-TIME_SENS = TIME_REMO
 TIME_TEMP = TIME_REMO
+TIME_SENS = TIME_REMO
+REPORT_STAT = 1
+COUNT_REMO = 0
 mail(MAILTO,'i.myMimamoriPi','起動しました')            # メール送信
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
@@ -135,7 +146,8 @@ while sock:                                             # 永遠に繰り返す
         print(vals[0],udp_from[0],',',vals[1:], end='')
         if udp.find(RC_CODE) >= 8:
             TIME_REMO = now                             # リモコン取得時刻を更新
-            print(' = TV RC')                           # テレビリモコン表示
+            COUNT_REMO += 1
+            print('TV_RC,',COUNT_REMO)                  # テレビリモコン表示
         else:
             print()                                     # 改行
         continue                                        # whileへ戻る
@@ -163,7 +175,7 @@ Mail: watt@bokunimo.net i.myMimamoriPi 起動しました
 Listening UDP port 1024 ...
 2019/10/14 17:39, temp0_2 192.168.0.7 ,temperature = 26.0 ,level = 0
 2019/10/14 17:40, temp0_2 192.168.0.7 ,temperature = 26.0 ,level = 0
-2019/10/14 17:40, ir_in_2 192.168.0.7 , ['48', 'a5', '50', '88', '13', '17', 'de'] = TV RC
+2019/10/14 17:40, ir_in_2 192.168.0.7 , ['48', 'a5', '50', '88', '13', '17', 'de']TV_RC, 1
 
 --------------------------------------------------------------------------------
 '''
