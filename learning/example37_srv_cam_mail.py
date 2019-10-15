@@ -3,11 +3,12 @@
 
 # Example 37 IoTボタンでチャイム音＋写真撮影するカメラ付き玄関呼び鈴システム
 # IoTボタンが送信するUDPを受信し、写真撮影とIoTチャイムへ鳴音指示を送信する
+# 【メール送信機能つき】
 
 # 接続図
 #           [IoTボタン] ------> [本機] ------> [IoTチャイム]
 #           ボタン操作            ↓             チャイム音
-#                               [IoTカメラ]
+#                               [IoTカメラ]      ＋【メール送信機能つき】
 #                               写真撮影
 
 # 機器構成
@@ -77,17 +78,17 @@ def cam(ip):                                            # IoTカメラ
 
 def mail(att, subject, text, files):                    # メール送信用関数
     try:
-        mime = MIMEMultipart()
+        mime = MIMEMultipart()                          # MIME形式のインスタンス
         mime['From'] = MAIL_ID                          # 送信者を代入
         mime['To'] = att                                # 宛先を代入
         mime['Subject'] = subject                       # 件名を代入
         txt = MIMEText(text.encode(), 'plain', 'utf-8') # TEXTをMIME形式に変換
-        mime.attach(txt)
-        for file in files:
-            fp = open(file, "rb")
-            app = MIMEApplication(fp.read(),Name=file)
-            fp.close()
-            mime.attach(app)
+        mime.attach(txt)                                # テキストを添付
+        for file in files:                              # 添付ファイル(複数)
+            fp = open(file, "rb")                       # ファイルを開く
+            app = MIMEApplication(fp.read(),Name=file)  # ファイルをappへ代入
+            fp.close()                                  # ファイルを閉じる
+            mime.attach(app)                            # 保持したappを添付
         smtp = smtplib.SMTP('smtp.gmail.com', 587)      # SMTPインスタンス生成
         smtp.starttls()                                 # SSL/TSL暗号化を設定
         smtp.login(MAIL_ID, MAIL_PASS)                  # SMTPサーバへログイン
