@@ -149,8 +149,8 @@ int main(int argc,char **argv){
     /* 第3引数以降のdataの取り込み */
     for(i=3;i<argc;i++){
 		value=ahex2i((char)argv[i][1]);
-		if(value>0) value += ahex2i((char)argv[i][0])*16;
-		if(value>0){
+		if(value>=0) value += ahex2i((char)argv[i][0])*16;
+		if(value>=0){
 			data[len]=(byte)value;
 			len++;
 			if(len>=DATA_SIZE) len= DATA_SIZE-1;	// メモリ保護のための処理
