@@ -254,7 +254,7 @@ boolean sensors_irRead(boolean noUdp, const String &SP){
 	for(int i=0; i < len8; i++){
 		S += ",";
 		S += String(data[i]>>4,HEX);
-		S += String(data[i]%15,HEX);
+		S += String(data[i]&15,HEX);
 	}
 	Serial.println("ir_in      = " + S);
 	if (!noUdp) sensors_sendUdp("ir_in", S);
@@ -423,11 +423,11 @@ boolean sensors_init_BTN(int mode){
 
 boolean sensors_init_PIR(int enable){
 	boolean ret = true;		// ピン干渉なし
-	if( IR_IN_EN ) return false;	// IR と排他 ∵VDD=26/GND=14
-	PIN_VDD = 25;
-	PIN_PIR = 26;
-	PIN_GND = 27;
 	if( enable > 0 ){
+		if( IR_IN_EN ) return false;	// IR と排他 ∵VDD=26/GND=14
+		PIN_VDD = 25;
+		PIN_PIR = 26;
+		PIN_GND = 27;
 		if(	sensors_pin_set("IO" + String(PIN_GND),"人感_GND") &&
 			sensors_pin_set("IO" + String(PIN_PIR),"人感_OUT") &&
 			sensors_pin_set("IO" + String(PIN_VDD),"人感_VIN")
@@ -451,11 +451,11 @@ boolean sensors_init_PIR(int enable){
 
 boolean sensors_init_IR_IN(int mode){
 	boolean ret = true;		// ピン干渉なし
-	if( PIR_EN ) return false;	// PIR と排他 ∵VDD=14/GND=27
-	PIN_IR_IN = 26;
-	PIN_GND = 27;
-	PIN_VDD = 14;
 	if( mode > 0 ){
+		if( PIR_EN ) return false;	// PIR と排他 ∵VDD=14/GND=27
+		PIN_IR_IN = 26;
+		PIN_GND = 27;
+		PIN_VDD = 14;
 		if(	sensors_pin_set("IO" + String(PIN_GND),"赤外線_GND") &&
 			sensors_pin_set("IO" + String(PIN_IR_IN),"赤外線_OUT") &&
 			sensors_pin_set("IO" + String(PIN_VDD),"赤外線_VCC")

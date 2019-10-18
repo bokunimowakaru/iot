@@ -3,11 +3,14 @@ IoT Sensor Core for ESP32
 
 										   Copyright (c) 2019 Wataru KUNINO
 *******************************************************************************/
+#include <SPIFFS.h>
 #include <WiFi.h>								// ESP32用WiFiライブラリ
 #include <WiFiUdp.h>							// UDP通信を行うライブラリ
 #include <ESPmDNS.h>							// ESP32用マルチキャストDNS
 #include <esp_wps.h>							// ESP32用Wi-Fi WPSライブラリ
 #include "Ambient.h"							// Ambient接続用 ライブラリ
+
+#define  FILENAME "/wifiset.txt" 				// Wi-Fi 設定用ファイル名
 
 // ユーザ設定
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
@@ -290,6 +293,70 @@ void setup(){
 	if( (BTN_EN || IR_IN_EN || PIR_EN) && sw ) sleep();
 	
 	Serial.println("-------- IoT Sensor Core ESP32 by Wataru KUNINO --------");
+		
+//	/* SPIFFS //////////////////////////
+	if(!SPIFFS.begin()){					// ファイルシステムSPIFFSの開始
+		Serial.println("Formating SPIFFS.");
+		SPIFFS.format(); SPIFFS.begin();	// エラー時にSPIFFSを初期化
+	}
+	
+	if( wake == 0 && digitalRead(0) == 0){
+		File root = SPIFFS.open("/");
+	    if (!root) {
+	        Serial.println("Failed to open directory");
+	    }else if (!root.isDirectory()) {
+	        Serial.println("Not a directory");
+	    }else{
+	        File file = root.openNextFile();
+	        while (file) {
+	            if (file.isDirectory()) {
+	                Serial.print("  DIR : ");
+	                Serial.println(file.name());
+	            } else {
+	                Serial.print("  FILE: ");
+	                Serial.print(file.name());
+	                Serial.print("  SIZE: ");
+	                Serial.println(file.size());
+	            }
+	            file = root.openNextFile();
+	        }
+	        file.close();
+	    }
+	    root.close();
+
+		File file = SPIFFS.open(FILENAME,"r");	// ファイルを開く
+		if(file){
+			int size = 1 + 16 + 16 + 17 + 65 + 1;
+			int end = 0;
+			char d[(1 + 16 + 16 + 17 + 65 + 1) + 1];
+			memset(d,0,size + 1);
+			if(file.available()){
+				Serial.println("loading settings");
+				file.read((byte *)d,size);
+			/*	if(
+					d[0] >= '0' && d[0] <= '2'&&
+				//	strlen(&d[1])>0 &&
+				//	strlen(&d[1+16])>0 &&
+				//	strlen(&d[1+16+16])>0 &&
+				//	strlen(&d[1+16+16+17])>0 &&
+				//	strlen(&d[1+16+16+17+65])>0 &&
+				//	d[1+16+16+17+65+1] >= '1' && d[1+16+16+17+65+1] <= '3'
+				){
+			*/
+					BOARD_TYPE= (byte)d[end] - '0';			Serial.printf("BOARD_TYPE  =%d\n",BOARD_TYPE);
+					end++;
+					strncpy(SSID_AP,d+end,16); end += 16;	Serial.printf("SSID_AP     =%s\n",SSID_AP);
+					strncpy(PASS_AP,d+end,16); end += 16;	Serial.printf("PASS_AP     =%s\n",PASS_AP);
+					strncpy(SSID_STA,d+end,17); end += 17;	Serial.printf("SSID_STA    =%s\n",SSID_STA);
+					strncpy(PASS_STA,d+end,65); end += 65;	Serial.printf("PASS_STA    =%s\n",PASS_STA);
+					WIFI_AP_MODE = (byte)d[end] - '0';		Serial.printf("WIFI_AP_MODE=%d\n",WIFI_AP_MODE);
+					end++;
+			//	}
+				file.close();
+			}else Serial.println("no wifi setting files.");
+		}
+	}
+//	*/
 	Serial.print("Wi-Fi Mode = ");
 	if(WIFI_AP_MODE>=0 && WIFI_AP_MODE<=3){
 		char mode_s[4][7]={"OFF","AP","STA","AP+STA"};
@@ -375,7 +442,7 @@ void setup(){
 }
 
 void loop(){
-	unsigned long time=millis();            // ミリ秒の取得
+	unsigned long time=millis();			// ミリ秒の取得
 	
 	html_handleClient();
 	sensors_btnRead("Trigged by Button ------" + Line);

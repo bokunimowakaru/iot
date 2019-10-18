@@ -8,6 +8,8 @@
 #define HTML_ERROR_LEN_MAX	64
 
 // extern RTC_DATA_ATTR
+// extern File file
+// extern FILENAME
 
 WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
 
@@ -524,7 +526,10 @@ void html_wifi(){
 				<h3>Wi-Fi 再起動</h3>\
 				<form method=\"GET\" action=\"/reboot\">\
 					<p>Wi-Fi 設定を有効にするために再起動を行ってください。</p>\
-					<p><input type=\"submit\" name=\"BOOT\" value=\"再起動\"></p>\
+					<p>\
+						<input type=\"submit\" name=\"BOOT\" value=\"再起動\">\
+						<input type=\"submit\" name=\"SAVE\" value=\"保存\">\
+					</p>\
 				</form>\
 				<hr>\
 				<h3>スリープ設定</h3>\
@@ -846,7 +851,31 @@ void html_reboot(){
 	
 	/////////////// ------------------------------------------------
 	Serial.println("HTML reboot ------------------------------------");
-	
+//	/* SPIFFS //////////////////////////
+	if(server.hasArg("SAVE")){
+		Serial.println("SAVE to SPIFFS");
+		File file = SPIFFS.open(FILENAME,"w");       // 保存のためにファイルを開く
+		if( file ){
+			int size = 1 + 16 + 16 + 17 + 65 + 1;
+			int end = 0;
+			char d[(1 + 16 + 16 + 17 + 65 + 1) + 1];
+		//	memset(d,0,size + 1);
+			d[end] = '0' + BOARD_TYPE;
+			end++;
+			strncpy(d+end,SSID_AP,16); end += 16;
+			strncpy(d+end,PASS_AP,16); end += 16;
+			strncpy(d+end,SSID_STA,17); end += 17;
+			strncpy(d+end,PASS_STA,65); end += 65;
+			d[end] = '0' + WIFI_AP_MODE;
+			end++;
+			file.write((byte *)d,size);
+			file.close();
+		}else{
+			Serial.println("SAVE ERROR");
+		}
+		delay(1000);
+	}
+//	*/
 	snprintf(s, HTML_MISC_LEN_MAX,
 		"<html>\
 			<head>\

@@ -28,7 +28,7 @@
 #endif
 
 //	#define DEBUG
-//	#define DEBUG_ARDUINO
+#define DEBUG_ARDUINO
 
 /*
 int micros_prev,micros_sec=0;
@@ -256,6 +256,12 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 		Serial.print("SYNC OFF= ");Serial.println(len_off);
 		Serial.print("SYMOL   = ");Serial.println(symbol_len);
 		Serial.print("DATA LEN= ");Serial.println(data_len);
+		
+		len=data_len/8;
+		if(data_len%8)len++;
+		Serial.printf("data[%02d]= {%02X",len,data[0]);
+		for(i=1;i<len;i++) Serial.printf(",%02X",data[i]);
+		Serial.printf("}\n");
 	#endif
 	/* データの有効性のチェック 共通 */
 	if(data_len<16)data_len=-2;					// 2バイトに満たないのは無効
@@ -293,3 +299,14 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 	}
 	return(data_len);
 }
+
+/*
+Mode    = 0 (AEHA)
+Detector= 1 (IR_IN_OFF)
+SYNC LEN= 5356
+SYNC ON = 3640
+SYNC OFF= 1716
+SYMOL   = 858
+DATA LEN= 48
+48,AA,5A,8F,12,15,E1
+*/
