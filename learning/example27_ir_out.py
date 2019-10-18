@@ -8,7 +8,7 @@ import subprocess
 
 ir_in_port  = 4                                 # GPIO ポート番号
 ir_type     = 'AEHA'                            # 赤外線方式 AEHA/NEC/SIRC
-ir_code     = ['48', '5a', '8f', '12', '15', 'e1']            # リモコンコード(スペース区切り)
+ir_code     = ['aa','5a','8f','12','16','d1']   # リモコンコード(スペース区切り)
 
 path = '../tools/ir-remote/raspi_ir_out'        # IR 受信ソフトモジュールのパス
 ir_types = ['AEHA','NEC','SIRC']                # 赤外線リモコン方式名の一覧表
@@ -22,16 +22,17 @@ for code in ir_code:
     app.append(code)
 print('raspi_ir_in, app =', app)                # サブ起動する設定内容を表示
 
-res = subprocess.run(app, stdout=subprocess.PIPE)   # サブプロセスとして起動
-data = res.stdout.decode().strip()                  # 結果をdataへ代入
-code = res.returncode                               # 終了コードをcodeへ代入
+res = subprocess.run(app,stdout=subprocess.PIPE)# サブプロセスとして起動
+data = res.stdout.decode().strip()              # 結果をdataへ代入
+code = res.returncode                           # 終了コードをcodeへ代入
 print('ret=', code, ', ', data)                 # 結果データを表示
 
 '''
 実行結果例
-pi@raspberrypi:~/iot/ir-remote $ ./raspi_ir_in.py
-raspi_ir_in, app = ['./raspi_ir_in', '4', '0', '-1']
-ret= 0 , len= 6 ,  AA 5A 8F 12 15 E1
-ret= 0 , len= 6 ,  AA 5A 8F 12 14 F1
+pi@raspberrypi4:~/iot/learning $ ./example27_ir_out.py
+raspi_ir_in, app = ['../tools/ir-remote/raspi_ir_out','4','0','aa','5a','8f','12','16','d1']
+ret= 0 ,  Pin = 7, Port(BCM) = 4 Port(wPi) = 7
+mode = 0
+data[6] = AA 5A 8F 12 16 D1
 
 '''

@@ -29,13 +29,13 @@ while True:                                             # 以下を繰り返し�
     if code != 0 or leng < 3:                           # 受信長3未満やエラー時
         print('ret =', code, 'len =', leng)             # 結果を表示
         continue                                        # whileに戻る
-    print('ret=', code, ', len=', leng, ', ', data)     # 結果データを表示
+    print('ret=', code, ', len=', leng * 8, ', ', data) # 結果データを表示
 
 '''
 実行結果例
 pi@raspberrypi:~/iot/ir-remote $ ./raspi_ir_in.py
 raspi_ir_in, app = ['./raspi_ir_in', '4', '0', '-1']
-ret= 0 , len= 6 ,  AA 5A 8F 12 15 E1
-ret= 0 , len= 6 ,  AA 5A 8F 12 14 F1
+ret= 0 , len= 48 ,  AA 5A 8F 12 15 E1
+ret= 0 , len= 48 ,  AA 5A 8F 12 14 F1
 
 '''
