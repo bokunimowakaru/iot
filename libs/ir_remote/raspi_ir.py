@@ -8,7 +8,7 @@ import subprocess
 class RaspiIr:
     TYPES = ['AEHA','NEC','SIRC']                       # 赤外線リモコン方式名の一覧表
 
-    def __init__(self,type='AEHA',in_port=18,out_port=4): # コンストラクタ作成
+    def __init__(self,type='AEHA',in_port=0,out_port=0): # コンストラクタ作成
         self.dir = os.path.dirname(__file__)
         self.in_port  = in_port                         # GPIO ポート番号
         self.out_port = out_port                        # GPIO ポート番号
@@ -20,6 +20,8 @@ class RaspiIr:
         self.code     = ['aa','5a','8f','12','16','d1'] # リモコンコード
 
     def input(self):
+        if self.in_port == 0:
+            raise Exception('ERROR: in_port=0')
         try:
             type_i = self.ir_type.index(self.ir_type)   # タイプ名の参照番号
         except ValueError as e:                         # 例外処理発生時(アクセス拒否)
@@ -39,7 +41,7 @@ class RaspiIr:
             print('len=', leng * 8)                     # 結果データを表示
             print('data=', data)                        # 結果データを表示
             raise Exception('ERROR: raspi_ir_in, return code='+ret)
-        code = data.split(' ')
+        code = data.lower().split(' ')
         if type(code) is not list:
             raise Exception('ERROR: raspi_ir_in, got no list obj')
         self.code = code
@@ -49,6 +51,8 @@ class RaspiIr:
         return self.output(self, None)
 
     def output(self, code):
+        if self.out_port == 0:
+            raise Exception('ERROR: out_port=0')
         if code is None:
             code = self.code
         else:
@@ -73,6 +77,22 @@ class RaspiIr:
             print('data=', data)                        # 結果データを表示
             raise Exception('ERROR: raspi_ir_out')
         return ret
+
+    def __del__(self):                                  # インスタンスの削除
+        if self.in_port > 0:
+            path = self.dir + '/raspi_ir_in'            # IR 受信ソフトモジュールのパス
+            app = [path, str(self.in_port), '-1']       # ポートの開放
+            res = subprocess.run(app,stdout=subprocess.PIPE)  # サブプロセスとして起動
+            if res.returncode != 0:                     # 終了コードを確認
+                print(res.stdout.decode().strip())      # 結果を表示
+                print('WARN: Failed to Disable Port',self.in_port)
+        if self.out_port > 0:
+            path = self.dir + '/raspi_ir_out'           # IR 送信ソフトモジュールのパス
+            app = [path, str(self.out_port), '-1']      # ポートの開放
+            res = subprocess.run(app,stdout=subprocess.PIPE)  # サブプロセスとして起動
+            if res.returncode != 0:                     # 終了コードを確認
+                print(res.stdout.decode().strip())      # 結果を表示
+                print('WARN: Failed to Disable Port',self.out_port)
 
 def main():
     raspiIr = RaspiIr('AEHA',in_port=18,out_port=4)
