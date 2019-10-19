@@ -5,31 +5,19 @@
 
 import sys
 import subprocess
+sys.path.append('../libs/ir_remote')
+import raspi_ir
 
 ir_in_port  = 4                                 # GPIO ポート番号
 ir_type     = 'AEHA'                            # 赤外線方式 AEHA/NEC/SIRC
 ir_code     = ['aa','5a','8f','12','16','d1']   # リモコンコード(スペース区切り)
 
-path = '../tools/ir-remote/raspi_ir_out'        # IR 送信ソフトモジュールのパス
-ir_types = ['AEHA','NEC','SIRC']                # 赤外線リモコン方式名の一覧表
+raspiIr = raspi_ir.RaspiIr('AEHA',out_port=4)
 try:
-    type_i = ir_types.index(ir_type)            # タイプ名の参照番号
+    ret = raspiIr.output(ir_code)
 except ValueError as e:                         # 例外処理発生時(アクセス拒否)
     print('ERROR:ir_types,',e)                  # エラー内容表示
-    exit()
-app = [path, str(ir_in_port), str(type_i)]      # 起動設定を集約
-for code in ir_code:
-    app.append(code)
-print('raspi_ir_in, app =', app)                # サブ起動する設定内容を表示
-
-res = subprocess.run(app,stdout=subprocess.PIPE)# サブプロセスとして起動
-data = res.stdout.decode().strip()              # 結果をdataへ代入
-# ret = res.returncode                          # 終了コードをcodeへ代入
-# print('ret =', ret, ', ', data)               # 結果データを表示
-
-line = data.lower().split('\n')                 # 配列型へ変換
-code = line[2].split(' ')                       # 3行目のデータを配列変数へ
-print('code =', code[2:])                       # 送信したリモコン信号を表示
+print('ret =', ret)                       # 送信したリモコン信号を表示
 
 '''
 実行結果例
