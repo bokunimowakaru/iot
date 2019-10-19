@@ -4,20 +4,17 @@
 # Example 27 IoT赤外線リモコン送信機
 
 import sys
-import subprocess
 sys.path.append('../libs/ir_remote')
 import raspi_ir
 
-ir_in_port  = 4                                 # GPIO ポート番号
-ir_type     = 'AEHA'                            # 赤外線方式 AEHA/NEC/SIRC
-ir_code     = ['aa','5a','8f','12','16','d1']   # リモコンコード(スペース区切り)
+ir_code     = ['aa','5a','8f','12','16','d1']   # リモコンコード
 
-raspiIr = raspi_ir.RaspiIr('AEHA',out_port=4)
+raspiIr = raspi_ir.RaspiIr('AEHA',out_port=18)  # 家製協方式で GPIO 18 を使用
 try:
-    ret = raspiIr.output(ir_code)
+    ret = raspiIr.output(ir_code)               # リモコンコードを送信
 except ValueError as e:                         # 例外処理発生時(アクセス拒否)
-    print('ERROR:ir_types,',e)                  # エラー内容表示
-print('ret =', ret)                       # 送信したリモコン信号を表示
+    print('ERROR:raspiIr,',e)                   # エラー内容表示
+print('ret =', ret)                             # 送信したリモコン信号を表示
 
 '''
 実行結果例
