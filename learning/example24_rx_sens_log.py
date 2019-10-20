@@ -41,29 +41,23 @@ except Exception as e:                                  # 例外処理発生時
     print(e)                                            # エラー内容を表示
     exit()                                              # プログラムの終了
 
-try:
-    while sock:                                         # 永遠に繰り返す
-        udp = sock.recv(64).decode().strip()            # UDPパケットを取得
-        vals = udp.split(',')                           # 「,」で分割
-        num = len(vals)                                 # データ数の取得
-        dev = check_dev_name(vals[0])                   # デバイス名を取得
-        if not dev or num < 2:                          # 不適合orデータなし
-            continue                                    # whileに戻る
-        date=datetime.datetime.today()                  # 日付を取得
-        s = date.strftime('%Y/%m/%d %H:%M')+', '+dev    # 日付を変数sへ代入
-        for i in range(1,num):                          # データ回数の繰り返し
-            val = get_val(vals[i])                      # データを取得
-            s += ', '                                   # 「,」を追加
-            if val is not None:                         # データがある時
-                s += str(val)                           # データを変数sに追加
-        filename = dev + '.csv'                         # ファイル名を作成
-        print(s, '-> ' + filename, flush=True)          # 受信データを表示
-        save(filename, s)                               # ファイルへ保存
-
-except KeyboardInterrupt:                               # キー割り込み発生時
-    print('\nKeyboardInterrupt')                        # キーボード割り込み表示
-    sock.close()                                        # ソケットの終了
-    exit()                                              # プログラムの終了
+while sock:                                             # 永遠に繰り返す
+    udp = sock.recv(64).decode().strip()                # UDPパケットを取得
+    vals = udp.split(',')                               # 「,」で分割
+    num = len(vals)                                     # データ数の取得
+    dev = check_dev_name(vals[0])                       # デバイス名を取得
+    if not dev or num < 2:                              # 不適合orデータなし
+        continue                                        # whileに戻る
+    date=datetime.datetime.today()                      # 日付を取得
+    s = date.strftime('%Y/%m/%d %H:%M')+', '+dev        # 日付を変数sへ代入
+    for i in range(1,num):                              # データ回数の繰り返し
+        val = get_val(vals[i])                          # データを取得
+        s += ', '                                       # 「,」を追加
+        if val is not None:                             # データがある時
+            s += str(val)                               # データを変数sに追加
+    filename = dev + '.csv'                             # ファイル名を作成
+    print(s, '-> ' + filename, flush=True)              # 受信データを表示
+    save(filename, s)                                   # ファイルへ保存
 
 '''
 pi@raspberrypi:~/iot/learning $ ./example24_rx_sens_log.py
