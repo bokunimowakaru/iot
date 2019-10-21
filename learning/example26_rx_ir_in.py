@@ -25,7 +25,7 @@ while sock:                                             # 永遠に繰り返す
     vals = udp.decode().strip().split(',')              # 「,」で分割
     dev = check_dev_name(vals[0])                       # デバイス名を取得
     if dev and len(vals) >= 2:                          # 取得成功かつ項目2以上
-        print(vals[0],udp_from[0],',',int(vals[1]),',',vals[2:])
+        print(vals[0],udp_from[0],',',int(vals[1]),',',vals[2:], flush=True)
         #     ~~~~~~  ~~~~~~~~~~          ~~~~~~       ~~~~~~
         #     device  IPアドレス          信号長       コード
 
