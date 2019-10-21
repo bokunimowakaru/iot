@@ -569,7 +569,8 @@ boolean i2c_lcd_Setup(int PIN_SDA, int PIN_SCL,byte x, byte y){
 	if(x==16||x==8||x==20) _i2c_lcd_size_x=x;
 	if(y==1 ||y==2) _i2c_lcd_size_y=y;
 	byte data[2];
-	data[0]=0x00; data[1]=0x39; i2c_lcd_i2c_write(I2C_lcd,data,2);	// IS=1
+	data[0]=0x00; data[1]=0x39; 
+	if( i2c_lcd_i2c_write(I2C_lcd,data,2) ==0 ) return 0;	// IS=1
 	data[0]=0x00; data[1]=0x11; i2c_lcd_i2c_write(I2C_lcd,data,2);	// OSC
 	data[0]=0x00; data[1]=0x70; i2c_lcd_i2c_write(I2C_lcd,data,2);	// コントラスト	0
 	data[0]=0x00; data[1]=0x56; i2c_lcd_i2c_write(I2C_lcd,data,2);	// Power/Cont	6

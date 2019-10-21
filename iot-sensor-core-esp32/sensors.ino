@@ -58,19 +58,19 @@ const String sensors_PINOUT_S_TTGO_Koala[36] = {
 String sensors_PIN_ASSIGNED_S[38];
 
 /*
-DoIt	DevC	AE-ESP	TTGO	メモ	TTGO以外
+DoIt	DevC	AE-ESP	TTGO	メモ	TTGO以外						TTGO_LCD
 IO36 i	IO36 i	IO36 i	IO36i
 IO39 i	IO39 i	IO39 i	IO39i
 IO34 i	IO34 i	IO34 i	IO32★	ADC、
 IO35 i	IO35 i	IO35 i	IO33★	ADC
 IO32	IO32	IO32	IO34 i	ADC				LUM/-
 IO33	IO33	IO33	IO35 i	ADC				LUM/O
-IO25	IO25	IO25	IO25	共通	PIR/+	LUM/+					BME/+
-IO26	IO26	IO26	IO26	共通	PIR/O	SHT/+	Si/+	BME/-
-IO27	IO27	IO27	IO27	共通	PIR/-	SHT/D	Si/-	BME/C
-IO14	IO14	IO14	IO14	共通	IR/+	SHT/C	Si/C	BME/D
-IO12	IO12	IO12	IO12	PDown★			SHT/A	Si/D	BME/A
-IO13	GND		GND		IO13	GND				SHT/-			BME/0
+IO25	IO25	IO25	IO25	共通	PIR/+	LUM/+			BME/+
+IO26	IO26	IO26	IO26	共通	PIR/O	SHT/+	Si/+	BME/-	LCD/+
+IO27	IO27	IO27	IO27	共通	PIR/-	SHT/D	Si/-	BME/C	LCD/R
+IO14	IO14	IO14	IO14	共通	IR/+	SHT/C	Si/C	BME/D	LCD/C
+IO12	IO12	IO12	IO12	PDown★			SHT/A	Si/D	BME/A	LCD/D
+IO13	GND		GND		IO13	GND				SHT/-			BME/0	LCD/-
 GND		IO13	IO13	5V
 --------------------------------------
 IO23	IO23	IO23
@@ -351,35 +351,63 @@ boolean sensors_init_LCD(int mode){
 	boolean ret = true;		// ピン干渉なし
 	if( mode == 0 ) LCD_EN=0;
 	if( mode >= 1 && mode <=2){
-		/*	LCD	ESP
-			VDD		IO19
-			RESET	IO18
-			SCL		IO5
-			SDA		IO17
-			GND		IO16
-		*/
-		if( sensors_pin_set("IO16","LCD_GND") &&
-			sensors_pin_set("IO17","LCD_SDA") &&
-			sensors_pin_set("IO5","LCD_SCL") &&
-			sensors_pin_set("IO18","LCD_RESET") &&
-			sensors_pin_set("IO19","LCD_VDD")
-		){	pinMode(16,OUTPUT);	digitalWrite(16,LOW);
-			pinMode(18,OUTPUT);	digitalWrite(18,LOW);
-			pinMode(19,OUTPUT);	digitalWrite(19,HIGH);
-			delay(100);
-			digitalWrite(18,HIGH);
-			if( i2c_lcd_Setup(17, 5, mode * 8, 2) ) LCD_EN=mode;
+		if( BOARD_TYPE == 2 ){	// TTGO
+			if( sensors_pin_set("IO13","LCD_GND") &&
+				sensors_pin_set("IO12","LCD_SDA") &&
+				sensors_pin_set("IO14","LCD_SCL") &&
+				sensors_pin_set("IO27","LCD_RESET") &&
+				sensors_pin_set("IO26","LCD_VDD")
+			){	pinMode(13,OUTPUT);	digitalWrite(13,LOW);
+				pinMode(27,OUTPUT);	digitalWrite(27,LOW);
+				pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
+				delay(100);
+				digitalWrite(27,HIGH);
+				if( i2c_lcd_Setup(12, 14, mode * 8, 2) ) LCD_EN=mode;
+			}else{
+				ret = false;		// ピン干渉
+				LCD_EN=0;
+			}
 		}else{
-			ret = false;		// ピン干渉
-			LCD_EN=0;
+			/*	LCD	ESP
+				VDD		IO19
+				RESET	IO18
+				SCL		IO5
+				SDA		IO17
+				GND		IO16
+			*/
+			if( sensors_pin_set("IO16","LCD_GND") &&
+				sensors_pin_set("IO17","LCD_SDA") &&
+				sensors_pin_set("IO5","LCD_SCL") &&
+				sensors_pin_set("IO18","LCD_RESET") &&
+				sensors_pin_set("IO19","LCD_VDD")
+			){	pinMode(16,OUTPUT);	digitalWrite(16,LOW);
+				pinMode(18,OUTPUT);	digitalWrite(18,LOW);
+				pinMode(19,OUTPUT);	digitalWrite(19,HIGH);
+				delay(100);
+				digitalWrite(18,HIGH);
+				if( i2c_lcd_Setup(17, 5, mode * 8, 2) ) LCD_EN=mode;
+			}else{
+				ret = false;		// ピン干渉
+				LCD_EN=0;
+			}
 		}
 	}
-	if(LCD_EN != 1 && LCD_EN !=2 ){
-		sensors_pin_reset("IO16","LCD_GND");
-		sensors_pin_reset("IO17","LCD_SDA");
-		sensors_pin_reset("IO5","LCD_SCL");
-		sensors_pin_reset("IO18","LCD_RESET");
-		sensors_pin_reset("IO19","LCD_VDD");
+	if( BOARD_TYPE == 2 ){	// TTGO
+		if(LCD_EN != 1 && LCD_EN !=2 ){
+			sensors_pin_reset("IO13","LCD_GND");
+			sensors_pin_reset("IO12","LCD_SDA");
+			sensors_pin_reset("IO14","LCD_SCL");
+			sensors_pin_reset("IO27","LCD_RESET");
+			sensors_pin_reset("IO26","LCD_VDD");
+		}
+	}else{
+		if(LCD_EN != 1 && LCD_EN !=2 ){
+			sensors_pin_reset("IO16","LCD_GND");
+			sensors_pin_reset("IO17","LCD_SDA");
+			sensors_pin_reset("IO5","LCD_SCL");
+			sensors_pin_reset("IO18","LCD_RESET");
+			sensors_pin_reset("IO19","LCD_VDD");
+		}
 	}
 	return ret;
 }
