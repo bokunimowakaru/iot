@@ -29,7 +29,7 @@
 #                   Wi-Fi設定   Wi-Fi動作モード : AP＋STA
 #                               Wi-Fi STA設定   : ホームゲートウェイのSSIDとPASS
 #                   センサ入力  人感センサ      : ON
-#                               注意：内蔵温度センサはOFFにしておくこと
+#                               ★注意：内蔵温度センサはOFFにしておくこと
 #
 #   子機3       IoT Sensor Coreを、以下に設定
 #                   Wi-Fi設定   Wi-Fi動作モード : AP＋STA
@@ -37,7 +37,7 @@
 #                   センサ入力  内蔵温度センサ  : ON
 #
 #   子機4       IoT チャイム    ./example18_iot_chime_nn.py
-#
+#                               ★注意：同一のRaspberry Piでは実験できない(GPIO)
 
 # ★★★ プログラムを終了させたいときは、[Ctrl] + [C]を、2回、実行してください。
 
@@ -109,7 +109,7 @@ def mimamori(interval):
 #   print('next',t.getName(),'=',time_now +datetime.timedelta(seconds=interval))
                                                         # (スレッド動作確認用)
 
-def chime(level):                                       # チャイム（スレッド用）
+def chime(level):                                       # チャイム
     if level is None or level < 0 or level > 3:         # 範囲外の値の時に
         return                                          # 何もせずに戻る
     url_s = 'http://' + ip_chime                        # アクセス先
