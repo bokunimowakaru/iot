@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-# Example 39 Raspberry Pi による見守りシステム i.myMimamoriPi
+# Example 38 Raspberry Pi による見守りシステム i.myMimamoriPi
 #                                         Copyright (c) 2016-2019 Wataru KUNINO
 #
 # テレビのリモコン信号と、IoT温度センサを監視し、指定した時間帯に4時間以上、
 # テレビ操作が無かったときや、温度が高いときにメールを送信します。
 
-# 接続図
+#【接続図】
 #           [IoTボタン]----------------
 #                                     ↓
 #           [IoT赤外線リモコン受信]---・
 #                                     ↓
 #           [IoT温度センサ] ------> [本機] ------> メール送信
 
-# 機器構成
+#【機器構成】
 #   本機        IoTボタンが押されたときにIoTチャイムへ鳴音指示
 #   子機        IoT Sensor Coreを、以下に設定
 #                   Wi-Fi設定   Wi-Fi動作モード : AP＋STA
@@ -23,7 +23,22 @@
 #                               押しボタン      : PingPong
 #                               赤外線RC        : AEHA (SHARP,Panasonic製テレビ)
 
-# プログラムを終了させたいときは、[Ctrl] + [C]を、2回、実行する必要があります。
+# ★★★ プログラムを終了させたいときは、[Ctrl] + [C]を、2回、実行してください。
+
+#【動作仕様】
+# ・IoT 赤外線リモコン・レシーバが、約4時間以上、テレビのリモコン信号を受信しな
+#   かったときに、通知メール「リモコン操作がxx時間ありません」を送信します。
+# ・その後、10分毎に確認を行い、リモコン信号を受信するまでメール送信し続けます。
+# ・リモコン信号未受信の通知メールは、深夜0時から翌朝7時までは送信しません。
+# ・IoT温度センサから取得した温度値が28℃以上だった時に、通知メール「室温がxx℃
+#   になりました」を送信します。
+# ・30℃以上のときは5分間隔、32℃以上のときは1分間隔で送信し続けます。
+# ・IoT温度センサから（電池切れなどで）4時間以上、受信できなかった時に通知メール
+#   「センサの信号がxx時間ありません」を送信します。
+# ・IoTボタンが押下されたときに通知メール「ボタンが押されました」を送信します。
+# ・システムが正常に稼働していることを知らせるために、毎朝、午前9時に、リモコン
+#   操作回数を定期報告メールとして送信します。
+
 
 MAIL_ID   = '************@gmail.com'    ## 要変更 ##    # GMailのアカウント
 MAIL_PASS = '************'              ## 要変更 ##    # パスワード
@@ -61,7 +76,7 @@ def mimamori(interval):
             mail(MAILTO,'i.myMimamoriPi 定期報告',msg)  # メール送信関数を実行
     time_sens = TIME_SENS + datetime.timedelta(hours=ALLOWED_TERM)
     if time_sens < time_now:                            # センサ送信時刻を超過
-        s = str(round((time_now - TIME_REMO).seconds / 60 / 60,1))
+        s = str(round((time_now - TIME_SENS).seconds / 60 / 60,1))
         msg = 'センサの信号が' + s + '時間ありません'   # メール本文の作成
         mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
     if time_now.hour < MONITOR_START:                   # AM0時～9時は送信しない
@@ -168,7 +183,7 @@ while sock:                                             # 永遠に繰り返す
 '''
 実行例
 --------------------------------------------------------------------------------
-pi@raspberrypi4:~/iot/learning $ ./example38_srv_mimamori.py
+pi@raspberrypi:~/iot/learning $ ./example38_srv_mimamori.py
 Mail: watt@bokunimo.net i.myMimamoriPi 起動しました
 Listening UDP port 1024 ...
 2019/10/14 17:39, temp0_2 192.168.0.7 ,temperature = 26.0 ,level = 0

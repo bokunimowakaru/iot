@@ -56,16 +56,16 @@ while mode:                                                 # modeが1の時に�
             if '終了' in voice:                             # 音声「終了」を認識したとき
                 mode = 0                                    # 変数modeに0を代入
                 break                                       # forループを抜ける
-            if 'テレビ' in voice:                           # 音声「LED」を認識したとき
+            if 'テレビ' in voice:                           # 音声「テレビ」を認識した
                 if 'オフ' in voice:                         # 「OFF」を認識したとき
                     udp = device + ', 0'                    # 変数udpへ送信データを代入
                 if 'オン' in voice:                         # 音声「ON」時
                     udp = device + ', 1'                    # 変数udpへ送信データを代入
             if udp is None:                                 # 変数udpがNoneのとき
                 continue                                    # whileの先頭へ
-            print('IR OUT :',ir_code)                       # 送信内容を表示
+            print('IR OUT :',ir_code)                       # リモコン信号の内容を表示
             try:
-                ret = raspiIr.output(ir_code)               # リモコンコードを送信
+                ret = raspiIr.output(ir_code)               # リモコン信号を送信
             except ValueError as e:                         # 例外処理発生時(アクセス拒否)
                 print('ERROR:raspiIr,',e)                   # エラー内容表示
 
