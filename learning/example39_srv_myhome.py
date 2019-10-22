@@ -48,9 +48,9 @@ MAIL_PASS = '************'              ## 要変更 ##    # パスワード
 MAILTO    = 'watt@bokunimo.net'         ## 要変更 ##    # メールの宛先
 
 ip_chime  = '127.0.0.1'                                 # IoTチャイム,IPアドレス
-ROOM      = '3'                                         # 部屋番号(デバイスSFX)
-ROOM_STAY = false                                       # 在室状態
-ROOM_RC   = false                                       # 運転フラグ
+ROOM      = ['2','3']                                   # 部屋番号(デバイスSFX)
+ROOM_STAY = False                                       # 在室状態
+ROOM_RC   = False                                       # 運転フラグ
 ALLOWED_TEMP  = [28,15]  #(℃)                          # 冷房／暖房自動運転温度
 REED=1                                                  # リード極性ON検出0,OFF1
 IR_TYPE   = 'AEHA'                                      # 方式 AEHA,NEC,SIRC
@@ -82,9 +82,9 @@ def mimamori(interval):
         msg = 'センサの信号が' + s + '時間ありません'   # メール本文の作成
         mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
     if ROOM_RC and not ROOM_STAY:                       # 不在なのに運転中のとき
-        ROOM_RC = false                                 # 運転停止状態に変更
-        aircon(false)                                   # エアコンの運転停止
-    ROOM_STAY = false                                   # 不在にリセットする
+        ROOM_RC = False                                 # 運転停止状態に変更
+        aircon(False)                                   # エアコンの運転停止
+    ROOM_STAY = False                                   # 不在にリセットする
                     # (一時的に不在にするが、在室していれば、次回までに変化する)
 
 #   print('next',t.getName(),'=',time_now +datetime.timedelta(seconds=interval))
@@ -123,9 +123,9 @@ def mail(att, subject, text):                           # メール送信用関�
     #   raise e                                         # Exceptionを応答する
 
 def aircon(onoff):                                      # エアコン制御
-    if onoff:                                           # ON/OFFフラグがtrueのとき
+    if onoff:                                           # ON/OFFフラグがTrueのとき
         code = AC_ON.split(',')                         # エアコンをONに
-    else                                                # falseのとき
+    else:                                               # Falseのとき
         code = AC_OFF.split(',')                        # エアコンをOFFに
     print('RC, Conditioner,',code)                      # 送信するリモコン信号を表示
     try:
@@ -149,6 +149,7 @@ def get_val(s):                                         # データを数値に�
         return float(s)                                 # 小数値を応答
     return None                                         # Noneを応答
 
+TIME_TEMP = TIME_SENS = datetime.datetime.now()
 mail(MAILTO,'i.myMimamoriHome','起動しました')          # メール送信
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
@@ -183,7 +184,8 @@ while sock:                                             # 永遠に繰り返す
 
     now = datetime.datetime.now()                       # 現在時刻を代入
     print(now.strftime('%Y/%m/%d %H:%M')+', ', end='')  # 日付を出力
-    print(vals[0],udp_from[0],',',vals[1:], end='')     # 受信結果を出力
+    print(vals[0]+','+udp_from[0]+',', end='')          # デバイス情報を出力
+    print(','.join(vals[1:]), end='')                   # センサ値を出力
     bell = 0                                            # 変数bell:IoTチャイム
     acrc = 0                                            # 変数acrc:リモコン制御
     val = get_val(vals[1])                              # 変数valの取得
@@ -196,31 +198,33 @@ while sock:                                             # 永遠に繰り返す
     if dev[0:5] == 'rd_sw':                             # 人感センサの場合
         if int(val) == REED:                            # 検出極性が一致したとき
             bell = 1                                    # IoTチャイム指示を設定
-        else                                            # 不一致(解除)のとき
+        else:                                           # 不一致(解除)のとき
             bell = 0                                    # IoTチャイム指示を設定
 
     if bell > 0:                                        # チャイム指示がONのとき
-        if dev[6] == ROOM:                              # 自室のセンサだったとき
-            ROOM_STAY = true                            # 在室状態を更新
+        if dev[6] in ROOM:                              # 自室のセンサだったとき
+            ROOM_STAY = True                            # 在室状態を更新
 
     # 温度センサ用の処理
     level = 0                                           # 温度超過レベル(低温=負
     if dev[0:5] in sensors[2:]:                         # 対応センサの3番目以降
-        if temp <= ALLOWED_TEMP[1]                      # 15℃以下のとき
+        if val <= ALLOWED_TEMP[1]:                      # 15℃以下のとき
             level = -1                                  # 負のレベル設定
         for temp in temp_lv:                            # 警告レベルを取得
             if val >= temp:                             # 温度が警告レベルを超過
                 level = temp_lv.index(temp) + 1         # レベルを代入
-        if dev[6] == ROOM:                              # 自室センサ時
+        if dev[6] in ROOM:                              # 自室センサ時
             TIME_SENS = now                             # センサ取得時刻を更新
             if ROOM_STAY and level != 0:                # 在室中,警告レベル1以上
                 acrc = abs(level)                       # 絶対値をacrvへ代入
                 bell = acrc                             # IoTチャイム制御を設定
-    print(\
-        ',stay='+str(ROOM_STAY)+\
-        ',bell='+str(bell)+\
-        ',temp='+str(val)+'('+str(level)+')'\
-    )                                                   # 各種の状態を表示
+        print(\
+            ',stay='+str(ROOM_STAY)+\
+            ',bell='+str(bell)+\
+            ',temp='+str(val)+'('+str(level)+')'\
+        )                                               # 各種の状態を表示
+    else:
+        print(',stay='+str(ROOM_STAY)+',bell='+str(bell))
 
     ### 制御 ### IoTチャイム
     if bell > 0:                                        # IoTチャイム制御有効時
@@ -233,8 +237,8 @@ while sock:                                             # 永遠に繰り返す
             msg = '室温が' + str(val) + '℃になりました'
             mail(MAILTO,'i.myMimamoriHome 警告レベル=' + str(level), msg)
             TIME_TEMP = datetime.datetime.now()         # センサ取得時刻を代入
-            ROOM_RC = true                              # 運転状態に変更
-            aircon(true)                                # 運転開始
+            ROOM_RC = True                              # 運転状態に変更
+            aircon(True)                                # 運転開始
 '''
 実行例
 --------------------------------------------------------------------------------
