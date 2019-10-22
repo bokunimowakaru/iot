@@ -13,20 +13,36 @@
 #           [IoT人感センサ]-----------・
 #                                     ↓
 #           [IoT温度センサ] ------> [本機] ------> エアコン制御
+#                                     ↓
+#                                     ・ --------> IoTチャイム
 
 #【機器構成】
+#
 #   本機        IoTボタンが押されたときにIoTチャイムへ鳴音指示
-#   子機        IoT Sensor Coreを、以下に設定
+#
+#   子機1       IoT Sensor Coreを、以下に設定
+#                   Wi-Fi設定   Wi-Fi動作モード : AP＋STA
+#                               Wi-Fi STA設定   : ホームゲートウェイのSSIDとPASS
+#                   センサ入力  押しボタン      : PingPong
+#
+#   子機2       IoT Sensor Coreを、以下に設定
+#                   Wi-Fi設定   Wi-Fi動作モード : AP＋STA
+#                               Wi-Fi STA設定   : ホームゲートウェイのSSIDとPASS
+#                   センサ入力  人感センサ      : ON
+#                               注意：内蔵温度センサはOFFにしておくこと
+#
+#   子機3       IoT Sensor Coreを、以下に設定
 #                   Wi-Fi設定   Wi-Fi動作モード : AP＋STA
 #                               Wi-Fi STA設定   : ホームゲートウェイのSSIDとPASS
 #                   センサ入力  内蔵温度センサ  : ON
-#                               押しボタン      : PingPong
-#                               人感センサ      : ON
+#
+#   子機4       IoT チャイム    ./example18_iot_chime_nn.py
+#
 
 # ★★★ プログラムを終了させたいときは、[Ctrl] + [C]を、2回、実行してください。
 
 #【動作仕様】
-# ・エアコンのある部屋（デバイス名に付随する番号が「3」）のIoT人感センサが、人の
+# ・エアコンのある部屋（デバイス名に付随する番号が「1～3」）のIoT人感センサが、
 #   在室状態を検知し、かつIoT温度センサから取得した温度値が28℃以上だった時に、
 #   赤外線リモコン信号をエアコンに送信し、エアコンの運転を開始します。
 # ・エアコン運転中、IoT人感センサが10分以上反応しなかった場合に、エアコンを停止
@@ -47,16 +63,17 @@ MAIL_ID   = '************@gmail.com'    ## 要変更 ##    # GMailのアカウ�
 MAIL_PASS = '************'              ## 要変更 ##    # パスワード
 MAILTO    = 'watt@bokunimo.net'         ## 要変更 ##    # メールの宛先
 
-ip_chime  = '127.0.0.1'                                 # IoTチャイム,IPアドレス
-ROOM      = ['2','3']                                   # 部屋番号(デバイスSFX)
-ROOM_STAY = False                                       # 在室状態
+ip_chime  = '192.168.0.5'               ## 要変更 ##    # IoTチャイム,IPアドレス
+
+ROOM      = ['1','2','3']                               # 部屋番号(デバイスSFX)
+ROOM_STAY = None                                        # 在室状態
 ROOM_RC   = False                                       # 運転フラグ
 ALLOWED_TEMP  = [28,15]  #(℃)                          # 冷房／暖房自動運転温度
 REED=1                                                  # リード極性ON検出0,OFF1
 IR_TYPE   = 'AEHA'                                      # 方式 AEHA,NEC,SIRC
-AC_ON  = "104,AA,5A,CF,10,00,11,20,3F,18,B0,00,F4,B1"   # エアコン電源入コマンド
-AC_OFF = "104,AA,5A,CF,10,00,21,20,3F,18,B0,00,F4,81"   # エアコン電源切コマンド
-MON_INTERVAL  = 10 #(分)                                # 監視処理の実行間隔
+AC_ON  = "AA,5A,CF,10,00,11,20,3F,18,B0,00,F4,B1"       # エアコン電源入コマンド
+AC_OFF = "AA,5A,CF,10,00,21,20,3F,18,B0,00,F4,81"       # エアコン電源切コマンド
+MON_INTERVAL  = 1 #(分)                                 # 監視処理の実行間隔
 
 sensors = ['pir_s','rd_sw','temp.','temp0','humid','press','envir'] # 対応センサ
 temp_lv = [ALLOWED_TEMP[0], ALLOWED_TEMP[0]+2 , ALLOWED_TEMP[0]+4 ] # 警告レベル
@@ -77,16 +94,18 @@ def mimamori(interval):
     global ROOM_RC, ROOM_STAY, TIME_SENS                # グローバル変数
     time_now = datetime.datetime.now()                  # 現在時刻の取得
     time_sens = TIME_SENS + datetime.timedelta(hours=2) # センサ受信時刻+2時間
-    if time_sens < time_now:                            # 3時間以上、受信なし
+    if time_sens < time_now:                            # 2時間以上、受信なし
         s = str(round((time_now - TIME_SENS).seconds / 60 / 60,1))
         msg = 'センサの信号が' + s + '時間ありません'   # メール本文の作成
         mail(MAILTO,'i.myMimamoriPi 警告',msg)          # メール送信関数を実行
-    if ROOM_RC and not ROOM_STAY:                       # 不在なのに運転中のとき
-        ROOM_RC = False                                 # 運転停止状態に変更
-        aircon(False)                                   # エアコンの運転停止
-    ROOM_STAY = False                                   # 不在にリセットする
-                    # (一時的に不在にするが、在室していれば、次回までに変化する)
-
+    if ROOM_STAY is not None:
+        time_stay = ROOM_STAY + datetime.timedelta(seconds=600)  # ＋10分
+        if time_stay < time_now:                        # 10分以上、受信なし
+            ROOM_STAY = None                            # 不在にリセットする
+    if ROOM_STAY is None:
+        if ROOM_RC:                                     # 不在なのに運転中のとき
+            ROOM_RC = False                             # 運転停止状態に変更
+            aircon(False)                               # エアコンの運転停止
 #   print('next',t.getName(),'=',time_now +datetime.timedelta(seconds=interval))
                                                         # (スレッド動作確認用)
 
@@ -149,7 +168,7 @@ def get_val(s):                                         # データを数値に�
         return float(s)                                 # 小数値を応答
     return None                                         # Noneを応答
 
-TIME_TEMP = TIME_SENS = datetime.datetime.now()
+TIME_TEMP = TIME_SENS = datetime.datetime.now() - datetime.timedelta(hours=1)
 mail(MAILTO,'i.myMimamoriHome','起動しました')          # メール送信
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
@@ -174,7 +193,7 @@ while sock:                                             # 永遠に繰り返す
         exit()                                          # プログラムの終了
     if udp == 'Ping':                                   # 「Ping」に一致する時
         print('Ping',udp_from[0])                       # 取得値を表示
-        chime(2)                                        # IoTチャイムを制御
+        chime(0)                                        # IoTチャイムを制御
         mail(MAILTO,'i.myMimamoriHome 通知','ボタンが押されました')
         continue                                        # whileへ戻る
     vals = udp.split(',')                               # 「,」で分割
@@ -183,7 +202,7 @@ while sock:                                             # 永遠に繰り返す
         continue                                        # whileへ戻る
 
     now = datetime.datetime.now()                       # 現在時刻を代入
-    print(now.strftime('%Y/%m/%d %H:%M')+', ', end='')  # 日付を出力
+    print(now.strftime('%Y/%m/%d %H:%M')+',', end='')   # 日付を出力
     print(vals[0]+','+udp_from[0]+',', end='')          # デバイス情報を出力
     print(','.join(vals[1:]), end='')                   # センサ値を出力
     bell = 0                                            # 変数bell:IoTチャイム
@@ -192,7 +211,9 @@ while sock:                                             # 永遠に繰り返す
 
     # IoT人感センサ用の処理
     if dev[0:5] == 'pir_s':                             # 人感センサの場合
-        bell = int(val)                                 # IoTチャイム指示を設定
+        if dev[6] in ROOM:                              # 自室のセンサだったとき
+            if int(val) == 1:                           # 人感検知時
+                ROOM_STAY = now                         # 在室状態を更新
 
     # IoTドアセンサ用の処理(参考)
     if dev[0:5] == 'rd_sw':                             # 人感センサの場合
@@ -200,10 +221,8 @@ while sock:                                             # 永遠に繰り返す
             bell = 1                                    # IoTチャイム指示を設定
         else:                                           # 不一致(解除)のとき
             bell = 0                                    # IoTチャイム指示を設定
-
-    if bell > 0:                                        # チャイム指示がONのとき
         if dev[6] in ROOM:                              # 自室のセンサだったとき
-            ROOM_STAY = True                            # 在室状態を更新
+            ROOM_STAY = now                             # 在室状態を更新
 
     # 温度センサ用の処理
     level = 0                                           # 温度超過レベル(低温=負
@@ -215,16 +234,16 @@ while sock:                                             # 永遠に繰り返す
                 level = temp_lv.index(temp) + 1         # レベルを代入
         if dev[6] in ROOM:                              # 自室センサ時
             TIME_SENS = now                             # センサ取得時刻を更新
-            if ROOM_STAY and level != 0:                # 在室中,警告レベル1以上
+            if (ROOM_STAY is not None) and level != 0:  # 在室中,警告レベル1以上
                 acrc = abs(level)                       # 絶対値をacrvへ代入
                 bell = acrc                             # IoTチャイム制御を設定
         print(\
-            ',stay='+str(ROOM_STAY)+\
+            ',stay='+str(ROOM_STAY is not None)+\
             ',bell='+str(bell)+\
             ',temp='+str(val)+'('+str(level)+')'\
         )                                               # 各種の状態を表示
     else:
-        print(',stay='+str(ROOM_STAY)+',bell='+str(bell))
+        print(',stay='+str(ROOM_STAY is not None)+',bell='+str(bell))
 
     ### 制御 ### IoTチャイム
     if bell > 0:                                        # IoTチャイム制御有効時
@@ -242,9 +261,16 @@ while sock:                                             # 永遠に繰り返す
 '''
 実行例
 --------------------------------------------------------------------------------
-pi@raspberrypi:~/iot/learning $ ./example38_srv_mimamori.py
-Mail: watt@bokunimo.net i.myMimamoriPi 起動しました
+pi@raspberrypi:~ $ ./example39_srv_myhome.py
+Mail: watt@bokunimo.net i.myMimamoriHome 起動しました
 Listening UDP port 1024 ...
-
+2019/10/22 18:08,temp0_2,192.168.0.4,29,stay=False,bell=0,temp=29.0(1)
+2019/10/22 18:08,pir_s_2,192.168.0.3,1, 0,stay=True,bell=0
+2019/10/22 18:09,temp0_2,192.168.0.4,29,stay=True,bell=1,temp=29.0(1)
+Mail: watt@bokunimo.net i.myMimamoriHome 警告レベル=1 室温が29.0℃になりました
+RC, Conditioner, ['AA','5A','CF','10','00','11','20','3F','18','B0','00','F4','B1']
+2019/10/22 18:10,temp0_2,192.168.0.4,30,stay=True,bell=2,temp=30.0(2)
+Mail: watt@bokunimo.net i.myMimamoriHome 警告レベル=2 室温が30.0℃になりました
+RC, Conditioner, ['AA','5A','CF','10','00','11','20','3F','18','B0','00','F4','B1']
 --------------------------------------------------------------------------------
 '''
