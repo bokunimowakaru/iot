@@ -10,12 +10,11 @@ ESP32内蔵の温度センサを使用するので、精度は良くありませ
    Ported to Arduino ESP32 by pcbreflux
 */
 
-//#include <WiFi.h>                         // ESP32用WiFiライブラリ
+#include <WiFi.h>                           // ESP32用WiFiライブラリ
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include "esp_sleep.h"                      // ESP32用Deep Sleep ライブラリ
 #define PIN_EN 2                            // GPIO 2 にLEDを接続
-#define PIN_BUZZER 12                       // GPIO 12 にスピーカを接続
 #define SLEEP_P 5*1000000ul                 // スリープ時間 5秒(uint32_t)
 #define BLE_DEVICE "espRohmTemp"            // BLE用デバイス名
 
@@ -27,16 +26,13 @@ RTC_DATA_ATTR int8_t TEMP_ADJ=0;            // 温度補正値
 int wake;
 
 void setup(){                               // 起動時に一度だけ実行する関数
-//  WiFi.mode(WIFI_OFF);                    // 無線LANをOFFに設定
+    WiFi.mode(WIFI_OFF);                    // 無線LANをOFFに設定
     pinMode(PIN_EN,OUTPUT);                 // LEDを出力に
     digitalWrite(PIN_EN,1);                 // LEDをON
-    pinMode(PIN_BUZZER,OUTPUT);             // ブザーを接続したポートを出力に
-    chimeBellsSetup(PIN_BUZZER);            // ブザー/LED用するPWM制御部の初期化
     Serial.begin(115200);                   // 動作確認のためのシリアル出力開始
     Serial.println("IoT Temperature");      // 「IoT Temperature」をシリアル出力
     wake = TimerWakeUp_init();
     BLEDevice::init(BLE_DEVICE);            // Create the BLE Device
-    ledcWriteNote(0,NOTE_D,8);              // 送信中の音
 }
 
 void loop() {
@@ -58,16 +54,17 @@ void loop() {
 }
 
 void sleep(){
+    Serial.print("BLE Advertizing");
     delay(150);                             // 送信待ち時間
     if(wake<2) for(int i=0; i<20;i++){
-        ledcWrite(0, 0);
-        delay(490);
-        ledcWriteNote(0,NOTE_D,8);
-        delay(10);
+        delay(500);
+        Serial.print('.');
     }
-    ledcWrite(0, 0);
     digitalWrite(PIN_EN,0);                 // LEDをOFF
     pAdvertising->stop();
+    btStop();
+    Serial.println("\nBye!");
+//  delay(200);                             // 送信待ち時間
     esp_deep_sleep(SLEEP_P);                // Deep Sleepモードへ移行
 }
 
