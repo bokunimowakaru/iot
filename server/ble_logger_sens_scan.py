@@ -163,7 +163,9 @@ while True:
             if isRohmMedal == 'Sensor Kit espRohm' and len(val) < 17 * 2:
                 sensors['ID'] = hex(payval(2,2))
                 sensors['Temperature'] = -45 + 175 * payval(4,2) / 65536
-                sensors['Pressure'] = payval(6,3) / 2048
+                press = payval(6,3)
+                if press:
+                    sensors['Pressure'] = payval(6,3) / 2048
                 sensors['SEQ'] = payval(9)
                 sensors['RSSI'] = dev.rssi
 
