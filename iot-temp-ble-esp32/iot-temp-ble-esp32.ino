@@ -56,6 +56,14 @@ void loop() {
 void sleep(){
     Serial.print("BLE Advertizing");
     delay(150);                             // 送信待ち時間
+    if(ESP.getChipRevision() == 0 ){  // for Revision 0
+        pAdvertising->stop();
+        Serial.println("\nWaiting (ESP32 R.0)");
+        digitalWrite(PIN_EN,0);                 // LEDをOFF
+        delay(SLEEP_P / 1000);
+        digitalWrite(PIN_EN,1);                 // LEDをON
+        return;
+    }
     if(wake<2) for(int i=0; i<20;i++){
         delay(500);
         Serial.print('.');
