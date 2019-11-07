@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 device="/dev/ttyUSB0"
 echo "ESP32へ書き込みます (usage: ${0} port)"
 if [ ${#} -eq 1 ]; then
