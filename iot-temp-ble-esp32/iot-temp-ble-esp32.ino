@@ -115,7 +115,7 @@ void setBleAdvData(float temp,float hum){
     strServiceData += (char)(val & 0xFF);   // 温度 下位バイト
     strServiceData += (char)(val >> 8);     // 温度 上位バイト
     strServiceData += (char)'\0';
-    val = (long)((hum - 100) * 65536);
+    val = (long)((hum / 100) * 65536);
     strServiceData += (char)(val & 0xFF);   // 湿度 下位バイト
     strServiceData += (char)(val >> 8);     // 湿度 上位バイト
     strServiceData += (char)(SEQ_N);        // 送信番号
