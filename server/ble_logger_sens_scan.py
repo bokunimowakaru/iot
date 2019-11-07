@@ -121,11 +121,14 @@ while True:
             # ローム製 センサ・シールド・キット
             if adtype == 9 and value[0:7] == 'espRohm':
                 isRohmMedal = 'Sensor Kit espRohm'
+            # ESP32マイコン＋Si7021センサ
+            if adtype == 9 and value[0:11] == 'espRohmHumi':
+                isRohmMedal = 'ESP32 Si7021'
             # ローム製 センサ・シールド・キット
             if adtype == 9 and value == 'R':
                 isRohmMedal = 'Sensor Kit RH'
             # Spresens用 IoTセンサ
-            if adtype == 8 and value[0:10] == 'LapisDev':
+            if adtype == 8 and value[0:8]  == 'LapisDev':
                 isRohmMedal = 'Spresense Rohm IoT'
             if desc == 'Manufacturer':
                 val = value
@@ -223,6 +226,13 @@ while True:
                 sensors['ID'] = hex(payval(2,2))
                 sensors['Temperature'] = -45 + 175 * payval(4,2) / 65536
                 sensors['Pressure'] = payval(6,3) / 2048
+                sensors['SEQ'] = payval(9)
+                sensors['RSSI'] = dev.rssi
+
+            if isRohmMedal == 'ESP32 Si7021':
+                sensors['ID'] = hex(payval(2,2))
+                sensors['Temperature'] = -45 + 175 * payval(4,2) / 65536
+                sensors['Humidity'] = payval(7,2) / 65536 * 100
                 sensors['SEQ'] = payval(9)
                 sensors['RSSI'] = dev.rssi
 
