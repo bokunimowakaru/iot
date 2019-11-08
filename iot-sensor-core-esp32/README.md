@@ -9,14 +9,17 @@ ESP32-WROOM-32モジュールに対応した汎用のIoTセンサ機器向けプ
 ## インストール方法
 
 * 下記のコマンドでダウンロードしてください。  
+
 		git clone https://github.com/bokunimowakaru/iot
 
 * ESP32開発ボードをRaspberry PiのUSBへ接続してください。  
 
 * 下記のコマンドでUSBシリアルのデバイスPath(/dev/ttyUSB*、「*」は数字)を確認してください。表示されないときはUSB接続をやり直してください。  
+
 		ls -l /dev/serial/by-id/
 
 * 下記のコマンドを入力するとESP32へ書き込むことが出来ます。上記でUSB0しか無かったときは、/dev/ttyUSB0を省略できます。その他の場合は、/dev/ttyUSB0の数字部分を、上記で確認したUSBシリアルのデバイスPathに置き換えてください。  
+
 		cd ~/iot/iot-sensor-core-esp32/target  
 		./iot-sensor-core-esp32.sh /dev/ttyUSB0  
 
