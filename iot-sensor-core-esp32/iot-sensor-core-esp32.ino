@@ -507,17 +507,19 @@ void sleep(){
 		TimerWakeUp_setExternalInput((gpio_num_t)PIN_IR_IN, LOW);
 	}
 	
-	// RTC_IO
-	//						// IO0	Booting Mode|Default:Pull-up
-	rtc_io_setPin(2,0);		// IO2	Booting Mode|Default:Pull-down
-	//						// IO5	Timing SDIO	|Default:Pull-up
-	rtc_io_setPin(12,0);	// IO12	VDD_SDIO	|Default:Pull-down
-	//						// IO15	DebuggingLog|Default:Pull-up
-	if(PIR_EN || IR_IN_EN){
-		rtc_io_setPin(PIN_GND,0);
-		rtc_io_setPin(PIN_VDD,1);
-	}
-	rtc_io_on();
+//	if(ESP.getChipRevision() != 0 ){
+		// RTC_IO
+		//						// IO0	Booting Mode|Default:Pull-up
+		rtc_io_setPin(2,0);		// IO2	Booting Mode|Default:Pull-down
+		//						// IO5	Timing SDIO	|Default:Pull-up
+		rtc_io_setPin(12,0);	// IO12	VDD_SDIO	|Default:Pull-down
+		//						// IO15	DebuggingLog|Default:Pull-up
+		if(PIR_EN || IR_IN_EN){
+			rtc_io_setPin(PIN_GND,0);
+			rtc_io_setPin(PIN_VDD,1);
+		}
+		rtc_io_on();
+//	}
 	
 	if(SLEEP_SEC > 0) TimerWakeUp_setSleepTime(SLEEP_SEC);
 	digitalWrite(PIN_LED,LOW);
