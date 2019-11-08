@@ -25,6 +25,8 @@ Pranav Cherukupalli <cherukupallip@gmail.com>
 
 RTC_DATA_ATTR int bootCount = 0;
 
+//int TimerWakeUp_time = 0;
+
 /*
 Method to print the reason by which ESP32
 has been awaken from sleep
@@ -48,6 +50,11 @@ byte TimerWakeUp_print_wakeup_reason(){
 }
 
 void TimerWakeUp_setSleepTime(int time_sec){
+/*if(ESP.getChipRevision() == 0 ){  // for Revision 0
+    TimerWakeUp_time = time_sec;
+    return;
+  }
+*/
   esp_sleep_enable_timer_wakeup(time_sec * uS_TO_S_FACTOR);
   Serial.println("Setup ESP32 to sleep for every " + String(time_sec) +
   " Seconds");
@@ -58,6 +65,7 @@ void TimerWakeUp_setExternalInput(gpio_num_t gpio, int level){
    *              which are have RTC functionality can be used in this bit map:
    *              0,2,4,12-15,25-27,32-39.
   */
+//if(ESP.getChipRevision() == 0 )return;  // for Revision 0
   esp_sleep_enable_ext0_wakeup(gpio,level);
   Serial.println("Wakeup ESP32 when IO" + String(gpio) + " = " + String(level));
 }
@@ -72,10 +80,27 @@ void TimerWakeUp_sleep(){
   Serial.println("Going to sleep now");
   delay(100);
   Serial.flush(); 
+  /*
+  if(ESP.getChipRevision() == 0 ){  // for Revision 0
+    Serial.println("WARN: ESP32 Rev 0 cannot sleep. use Rev 1, or more than");
+    int time_sec = TimerWakeUp_time;
+    TimerWakeUp_time = 0;
+    for(int i=0 ; i < time_sec; i++){
+        for(int j=0 ; j<100; j++){
+            delay(10);
+            if(PIR_EN) if(digitalRead(PIN_PIR)) return;
+            if(IR_IN_EN) if(!digitalRead(PIN_IR_IN)) return;
+            if(!digitalRead(PIN_SW)) return;
+        }
+    }
+    return;
+  }
+  */
   // タッチパッド起動を有効にしていなくても動作してしまう不具合対策
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TOUCHPAD);
   Serial.println("Disabled wakeup touchpad, please ignore above \"E () sleep: Incorrect\"");
   esp_deep_sleep_start();
+  // while(1) delay(100);
 }
 
 void TimerWakeUp_setup(){
