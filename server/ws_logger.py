@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # coding: utf-8
-# WebSocketを受信する
+# WebSocketを受信する (サンプル＝ wss://wss.bokunimo.com/ から受信)
 # Copyright (c) 2019 Wataru KUNINO
+
+# 実行し、しばらく待つと（2分以内）にkeepaliveなどを受信します
 
 ################################################################################
 # 下記のライブラリが必要です
-# pip3 install websocket-client
+# sudo pip3 install websocket-client
 '''
     Name: websocket-client
     Version: 0.56.0
@@ -22,15 +24,13 @@ import sys
 import websocket
 import datetime
 
-url = 'wss://api.sakura.io/ws/v1/'
-token = '00000000-0000-0000-0000-000000000000'          # sakura.ioのtokenを記入
+url = 'wss://wss.bokunimo.com/'
 argc = len(sys.argv)                                    # 引数の数をargcへ代入
-print('WebSocket Logger (usage:',sys.argv[0],'token)')  # タイトル表示
+print('WebSocket Logger (usage:',sys.argv[0],'URL)')    # タイトル表示
 
 if argc >= 2:                                           # 入力パラメータ数の確認
-    token = sys.argv[1]                                 # トークンを設定
+    url = sys.argv[1]                                   # トークンを設定
 
-url += token                                            # トークンを連結
 print('Listening,',url)                                 # URL表示
 try:
     sock = websocket.create_connection(url)             # ソケットを作成

@@ -3,6 +3,12 @@
 # UDPを送信する
 # Copyright (c) 2018-2019 Wataru KUNINO
 
+# UDPを送信します。
+# echo "Ping" | ./udp_sender.py
+
+# 引数はポート番号です。
+# echo "Ping" | ./udp_sender.py 1024
+
 import sys
 import socket
 
