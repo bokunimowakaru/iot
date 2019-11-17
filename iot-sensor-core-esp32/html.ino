@@ -181,9 +181,9 @@ void html_dataAttrSet(char *res_s){
 					snprintf(s, HTML_S_LEN_MAX,"本機SSIDを[%s]に設定しました(要Wi-Fi再起動)",SSID_AP);
 					_html_cat_res_s(res_s, s);
 					Serial.print(" SSID_AP=");
-					Serial.print(SSID_STA);
+					Serial.print(SSID_AP);
 					Serial.print(" PASS_AP=");
-					Serial.println(PASS_STA);
+					Serial.println(PASS_AP);
 				}
 			}
 		}
