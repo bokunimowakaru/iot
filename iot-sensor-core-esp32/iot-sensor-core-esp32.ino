@@ -252,6 +252,7 @@ String sendSensorValues(){
 }
 
 void setup(){
+	pinMode(0,INPUT_PULLUP);
 	sensors_init();
 	Serial.begin(115200);
 	Serial.println(Line);
@@ -295,34 +296,37 @@ void setup(){
 	Serial.println("-------- IoT Sensor Core ESP32 by Wataru KUNINO --------");
 		
 //	/* SPIFFS //////////////////////////
-	if(!SPIFFS.begin()){					// ファイルシステムSPIFFSの開始
+	if(!SPIFFS.begin() && wake == 0 && digitalRead(0) == 0){	// ファイルシステムSPIFFSの開始
 		Serial.println("Formating SPIFFS.");
-		SPIFFS.format(); SPIFFS.begin();	// エラー時にSPIFFSを初期化
+		SPIFFS.format();
+		SPIFFS.begin();	// エラー時にSPIFFSを初期化
 	}
 	
-	if( wake == 0 && digitalRead(0) == 0){
+	if( wake == 0 ){
+		/*
 		File root = SPIFFS.open("/");
-	    if (!root) {
-	        Serial.println("Failed to open directory");
-	    }else if (!root.isDirectory()) {
-	        Serial.println("Not a directory");
-	    }else{
-	        File file = root.openNextFile();
-	        while (file) {
-	            if (file.isDirectory()) {
-	                Serial.print("  DIR : ");
-	                Serial.println(file.name());
-	            } else {
-	                Serial.print("  FILE: ");
-	                Serial.print(file.name());
-	                Serial.print("  SIZE: ");
-	                Serial.println(file.size());
-	            }
-	            file = root.openNextFile();
-	        }
-	        file.close();
-	    }
-	    root.close();
+		if (!root) {
+			Serial.println("Failed to open directory");
+		}else if (!root.isDirectory()) {
+			Serial.println("Not a directory");
+		}else{
+			File file = root.openNextFile();
+			while (file) {
+				if (file.isDirectory()) {
+					Serial.print("  DIR : ");
+					Serial.println(file.name());
+				} else {
+					Serial.print("  FILE: ");
+					Serial.print(file.name());
+					Serial.print("  SIZE: ");
+					Serial.println(file.size());
+				}
+				file = root.openNextFile();
+			}
+			file.close();
+		}
+		root.close();
+		*/
 
 		File file = SPIFFS.open(FILENAME,"r");	// ファイルを開く
 		if(file){
@@ -353,15 +357,24 @@ void setup(){
 					end++;
 			//	}
 				file.close();
-			}else Serial.println("no wifi setting files.");
+			}else Serial.println("no setting files.");
 		}
+	}
+	SPIFFS.end();
+	if(BOARD_TYPE > 2 || strlen(SSID_AP) == 0 || WIFI_AP_MODE > 3){
+		Serial.println("ERROR Invalid value, configs revoked");
+		SPIFFS.format();
+		delay(100);
+		BOARD_TYPE = 1;
+		WIFI_AP_MODE = 1;
+		strcpy(SSID_AP,"iot-core-esp32");
+		strcpy(PASS_AP,"password");
 	}
 //	*/
 	Serial.print("Wi-Fi Mode = ");
-	if(WIFI_AP_MODE>=0 && WIFI_AP_MODE<=3){
-		char mode_s[4][7]={"OFF","AP","STA","AP+STA"};
-		Serial.println( mode_s[WIFI_AP_MODE] );
-	}else Serial.println( WIFI_AP_MODE );
+	char mode_s[4][7]={"OFF","AP","STA","AP+STA"};
+	Serial.println( mode_s[WIFI_AP_MODE] );
+	
 	if( (WIFI_AP_MODE & 1) == 1){
 		Serial.println("SSID_AP    = " + String(SSID_AP) );
 		Serial.println("PASS_AP    = " + String(PASS_AP) );
@@ -520,7 +533,7 @@ void sleep(){
 		}
 		rtc_io_on();
 //	}
-	
+
 	if(SLEEP_SEC > 0) TimerWakeUp_setSleepTime(SLEEP_SEC);
 	digitalWrite(PIN_LED,LOW);
 	TimerWakeUp_sleep();

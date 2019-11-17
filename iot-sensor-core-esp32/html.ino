@@ -415,8 +415,8 @@ void html_index(){
 	char sensors_res_s[HTML_RES_LEN_MAX]="なし";
 	char sensors_s[HTML_RES_LEN_MAX]="";
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML index -------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML index -----------");
 	
 	_html_cat_res_s(res_s);
 	html_dataAttrSet(res_s);
@@ -458,6 +458,7 @@ void html_index(){
 				<h4><a href=\"display\">表示出力設定</a></h4>\
 				<h4><a href=\"pinout\">ピン配列表</a></h4>\
 				<h4><a href=\"sendto\">データ送信設定</a></h4>\
+				<h4><a href=\"format\">SPIFFS初期化</a></h4>\
 				<hr>\
 				<h3>電源</h3>\
 				<h4><a href=\"reboot\">Wi-Fi 再起動</a>（Wi-FiとGPIO を再設定）</h4>\
@@ -477,8 +478,8 @@ void html_wifi(){
 	char res_s[HTML_RES_LEN_MAX]="";
 	int i;
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML Wi-Fi -------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML Wi-Fi -----------");
 	
 	_html_cat_res_s(res_s);
 	html_dataAttrSet(res_s);
@@ -567,8 +568,8 @@ void html_wifi(){
 void html_sensors(){
 	char s[HTML_INDEX_LEN_MAX];
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML sensors -----------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML sensors ---------");
 	
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
@@ -670,8 +671,8 @@ void html_display(){
 	char s[HTML_INDEX_LEN_MAX];
 	char res_s[HTML_RES_LEN_MAX]="";
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML display -----------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML display ---------");
 	
 	html_dataAttrSet(res_s);
 	int led = digitalRead(PIN_LED);
@@ -728,8 +729,8 @@ void html_display(){
 void html_sendto(){
 	char s[HTML_INDEX_LEN_MAX];
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML sendto ------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML sendto ----------");
 	
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
@@ -795,8 +796,8 @@ void html_pinout(){
 	char buf_s[128];
 	int i;
 		
-	/////////////// ------------------------------------------------
-	Serial.println("HTML pinout ------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML pinout ----------");
 	
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
@@ -849,30 +850,32 @@ void html_pinout(){
 void html_reboot(){
 	char s[HTML_INDEX_LEN_MAX];
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML reboot ------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML reboot ----------");
 //	/* SPIFFS //////////////////////////
 	if(server.hasArg("SAVE")){
 		Serial.println("SAVE to SPIFFS");
-		File file = SPIFFS.open(FILENAME,"w");       // 保存のためにファイルを開く
-		if( file ){
-			int size = 1 + 16 + 16 + 17 + 65 + 1;
-			int end = 0;
-			char d[(1 + 16 + 16 + 17 + 65 + 1) + 1];
-		//	memset(d,0,size + 1);
-			d[end] = '0' + BOARD_TYPE;
-			end++;
-			strncpy(d+end,SSID_AP,16); end += 16;
-			strncpy(d+end,PASS_AP,16); end += 16;
-			strncpy(d+end,SSID_STA,17); end += 17;
-			strncpy(d+end,PASS_STA,65); end += 65;
-			d[end] = '0' + WIFI_AP_MODE;
-			end++;
-			file.write((byte *)d,size);
-			file.close();
-		}else{
-			Serial.println("SAVE ERROR");
-		}
+				
+		if(SPIFFS.begin()){	// ファイルシステムSPIFFSの開始
+			File file = SPIFFS.open(FILENAME,"w");       // 保存のためにファイルを開く
+			if( file ){
+				int size = 1 + 16 + 16 + 17 + 65 + 1;
+				int end = 0;
+				char d[(1 + 16 + 16 + 17 + 65 + 1) + 1];
+			//	memset(d,0,size + 1);
+				d[end] = '0' + BOARD_TYPE;
+				end++;
+				strncpy(d+end,SSID_AP,16); end += 16;
+				strncpy(d+end,PASS_AP,16); end += 16;
+				strncpy(d+end,SSID_STA,17); end += 17;
+				strncpy(d+end,PASS_STA,65); end += 65;
+				d[end] = '0' + WIFI_AP_MODE;
+				end++;
+				file.write((byte *)d,size);
+				file.close();
+			} else Serial.println("SAVE ERROR");
+			SPIFFS.end();
+		} else Serial.println("SPIFSS ERROR");
 		delay(1000);
 	}
 //	*/
@@ -880,13 +883,13 @@ void html_reboot(){
 		"<html>\
 			<head>\
 				<title>Wi-Fi 再起動中</title>\
-				<meta http-equiv=\"refresh\" content=\"10;URL=http://%s/\">\
+				<meta http-equiv=\"refresh\" content=\"12;URL=http://%s/\">\
 				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
 				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
 				<h1>Wi-Fi 再起動中</h1>\
-				<p>しばらくおまちください(約12秒)。</p>\
+				<p>しばらくおまちください(約15秒)。</p>\
 				<p>STAモードに切り替えたときは、LAN側からアクセスしてください。</p>\
 				<p>接続できないときはスマートフォンのWi-Fi接続先を確認してください。</p>\
 				<p><a href=\"http://%s/\">http://%s/</a></p>\
@@ -902,7 +905,7 @@ void html_reboot(){
 }
 
 void html_gpio_init(){
-	Serial.println("HTML gpio_init ---------------------------------");
+	Serial.println("HTML gpio_init -------");
 	server.send(200, "text/html",
 		"<html>\
 			<head>\
@@ -920,11 +923,32 @@ void html_gpio_init(){
 	Serial.print("done html");
 }
 
+void html_format(){
+	Serial.println("HTML format ----------");
+	server.send(200, "text/html",
+		"<html>\
+			<head>\
+				<title>SPIFFS フォーマット中</title>\
+				<meta http-equiv=\"refresh\" content=\"3;/?SENSORS=GET\">\
+				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
+			</head>\
+			<body>\
+				<h1>SPIFFS フォーマット中</h1>\
+				<p>おまちください(約5秒)。</p>\
+			</body>\
+		</html>");
+	Serial.println("Formating SPIFFS.");
+	delay(500);
+	SPIFFS.format();
+	Serial.print("done html");
+}
+
 void html_sleep(){
 	char s[HTML_INDEX_LEN_MAX];
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML sleep -------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML sleep -----------");
 	
 	snprintf(s, HTML_MISC_LEN_MAX,
 		"<html>\
@@ -956,7 +980,7 @@ void html_test(){
 	const char *test16 = "this is test, 16";	// 16+1 bytes
 	const char *test32 = "I say someting, THIS IS TEST, 32";	// 32+1 bytes
 	
-	/////////////// ------------------------------------------------
+	/////////////// ----------------------
 	Serial.println("html_error");
 	for(int i=0; i<5;i++){
 		html_error(test16,test16,test16);
@@ -979,23 +1003,25 @@ void html_test(){
 	server.send(200, "text/plain", "Test Done");
 }
 
-
+/*
 void html_text(){
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML text --------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML text ------------");
 	
 	server.send(200, "text/plain", "hello from esp32!");
 }
+*/
 
+/*
 void html_demo(){
 	char s[400];
 	int sec = millis() / 1000;
 	int min = sec / 60;
 	int hr = min / 60;
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML demo --------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML demo ------------");
 	
 	snprintf(s, 400,
 		"<html>\
@@ -1016,13 +1042,14 @@ void html_demo(){
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
 }
+*/
 
 void drawGraph() {
 	String out = "";
 	char temp[100];
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML drawGraph ---------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML drawGraph -------");
 	
 	out += "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"400\" height=\"150\">\n";
 	out += "<rect width=\"400\" height=\"150\" fill=\"rgb(250, 230, 210)\" stroke-width=\"1\" stroke=\"rgb(0, 0, 0)\" />\n";
@@ -1041,8 +1068,8 @@ void drawGraph() {
 
 void html_404(){
 	
-	/////////////// ------------------------------------------------
-	Serial.println("HTML 404 ---------------------------------------");
+	/////////////// ----------------------
+	Serial.println("HTML 404 -------------");
 	
 	String message = "File Not Found\n\n";
 	message += "URI: ";
@@ -1101,6 +1128,7 @@ void html_init(const char *domainName_local, uint32_t ip, int32_t ip_ap, int32_t
 	server.on("/reboot", html_reboot);
 	server.on("/gpio_init", html_gpio_init);
 	server.on("/sleep", html_sleep);
+	server.on("/format", html_format);
 	server.on("/test", html_test);
 //	server.on("/text", html_text);
 //	server.on("/demo", html_demo);
