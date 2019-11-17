@@ -296,7 +296,7 @@ void setup(){
 	Serial.println("-------- IoT Sensor Core ESP32 by Wataru KUNINO --------");
 		
 //	/* SPIFFS //////////////////////////
-	if(!SPIFFS.begin() && wake == 0 && digitalRead(0) == 0){	// ファイルシステムSPIFFSの開始
+	if( ( !SPIFFS.begin() || !digitalRead(0) ) && wake == 0 ){	// ファイルシステムSPIFFSの開始
 		Serial.println("Formating SPIFFS.");
 		SPIFFS.format();
 		SPIFFS.begin();	// エラー時にSPIFFSを初期化

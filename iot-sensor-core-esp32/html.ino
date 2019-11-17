@@ -876,7 +876,6 @@ void html_reboot(){
 			} else Serial.println("SAVE ERROR");
 			SPIFFS.end();
 		} else Serial.println("SPIFSS ERROR");
-		delay(1000);
 	}
 //	*/
 	snprintf(s, HTML_MISC_LEN_MAX,
@@ -939,7 +938,6 @@ void html_format(){
 			</body>\
 		</html>");
 	Serial.println("Formating SPIFFS.");
-	delay(500);
 	SPIFFS.format();
 	Serial.print("done html");
 }
