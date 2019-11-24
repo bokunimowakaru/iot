@@ -24,7 +24,7 @@ IoT Sensor Core for ESP32
 #include "Ambient.h"							// Ambient接続用 ライブラリ
 
 #define  FILENAME "/wifiset.txt" 				// Wi-Fi 設定用ファイル名
-#define  Ambient_Data_Num 3						// Ambient データ番号d(n)
+#define  Ambient_Data_Num 1						// Ambient データ番号d(n)
 
 // ユーザ設定
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
