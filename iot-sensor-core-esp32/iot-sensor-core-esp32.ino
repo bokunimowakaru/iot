@@ -3,6 +3,19 @@ IoT Sensor Core for ESP32
 
 										   Copyright (c) 2019 Wataru KUNINO
 *******************************************************************************/
+
+// 推奨コンパイルオプション
+/*
+	Flash Mode		: QIO
+	CPU Frequency	: 80MHz(WiFi/BT)
+	PSRAM			: Disabled
+	Flash Size		: 4MB
+	Partition Scheme: Huge APP 3MB No OTA 1MB SPIFFS
+	Flash Frequency : 80Mz	<- 必須
+	Upload Speed	: 921600 (通常) / 115200 (CH340用)
+	Core Debug Level: なし
+*/
+
 #include <SPIFFS.h>
 #include <WiFi.h>								// ESP32用WiFiライブラリ
 #include <WiFiUdp.h>							// UDP通信を行うライブラリ
@@ -11,6 +24,7 @@ IoT Sensor Core for ESP32
 #include "Ambient.h"							// Ambient接続用 ライブラリ
 
 #define  FILENAME "/wifiset.txt" 				// Wi-Fi 設定用ファイル名
+#define  Ambient_Data_Num 3						// Ambient データ番号d(n)
 
 // ユーザ設定
 RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
@@ -218,7 +232,7 @@ boolean sentToAmbient(String &payload){
 	ambient.begin(AmbientChannelId, AmbientWriteKey, &ambClient);
 	int Sp=0;
 	char s[16];
-	for(int num = 1; num <= 8; num++){
+	for(int num = Ambient_Data_Num; num <= 8; num++){
 		float val = payload.substring(Sp).toFloat();
 		Serial.println("http://ambidata.io/ POST {\"d"
 			+ String(num)
@@ -434,12 +448,12 @@ void setup(){
 	}
 	
 	// HTTP サーバ
-	if( (WIFI_AP_MODE & 1) == 1 ){				// WiFi_AP 動作時
+//	if( (WIFI_AP_MODE & 1) == 1 ){				// WiFi_AP 動作時
 		MDNS_EN=MDNS.begin("iot");
 		if(MDNS_EN) Serial.println("MDNS responder started");
-	}else{
-		MDNS_EN = false;
-	}
+//	}else{
+//		MDNS_EN = false;
+//	}
 	html_init("iot",IP,IPAddress(192,168,254,1),IP_STA);
 	Serial.print("WebServ IP = ");
 	Serial.println( IP );
@@ -502,6 +516,14 @@ void sleep(){
 		delay(50);
 	}
 	digitalWrite(PIN_LED,LOW);
+	
+	if(!PIR_EN && !IR_IN_EN && SLEEP_SEC > 0){
+		Serial.println("Deep Sleep Mode --------" + Line);
+		delay(10);
+		esp_deep_sleep(SLEEP_SEC * 1000000u);	// 間欠動作用(タイマー割り込みのみ)
+	}
+	
+	// ボタン・入力待機用スリープ
 	TimerWakeUp_setExternalInput((gpio_num_t)PIN_SW, LOW);
 	if(PIR_EN){
 		pinMode(PIN_PIR,INPUT);

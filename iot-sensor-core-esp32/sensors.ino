@@ -425,20 +425,20 @@ boolean sensors_init_HALL(int enable){
 }
 
 boolean sensors_init_ADC(int pin){
-	boolean ret = true;		// ピン干渉なし
+	boolean ret = false;		// ピン干渉なし
 	int i;
 	for(i=1;i<5;i++){
 		if(pin == sensors_adc_pin[i]){
 			if(sensors_pin_set("IO" + String(pin),"アナログ_IN")){
 				ADC_EN=pin;
 				mvAnalogIn_init(ADC_EN);
+				ret = true;
 			}else{
 				sensors_pin_reset("IO" + String(sensors_adc_pin[i]),"アナログ_IN");
-				ret = false;		// ピン干渉
 			}
 		}else sensors_pin_reset("IO" + String(sensors_adc_pin[i]),"アナログ_IN");
 	}
-	if( i==5 ) ADC_EN=0;		// pin ==0も含む
+	if(ret == false) ADC_EN=0;
 	return ret;
 }
 
