@@ -83,33 +83,49 @@ void _html_cat_res_s(char *res_s){
 void html_dataAttrSet(char *res_s){
 	int i;
 	char s[HTML_S_LEN_MAX];
+	
 	if(server.hasArg("WIFI_AP_MODE")){
 		String S = server.arg("WIFI_AP_MODE");
 		i = S.toInt();
 		if( i >= 1 && i <= 3 && WIFI_AP_MODE != i ){
 			char mode_s[3][7]={"AP","STA","AP+STA"};
 			WIFI_AP_MODE = i;
-			if(i == 2){
-				MDNS_EN = false;
-				sprintf(html_ip_s,"%d.%d.%d.%d",
-					html_ip_sta & 255,
-					html_ip_sta>>8 & 255,
-					html_ip_sta>>16 & 255,
-					html_ip_sta>>24
-				);
-			}else if(!MDNS_EN){
-				sprintf(html_ip_s,"%d.%d.%d.%d",
-					html_ip_ap & 255,
-					html_ip_ap>>8 & 255,
-					html_ip_ap>>16 & 255,
-					html_ip_ap>>24
-				);
-			}else strcpy(html_ip_s,html_ip_ap_s);
-			
 			snprintf(s, HTML_S_LEN_MAX,"Wi-Fiモードを[%s]に設定しました(要Wi-Fi再起動)",mode_s[i-1]);
 			_html_cat_res_s(res_s, s);
 			Serial.print(" WIFI_AP_MODE=");
 			Serial.println(WIFI_AP_MODE);
+		}
+	}
+	if(server.hasArg("MDNS_EN")){
+		String S = server.arg("MDNS_EN");
+		i = S.toInt();
+		if( i >= 0 && i <= 1 ){
+			MDNS_EN = (boolean)i;
+			char mode_s[2][4]={"OFF","ON"};
+			snprintf(s, HTML_S_LEN_MAX,"mDNSを[%s]に設定しました(要Wi-Fi再起動)",mode_s[i]);
+			_html_cat_res_s(res_s, s);
+			Serial.print(" MDNS_EN=");
+			Serial.println(MDNS_EN);
+		}
+	}
+	
+	if(MDNS_EN){
+		strcpy(html_ip_s,html_ip_ap_s);
+	}else{
+		if(WIFI_AP_MODE == 2){
+			sprintf(html_ip_s,"%d.%d.%d.%d",
+				html_ip_sta & 255,
+				html_ip_sta>>8 & 255,
+				html_ip_sta>>16 & 255,
+				html_ip_sta>>24
+			);
+		}else{
+			sprintf(html_ip_s,"%d.%d.%d.%d",
+				html_ip_ap & 255,
+				html_ip_ap>>8 & 255,
+				html_ip_ap>>16 & 255,
+				html_ip_ap>>24
+			);
 		}
 	}
 	
@@ -272,9 +288,7 @@ void html_dataAttrSet(char *res_s){
 		Serial.println(HALL_EN);
 	}
 	if(server.hasArg("ADC_EN")){
-		if( !sensors_init_ADC( server.arg("ADC_EN").toInt()) ){
-			_html_cat_res_s(res_s, "ADCの設定に失敗しました");
-		}
+		sensors_init_ADC( server.arg("ADC_EN").toInt() );
 		Serial.print(" ADC_EN=");
 		Serial.println(ADC_EN);
 	}
@@ -337,6 +351,14 @@ void html_dataAttrSet(char *res_s){
 		}
 		Serial.print(" I2C_ACCEM_EN=");
 		Serial.println(I2C_ACCEM_EN);
+	}
+	if(server.hasArg("TIMER_EN")){
+		i = server.arg("TIMER_EN").toInt();
+		if( i < 0 || i > 1 ){
+			_html_cat_res_s(res_s, "動作時間測定の設定に失敗しました");
+		}else TIMER_EN = (boolean)i;
+		Serial.print(" TIMER_EN=");
+		Serial.println(TIMER_EN);
 	}
 	if(server.hasArg("DEVICE_NUM")){
 		i = server.arg("DEVICE_NUM").toInt();
@@ -461,9 +483,9 @@ void html_index(){
 				<h4><a href=\"format\">SPIFFS初期化</a></h4>\
 				<hr>\
 				<h3>電源</h3>\
-				<h4><a href=\"reboot\">Wi-Fi 再起動</a>（Wi-FiとGPIO を再設定）</h4>\
-				<h4><a href=\"gpio_init\">GPIO 再起動</a>（GPIO のみ再設定）</h4>\
-				<h4><a href=\"sleep\">ESP32 OFF</a>（設定を保持したままスリープ）</h4>\
+				<h4><a href=\"reboot\">Wi-Fi 再起動</a>(Wi-FiとGPIO を再設定)</h4>\
+				<h4><a href=\"gpio_init\">GPIO 再起動</a>(GPIO のみ再設定)</h4>\
+				<h4><a href=\"sleep\">ESP32 OFF</a>(設定を保持したままスリープ)</h4>\
 				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
@@ -501,22 +523,30 @@ void html_wifi(){
 					<input type=\"radio\" name=\"WIFI_AP_MODE\" value=\"2\" %s>STA\
 					<input type=\"radio\" name=\"WIFI_AP_MODE\" value=\"3\" %s>AP+STA\
 					<p><input type=\"submit\" value=\"設定\"></p>\
-					<p>Wi-Fiモードを[STA]にすると無線LANが切断されます(操作不可になる)</p>\
+					<p>Wi-Fiモードを[STA]にすると本機の無線APが停止します</p>\
 					<p>[AP]:本機がAPとして動作, [STA]:他のAPへ接続, [AP+STA]:両方</p>\
+				</form>\
+				<hr>\
+				<h3>mDNS(Bonjour)モード</h3>\
+				<form method=\"GET\" action=\"/wifi\">\
+					<input type=\"radio\" name=\"MDNS_EN\" value=\"1\" %s>ON\
+					<input type=\"radio\" name=\"MDNS_EN\" value=\"0\" %s>OFF\
+					<p><input type=\"submit\" value=\"設定\"></p>\
+					<p>iOS,Windows 10,macOSの場合は[ON],その他は[OFF]を設定して下さい</p>\
 				</form>\
 				<hr>\
 				<h3>Wi-Fi AP 設定</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
-					<p>本機 Wi-Fi AP(アクセスポイント)へ接続するための設定です。</p>\
+					<p>本機 Wi-Fi AP(アクセスポイント)へ接続するための設定です</p>\
 					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"10\">\
 					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"10\">\
 					<p><input type=\"submit\" value=\"設定\"></p>\
-					<p>変更すると、Wi-Fi を新しい設定で再接続する必要があります。</p>\
+					<p>変更すると,Wi-Fi を新しい設定で再接続する必要があります</p>\
 				</form>\
 				<hr>\
 				<h3>Wi-Fi STA 接続先</h3>\
 				<form method=\"GET\" action=\"/wifi\">\
-					<p>お手持ちのWi-Fiアクセスポイントの設定を記入し[設定]を押してください。</p>\
+					<p>お手持ちのWi-Fiアクセスポイントの設定を記入し[設定]を押してください</p>\
 					<input type=\"radio\" name=\"WPS_STA\" value=\"1\" %s>WPS\
 					<input type=\"radio\" name=\"WPS_STA\" value=\"0\" %s>\
 					SSID=<input type=\"text\" name=\"SSID_STA\" value=\"%s\" size=\"10\">\
@@ -526,10 +556,10 @@ void html_wifi(){
 				<hr>\
 				<h3>Wi-Fi 再起動</h3>\
 				<form method=\"GET\" action=\"/reboot\">\
-					<p>Wi-Fi 設定を有効にするために再起動を行ってください。</p>\
+					<p>Wi-Fi 設定を有効にするには再起動を行ってください</p>\
 					<p>\
 						<input type=\"submit\" name=\"BOOT\" value=\"再起動\">\
-						<input type=\"submit\" name=\"SAVE\" value=\"保存\">\
+						<input type=\"submit\" name=\"SAVE\" value=\"保存\">(Wi-Fi設定を保存)\
 					</p>\
 				</form>\
 				<hr>\
@@ -544,7 +574,7 @@ void html_wifi(){
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"3595\" %s>60分\
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"65535\" %s>∞\
 					<p><input type=\"submit\" value=\"設定\"></p>\
-					<p>[OFF]以外に設定するとスリープ中(殆どの時間)は操作できません。</p>\
+					<p>[OFF]以外に設定するとスリープ中に操作できなくなります</p>\
 				</form>\
 				<hr>\
 				<form method=\"GET\" action=\"/\">\
@@ -556,6 +586,7 @@ void html_wifi(){
 		</html>", html_title,
 			html_title,  res_s,
 			html_checked[WIFI_AP_MODE==1], html_checked[WIFI_AP_MODE==2], html_checked[WIFI_AP_MODE==3],
+			html_checked[MDNS_EN==1], html_checked[MDNS_EN==0], 
 			SSID_AP, PASS_AP,
 			html_checked[WPS_STA==true],html_checked[WPS_STA==false],SSID_STA,
 			html_checked[SLEEP_SEC==0], html_checked[SLEEP_SEC==25], html_checked[SLEEP_SEC==55], html_checked[SLEEP_SEC==175],
@@ -641,6 +672,10 @@ void html_sensors(){
 					<input type=\"radio\" name=\"I2C_ACCEM_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"I2C_ACCEM_EN\" value=\"1\" %s>ADXL345\
 					</p>\
+					<p>動作時間測定　\
+					<input type=\"radio\" name=\"TIMER_EN\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"TIMER_EN\" value=\"1\" %s>ON\
+					</p>\
 					<p>センサ設定の実行　\
 					<input type=\"submit\" name=\"SENSORS\" value=\"設定\">\
 					</p>\
@@ -661,7 +696,8 @@ void html_sensors(){
 				html_checked[AD_TEMP_EN==0], html_checked[AD_TEMP_EN==1], html_checked[AD_TEMP_EN==2],
 				html_checked[I2C_HUM_EN==0], html_checked[I2C_HUM_EN==1], html_checked[I2C_HUM_EN==2],
 				html_checked[I2C_ENV_EN==0], html_checked[I2C_ENV_EN==1], html_checked[I2C_ENV_EN==2],
-				html_checked[I2C_ACCEM_EN==0], html_checked[I2C_ACCEM_EN==1]
+				html_checked[I2C_ACCEM_EN==0], html_checked[I2C_ACCEM_EN==1],
+				html_checked[TIMER_EN==0], html_checked[TIMER_EN==1]
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -771,8 +807,8 @@ void html_sendto(){
 					<input type=\"radio\" name=\"SEND_INT_SEC\" value=\"15\" %s>15秒\
 					<input type=\"radio\" name=\"SEND_INT_SEC\" value=\"30\" %s>30秒\
 					<input type=\"radio\" name=\"SEND_INT_SEC\" value=\"60\" %s>60秒\
-					<p>※スリープ中は本設定に関わらず、[Wi-Fi 設定]の[スリープ間隔]で送信します。</p>\
-					<p>Ambientへの送信間隔は30秒以上を推奨します(1日3000サンプルまで)。</p>\
+					<p>[Wi-Fi 設定]の[スリープ間隔]の設定のほうが優先します</p>\
+					<p>Ambientへの送信間隔は30秒以上を推奨します(1日3000サンプルまで)</p>\
 					<h3>送信設定の実行</h3>\
 					<input type=\"submit\" name=\"SENSORS\" value=\"設定\">\
 				</form>\
@@ -859,9 +895,9 @@ void html_reboot(){
 		if(SPIFFS.begin()){	// ファイルシステムSPIFFSの開始
 			File file = SPIFFS.open(FILENAME,"w");       // 保存のためにファイルを開く
 			if( file ){
-				int size = 1 + 16 + 16 + 17 + 65 + 1;
+				int size = 1 + 16 + 16 + 17 + 65 + 1 + 1;
+				char d[(1 + 16 + 16 + 17 + 65 + 1) + 1 + 1];
 				int end = 0;
-				char d[(1 + 16 + 16 + 17 + 65 + 1) + 1];
 			//	memset(d,0,size + 1);
 				d[end] = '0' + BOARD_TYPE;
 				end++;
@@ -871,6 +907,9 @@ void html_reboot(){
 				strncpy(d+end,PASS_STA,65); end += 65;
 				d[end] = '0' + WIFI_AP_MODE;
 				end++;
+				d[end] = '0' + MDNS_EN;
+				end++;
+				// int sizeと char dでデータサイズを設定する
 				file.write((byte *)d,size);
 				file.close();
 			} else Serial.println("SAVE ERROR");
@@ -888,9 +927,9 @@ void html_reboot(){
 			</head>\
 			<body>\
 				<h1>Wi-Fi 再起動中</h1>\
-				<p>しばらくおまちください(約15秒)。</p>\
-				<p>STAモードに切り替えたときは、LAN側からアクセスしてください。</p>\
-				<p>接続できないときはスマートフォンのWi-Fi接続先を確認してください。</p>\
+				<p>しばらくおまちください(約15秒)</p>\
+				<p>STAモードに切り替えたときは,LAN側からアクセスしてください</p>\
+				<p>接続できないときはスマートフォンのWi-Fi接続先を確認してください</p>\
 				<p><a href=\"http://%s/\">http://%s/</a></p>\
 			</body>\
 		</html>", html_ip_s, html_ip_s, html_ip_s
@@ -915,7 +954,7 @@ void html_gpio_init(){
 			</head>\
 			<body>\
 				<h1>GPIO 再起動中</h1>\
-				<p>おまちください(約5秒)。</p>\
+				<p>おまちください(約5秒)</p>\
 			</body>\
 		</html>");
 	sensors_init();
@@ -934,7 +973,7 @@ void html_format(){
 			</head>\
 			<body>\
 				<h1>SPIFFS フォーマット中</h1>\
-				<p>おまちください(約5秒)。</p>\
+				<p>おまちください(約5秒)</p>\
 			</body>\
 		</html>");
 	Serial.println("Formating SPIFFS.");
@@ -956,11 +995,11 @@ void html_sleep(){
 				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
-				<h1>Wi-Fi ディープ・スリープへ移行中です。</h1>\
-				<p>IO %d ピンをLowレベルに設定(BOOTボタン押下)すると復帰します。</p>\
-				<p>スリープ間隔を設定していた場合は、設定時間後に自動復帰します。</p>\
-				<p>スマホと本機とのWi-Fiが切れるので、再度、Wi-Fi接続が必要です。</p>\
-				<p>本機に設定した内容は保持されます。(電源OFFやENボタンで消えます)</p>\
+				<h1>Wi-Fi ディープ・スリープへ移行中です</h1>\
+				<p>IO %d ピンをLowレベルに設定(BOOTボタン押下)すると復帰します</p>\
+				<p>スリープ間隔を設定していた場合は,設定時間後に自動復帰します</p>\
+				<p>スマホと本機とのWi-Fiが切れるので,再度,Wi-Fi接続が必要です</p>\
+				<p>本機に設定した内容は保持されます(電源OFFやENボタンで消えます)</p>\
 				<p>復帰後のアクセス先＝<a href=\"http://%s/\">http://%s/</a></p>\
 			</body>\
 		</html>", PIN_SW, html_ip_s, html_ip_s

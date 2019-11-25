@@ -33,6 +33,7 @@ RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのA
 RTC_DATA_ATTR char 		PASS_STA[65] = "";		// STAモードのPASS(お手持ちのAPのPASS)
 RTC_DATA_ATTR boolean	WPS_STA		= false;	// STAモードのWPS指示
 RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
+RTC_DATA_ATTR boolean	MDNS_EN=true;			// MDNS responder
 RTC_DATA_ATTR byte 		PIN_LED		= 2;		// GPIO 2(24番ピン)にLEDを接続
 RTC_DATA_ATTR byte 		PIN_SW		= 0;		// GPIO 0(25番ピン)にスイッチを接続
 RTC_DATA_ATTR byte 		PIN_PIR		= 26;		// GPIO 26に人感センサを接続
@@ -50,7 +51,6 @@ RTC_DATA_ATTR uint16_t	UDP_PORT	= 1024; 	// UDP ポート番号
 RTC_DATA_ATTR byte		UDP_MODE	= 1;		// 0:OFF, 1:個々, 2:全値, 3:両方
 RTC_DATA_ATTR char		DEVICE[6]	= "esp32";	// デバイス名(5文字)
 RTC_DATA_ATTR char 		DEVICE_NUM	= '2';		// デバイス番号
-RTC_DATA_ATTR boolean	MDNS_EN=false;			// MDNS responder
 RTC_DATA_ATTR int		AmbientChannelId = 0; 	// チャネル名(整数) 0=無効
 RTC_DATA_ATTR char		AmbientWriteKey[17]="0123456789abcdef";	// ライトキー(16文字)
 
@@ -70,6 +70,7 @@ RTC_DATA_ATTR byte		AD_TEMP_EN=0;			// 1:LM61, 2:MCP9700
 RTC_DATA_ATTR byte		I2C_HUM_EN=0;			// 1:SHT31, 2:Si7021
 RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
 RTC_DATA_ATTR boolean	I2C_ACCEM_EN=false;
+RTC_DATA_ATTR boolean	TIMER_EN=false;
 
 IPAddress IP;									// AP用IPアドレス
 IPAddress IP_STA;								// STA用IPアドレス
@@ -344,9 +345,9 @@ void setup(){
 
 		File file = SPIFFS.open(FILENAME,"r");	// ファイルを開く
 		if(file){
-			int size = 1 + 16 + 16 + 17 + 65 + 1;
+			int size = 1 + 16 + 16 + 17 + 65 + 1 + 1;
+			char d[(1 + 16 + 16 + 17 + 65 + 1) + 1 + 1];
 			int end = 0;
-			char d[(1 + 16 + 16 + 17 + 65 + 1) + 1];
 			memset(d,0,size + 1);
 			if(file.available()){
 				Serial.println("loading settings");
@@ -369,6 +370,10 @@ void setup(){
 					strncpy(PASS_STA,d+end,65); end += 65;	// Serial.printf("PASS_STA    =%s\n",PASS_STA);
 					WIFI_AP_MODE = (byte)d[end] - '0';		Serial.printf("WIFI_AP_MODE=%d\n",WIFI_AP_MODE);
 					end++;
+					MDNS_EN = (byte)d[end] - '0';			Serial.printf("MDNS_EN=%d\n",MDNS_EN);
+					end++;
+					// int sizeと char dでデータサイズを設定する
+					// ファイルの書き込みは html.ino
 			//	}
 				file.close();
 			}else Serial.println("no setting files.");
@@ -448,12 +453,14 @@ void setup(){
 	}
 	
 	// HTTP サーバ
-//	if( (WIFI_AP_MODE & 1) == 1 ){				// WiFi_AP 動作時
-		MDNS_EN=MDNS.begin("iot");
-		if(MDNS_EN) Serial.println("MDNS responder started");
-//	}else{
-//		MDNS_EN = false;
-//	}
+	if(MDNS_EN){
+	//	if( (WIFI_AP_MODE & 1) == 1 ){				// WiFi_AP 動作時
+			MDNS_EN=MDNS.begin("iot");
+			if(MDNS_EN) Serial.println("MDNS responder started");
+	//	}else{
+	//		MDNS_EN = false;
+	//	}
+	}
 	html_init("iot",IP,IPAddress(192,168,254,1),IP_STA);
 	Serial.print("WebServ IP = ");
 	Serial.println( IP );
@@ -465,6 +472,8 @@ void setup(){
 	Serial.println("/");
 	sendSensorValues();
 	TIME_NEXT = millis() + (unsigned long)SEND_INT_SEC * 1000;
+	// Wi-Fi スリープ間隔180秒超過(10分以上を設定)、または 起動回数 360回超過(30秒間隔で3時間)で即sleep
+	if(SLEEP_SEC > 180 || TimerWakeUp_bootCount() > 360) sleep();
 	Serial.println("Waiting for Trigger ----" + Line);
 }
 
@@ -505,7 +514,7 @@ void loop(){
 
 void sleep(){
 	boolean led;
-	Serial.println("Shutting down");
+	Serial.println("Shutting down (Working Time = " + String((float)millis() / 1000,1) + ")");
 //	WiFi.disconnect();
 
 	pinMode(PIN_SW,INPUT_PULLUP);

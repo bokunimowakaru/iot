@@ -70,6 +70,10 @@ void TimerWakeUp_setExternalInput(gpio_num_t gpio, int level){
   Serial.println("Wakeup ESP32 when IO" + String(gpio) + " = " + String(level));
 }
 
+int TimerWakeUp_bootCount(){
+  return bootCount;
+}
+
 byte TimerWakeUp_init(){
   ++bootCount;	//Increment boot number and print it every reboot
   Serial.println("Boot number: " + String(bootCount));

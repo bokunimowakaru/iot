@@ -61,7 +61,7 @@ String sensors_PIN_ASSIGNED_S[38];
 DoIt	DevC	AE-ESP	TTGO	メモ	TTGO以外						TTGO_LCD
 IO36 i	IO36 i	IO36 i	IO36i
 IO39 i	IO39 i	IO39 i	IO39i
-IO34 i	IO34 i	IO34 i	IO32★	ADC、
+IO34 i	IO34 i	IO34 i	IO32★	ADC
 IO35 i	IO35 i	IO35 i	IO33★	ADC
 IO32	IO32	IO32	IO34 i	ADC				LUM/-
 IO33	IO33	IO33	IO35 i	ADC				LUM/O
@@ -791,7 +791,7 @@ String sensors_get(){
 		sensors_csv(sensors_S,csv_b);
 		csv_b = true;
 		payload += String(adc);
-		sensors_S += "ADC";
+		sensors_S += "ADC(mV)";
 		if(UDP_MODE & 1) sensors_sendUdp(sensors_devices[2], String(adc));
 	}
 	if(BTN_EN>0){
@@ -977,6 +977,15 @@ String sensors_get(){
 			sensors_S += "ERR";
 			acm_S = "0, 0, 0";
 		}
+	}
+	if(TIMER_EN){
+		String timer_S = dtoStrf((float)millis() / 1000,1);
+		Serial.println("timer      = " + timer_S);
+		sensors_csv(payload,csv_b);
+		sensors_csv(sensors_S,csv_b);
+		csv_b = true;
+		payload +=  String(timer_S);
+		sensors_S += "時間(秒)";
 	}
 	
 	if(UDP_MODE & 2) sensors_sendUdp(DEVICE, payload);
