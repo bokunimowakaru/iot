@@ -16,6 +16,8 @@ IoT Sensor Core for ESP32
 	Core Debug Level: なし
 */
 
+#define  VERSION "1.00"							// バージョン表示
+
 #include <SPIFFS.h>
 #include <WiFi.h>								// ESP32用WiFiライブラリ
 #include <WiFiUdp.h>							// UDP通信を行うライブラリ
@@ -308,7 +310,7 @@ void setup(){
 	}
 	if( (BTN_EN || IR_IN_EN || PIR_EN) && sw ) sleep();
 	
-	Serial.println("-------- IoT Sensor Core ESP32 by Wataru KUNINO --------");
+	Serial.println("-------- IoT Sensor Core ESP32 Ver." + String(VERSION) + " by Wataru KUNINO --------");
 		
 //	/* SPIFFS //////////////////////////
 	if( ( !SPIFFS.begin() || !digitalRead(0) ) && wake == 0 ){	// ファイルシステムSPIFFSの開始

@@ -462,7 +462,7 @@ void html_index(){
 				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
-				<h1>%s</h1>\
+				<h1>%s</h1>Ver.%s\
 				<hr>\
 				<h3>状態</h3>\
 					<p>%s</p>\
@@ -489,7 +489,7 @@ void html_index(){
 				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
-		</html>", html_title, html_title, res_s, sensors_res_s, sensors_s, html_ip_s, html_ip_s
+		</html>", html_title, html_title,VERSION, res_s, sensors_res_s, sensors_s, html_ip_s, html_ip_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
