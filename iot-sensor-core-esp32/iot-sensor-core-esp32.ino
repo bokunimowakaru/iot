@@ -16,7 +16,7 @@ IoT Sensor Core for ESP32
 	Core Debug Level: なし
 */
 
-#define  VERSION "1.00"							// バージョン表示
+#define  VERSION "1.03"							// バージョン表示
 
 #include <SPIFFS.h>
 #include <WiFi.h>								// ESP32用WiFiライブラリ
@@ -74,7 +74,8 @@ RTC_DATA_ATTR byte		I2C_ENV_EN=0;			// 1:BME280, 2:BMP280
 RTC_DATA_ATTR boolean	I2C_ACCEM_EN=false;
 RTC_DATA_ATTR boolean	TIMER_EN=false;
 
-IPAddress IP;									// AP用IPアドレス
+IPAddress IP;									// 本機IPアドレス
+const IPAddress IP_AP=IPAddress(192,168,254,1);	// AP用IPアドレス
 IPAddress IP_STA;								// STA用IPアドレス
 IPAddress IP_BC;								// ブロードキャストIPアドレス
 Ambient ambient;								// クラウドサーバ Ambient用
@@ -89,17 +90,35 @@ const String Line = "------------------------";
 boolean setupWifiAp(){
 	boolean ret;
 	Serial.println("Start Wi-Fi Soft AP ----"+ Line);
-	WiFi.softAPConfig(
-		IPAddress(192,168,254,1), 				// AP側の固定IPアドレス
-		IPAddress(192,168,254,1), 				// 本機のゲートウェイアドレス
-		IPAddress(255,255,255,0)				// ネットマスク
-	);
-	delay(500);									// 待ち時間が必要(起動後HUP対策)
-	ret = WiFi.softAP(SSID_AP,PASS_AP);			// ソフトウェアAPの起動
-	if(ret){
-		Serial.print("SoftAP  IP = "); Serial.println(WiFi.softAPIP());
-		Serial.println("Software AP started");
-	}else{
+	
+	if( WIFI_AP_MODE == 1 ){					// WiFi_AP 動作時(AP+STA時は待機不要)
+		for(int i=0; i < 5000; i++){			// ソフトAPモードの起動を遅らせる
+			delay(1);							// (起動直後のSTAからの接続があった場合のHUP対策)
+			if(i % 500 == 0 ) Serial.print(".");
+		}
+		Serial.println();
+	}
+	for(int tries=0; tries<3 ; tries++){		// 192.168.4.1が割り当てられる対策
+		WiFi.softAPConfig(
+			IP_AP, 								// AP側の固定IPアドレス
+			IP_AP, 								// 本機のゲートウェイアドレス
+			IPAddress(255,255,255,0)			// ネットマスク
+		);
+		for(int i=0;i<500;i++) delay(1);		// 待ち時間が必要(起動後HUP対策)
+		ret = WiFi.softAP(SSID_AP,PASS_AP);		// ソフトウェアAPの起動
+		if(ret){
+			IPAddress ip = WiFi.softAPIP();
+			Serial.print("SoftAP  IP = "); Serial.println(ip);
+			if( ip == IP_AP ){
+				Serial.println("Software AP started");
+				break;
+			}
+			Serial.println("Retring to start AP...");
+			ret=0;
+		}
+		for(int i=0;i<3000;i++) delay(1);
+	}
+	if(!ret){
 		html_error("Failed to start SoftAP","SoftAP 起動失敗","SoftAP");
 		TimerWakeUp_setSleepTime(TIMEOUT / 1000);
 		sleep();
@@ -127,7 +146,7 @@ boolean setupWifiSta(){
 			Serial.println("esp_wifi_wps_enable: " + String(wps));
 			return false;
 		}
-		delay(500);
+		for(int i=0;i<500;i++) delay(1);
 		wps = esp_wifi_wps_start(TIMEOUT);		// WPS接続(blocking time,最大120秒)
 		if(wps != ESP_OK){
 			html_error("AP not found","WPS 動作中 AP なし","WPSｼｯﾊﾟｲ");
@@ -138,7 +157,7 @@ boolean setupWifiSta(){
 		String ssid;
 		String pass;
 		while(millis()-start_ms < TIMEOUT){ 	// WPS 有効中
-			delay(500); 						// 待ち時間処理
+			for(int i=0;i<500;i++) delay(1);	// 待ち時間処理
 			digitalWrite(PIN_LED,!digitalRead(PIN_LED));	// LEDの点滅
 			Serial.print(".");
 			ssid = WiFi.SSID();
@@ -169,7 +188,7 @@ boolean setupWifiSta(){
 		esp_wifi_wps_disable();
 	}
 	Serial.println("Wi-Fi STA Started connection");
-	delay(10);
+	for(int i=0;i<10;i++) delay(1);
 	WiFi.begin(SSID_STA,PASS_STA);				// 無線LANアクセスポイントへ接続
 	start_ms=millis();							// 初期化開始時のタイマー値を保存
 	char c;										// 接続状態フラグ
@@ -190,7 +209,7 @@ boolean setupWifiSta(){
 				Serial.print(c);
 			}
 		}
-		delay(500); 							// 待ち時間処理
+		for(int i=0;i<500;i++) delay(1);		// 待ち時間処理
 		if(millis()-start_ms>TIMEOUT){			// 待ち時間後の処理
 			WiFi.disconnect();					// WiFiアクセスポイントを切断する
 			Serial.println();					// 改行をシリアル出力
@@ -364,15 +383,15 @@ void setup(){
 				//	d[1+16+16+17+65+1] >= '1' && d[1+16+16+17+65+1] <= '3'
 				){
 			*/
-					BOARD_TYPE= (byte)d[end] - '0';			Serial.printf("BOARD_TYPE  =%d\n",BOARD_TYPE);
+					BOARD_TYPE= (byte)d[end] - '0';			// Serial.printf("BOARD_TYPE  =%d\n",BOARD_TYPE);
 					end++;
-					strncpy(SSID_AP,d+end,16); end += 16;	Serial.printf("SSID_AP     =%s\n",SSID_AP);
-					strncpy(PASS_AP,d+end,16); end += 16;	Serial.printf("PASS_AP     =%s\n",PASS_AP);
-					strncpy(SSID_STA,d+end,17); end += 17;	Serial.printf("SSID_STA    =%s\n",SSID_STA);
+					strncpy(SSID_AP,d+end,16); end += 16;	// Serial.printf("SSID_AP     =%s\n",SSID_AP);
+					strncpy(PASS_AP,d+end,16); end += 16;	// Serial.printf("PASS_AP     =%s\n",PASS_AP);
+					strncpy(SSID_STA,d+end,17); end += 17;	// Serial.printf("SSID_STA    =%s\n",SSID_STA);
 					strncpy(PASS_STA,d+end,65); end += 65;	// Serial.printf("PASS_STA    =%s\n",PASS_STA);
-					WIFI_AP_MODE = (byte)d[end] - '0';		Serial.printf("WIFI_AP_MODE=%d\n",WIFI_AP_MODE);
+					WIFI_AP_MODE = (byte)d[end] - '0';		// Serial.printf("WIFI_AP_MODE=%d\n",WIFI_AP_MODE);
 					end++;
-					MDNS_EN = (byte)d[end] - '0';			Serial.printf("MDNS_EN=%d\n",MDNS_EN);
+					MDNS_EN = (byte)d[end] - '0';			// Serial.printf("MDNS_EN=%d\n",MDNS_EN);
 					end++;
 					// int sizeと char dでデータサイズを設定する
 					// ファイルの書き込みは html.ino
@@ -408,6 +427,8 @@ void setup(){
 			Serial.println();
 		}
 	}
+	
+//	IP_AP = IPAddress(192,168,254,1);
 	delay(10);									// ESP32に必要な待ち時間
 	switch(WIFI_AP_MODE){
 		case 1:	// WIFI_AP
@@ -426,8 +447,8 @@ void setup(){
 			break;
 		case 3:	// WIFI_AP_STA
 			WiFi.mode(WIFI_AP_STA);				// 無線LANを[AP+STA]モードに設定
-			setupWifiAp();
 			setupWifiSta();
+			setupWifiAp();
 			IP = WiFi.softAPIP();
 			IP_STA = WiFi.localIP();
 			IP_BC = (uint32_t)(WiFi.localIP()) | IPAddress(0,0,0,255);
@@ -454,16 +475,14 @@ void setup(){
 		}
 	}
 	
-	// HTTP サーバ
+	// mDND サーバ Bonjour
 	if(MDNS_EN){
-	//	if( (WIFI_AP_MODE & 1) == 1 ){				// WiFi_AP 動作時
-			MDNS_EN=MDNS.begin("iot");
-			if(MDNS_EN) Serial.println("MDNS responder started");
-	//	}else{
-	//		MDNS_EN = false;
-	//	}
+		MDNS_EN=MDNS.begin("iot");
+		if(MDNS_EN) Serial.println("MDNS responder started");
 	}
-	html_init("iot",IP,IPAddress(192,168,254,1),IP_STA);
+	
+	// Web サーバ
+	html_init("iot",IP,IP_AP,IP_STA);
 	Serial.print("WebServ IP = ");
 	Serial.println( IP );
 	Serial.print("     BC IP = ");
@@ -483,6 +502,7 @@ void loop(){
 	unsigned long time=millis();			// ミリ秒の取得
 	
 	html_handleClient();
+	yield();
 	sensors_btnRead("Trigged by Button ------" + Line);
 	sensors_pirRead("Trigged by PIR Sensor --" + Line);
 	sensors_irRead("Trigged by IR Sensor ---" + Line);

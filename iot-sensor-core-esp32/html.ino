@@ -13,11 +13,11 @@
 
 WebServer server(80);							// Webサーバ(ポート80=HTTP)定義
 
-uint32_t	html_ip=0;
-char 		html_ip_s[16];
-uint32_t	html_ip_sta=0;
-uint32_t	html_ip_ap=0;
-char 		html_ip_ap_s[16];
+int32_t 	ip_num_ap;
+int32_t 	ip_num_sta;
+char 		html_ip_ui_s[16];
+char 		html_ip_num_s[16];
+char 		html_ip_mdns_s[16];
 char 		html_error_s[HTML_ERROR_LEN_MAX]="";
 const char	html_checked[2][18]={"","checked=\"checked\""};
 
@@ -48,7 +48,8 @@ boolean html_check_overrun(int len){
 	Serial.print(len);
 	Serial.println(" bytes");
 	if(HTML_INDEX_LEN_MAX - 256 < len){
-		Serial.println("WARNING: No Enough Buffer");
+		Serial.print("WARNING: No Enough Buffer. Limit=");
+		Serial.print(HTML_INDEX_LEN_MAX);
 	}
 	if(HTML_INDEX_LEN_MAX - 1 <= len){
 		Serial.println("ERROR: Prevented HTML_INDEX Buffer Overrun");
@@ -108,27 +109,13 @@ void html_dataAttrSet(char *res_s){
 			Serial.println(MDNS_EN);
 		}
 	}
-	
-	if(MDNS_EN){
-		strcpy(html_ip_s,html_ip_ap_s);
+	/*
+	if(MDNS_EN && WIFI_AP_MODE == 3){
+		strcpy(html_ip_ui_s,html_ip_mdns_s);
 	}else{
-		if(WIFI_AP_MODE == 2){
-			sprintf(html_ip_s,"%d.%d.%d.%d",
-				html_ip_sta & 255,
-				html_ip_sta>>8 & 255,
-				html_ip_sta>>16 & 255,
-				html_ip_sta>>24
-			);
-		}else{
-			sprintf(html_ip_s,"%d.%d.%d.%d",
-				html_ip_ap & 255,
-				html_ip_ap>>8 & 255,
-				html_ip_ap>>16 & 255,
-				html_ip_ap>>24
-			);
-		}
+		strcpy(html_ip_ui_s,html_ip_num_s);
 	}
-	
+	*/
 	if(server.hasArg("WPS_STA")){
 		String S = server.arg("WPS_STA");
 		i = S.toInt();
@@ -454,6 +441,7 @@ void html_index(){
 	}
 	sensors_name().toCharArray(sensors_s,HTML_RES_LEN_MAX);
 	
+	char mode_s[4][7]={"OFF","AP","STA","AP+STA"};
 	snprintf(s, HTML_INDEX_LEN_MAX,
 		"<html>\
 			<head>\
@@ -462,7 +450,7 @@ void html_index(){
 				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
-				<h1>%s</h1>Ver.%s\
+				<h1>%s</h1>Ver.%s &emsp; mode=%s &emsp; IP=%s\
 				<hr>\
 				<h3>状態</h3>\
 					<p>%s</p>\
@@ -489,7 +477,7 @@ void html_index(){
 				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
-		</html>", html_title, html_title,VERSION, res_s, sensors_res_s, sensors_s, html_ip_s, html_ip_s
+		</html>", html_title, html_title,VERSION, mode_s[WIFI_AP_MODE], html_ip_num_s, res_s, sensors_res_s, sensors_s, html_ip_ui_s, html_ip_ui_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -563,7 +551,7 @@ void html_wifi(){
 					</p>\
 				</form>\
 				<hr>\
-				<h3>スリープ設定</h3>\
+				<br><br><h3>スリープ設定</h3>\
 				<form method=\"GET\" action=\"/\">\
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"SLEEP_SEC\" value=\"25\" %s>30秒\
@@ -662,6 +650,10 @@ void html_sensors(){
 					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"1\" %s>SHT31\
 					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"2\" %s>Si7021\
+					<p>　　　　　　　\
+					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"3\" %s>AM23<u>20</u>\
+					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"4\" %s>AM23<u>02</u>\
+					<input type=\"radio\" name=\"I2C_HUM_EN\" value=\"5\" %s>DHT11\
 					</p>\
 					<p>環境センサ　\
 					<input type=\"radio\" name=\"I2C_ENV_EN\" value=\"0\" %s>OFF\
@@ -676,9 +668,11 @@ void html_sensors(){
 					<input type=\"radio\" name=\"TIMER_EN\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"TIMER_EN\" value=\"1\" %s>ON\
 					</p>\
-					<p>センサ設定の実行　\
-					<input type=\"submit\" name=\"SENSORS\" value=\"設定\">\
-					</p>\
+					<p><input type=\"submit\" name=\"SENSORS\" value=\"設定\">(センサ設定の実行)</p>\
+				</form>\
+				<hr>\
+				<form method=\"GET\" action=\"/\">\
+					<p><input type=\"submit\" name=\"SENSORS\" value=\"前の画面に戻る\">(設定しない)</p>\
 				</form>\
 				<hr>\
 				<p>by bokunimo.net</p>\
@@ -695,6 +689,7 @@ void html_sensors(){
 				html_checked[AD_LUM_EN==0], html_checked[AD_LUM_EN==1],
 				html_checked[AD_TEMP_EN==0], html_checked[AD_TEMP_EN==1], html_checked[AD_TEMP_EN==2],
 				html_checked[I2C_HUM_EN==0], html_checked[I2C_HUM_EN==1], html_checked[I2C_HUM_EN==2],
+				html_checked[I2C_HUM_EN==3], html_checked[I2C_HUM_EN==4], html_checked[I2C_HUM_EN==5],
 				html_checked[I2C_ENV_EN==0], html_checked[I2C_ENV_EN==1], html_checked[I2C_ENV_EN==2],
 				html_checked[I2C_ACCEM_EN==0], html_checked[I2C_ACCEM_EN==1],
 				html_checked[TIMER_EN==0], html_checked[TIMER_EN==1]
@@ -741,8 +736,8 @@ void html_display(){
 				<h3>I2C液晶制御</h3>\
 					<p>表示:<input type=\"text\" name=\"DISPLAY\" value=\"LCDﾋｮｳｼﾞbyWataru\" size=\"16\"></p>\
 					<p>Hello:<a href=\"http://%s/?DISPLAY=Hello\">http://%s/?DISPLAY=Hello</a></p>\
-				<hr>\
-				<p><input type=\"submit\" value=\"設定\"></p>\
+				<h3>出力設定の実行</h3>\
+					<p><input type=\"submit\" value=\"設定\"></p>\
 				</form>\
 				<hr>\
 				<form method=\"GET\" action=\"/\">\
@@ -754,9 +749,9 @@ void html_display(){
 		</html>", html_title,
 			html_title, res_s,
 				html_checked[led==0], html_checked[led==1], html_checked[PIN_LED==2], html_checked[PIN_LED==4], html_checked[PIN_LED==23],
-				html_ip_s, html_ip_s, html_ip_s, html_ip_s,
+				html_ip_ui_s, html_ip_ui_s, html_ip_ui_s, html_ip_ui_s,
 				html_checked[LCD_EN==0], html_checked[LCD_EN==1], html_checked[LCD_EN==2],
-				html_ip_s, html_ip_s
+				html_ip_ui_s, html_ip_ui_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -810,7 +805,11 @@ void html_sendto(){
 					<p>[Wi-Fi 設定]の[スリープ間隔]の設定のほうが優先します</p>\
 					<p>Ambientへの送信間隔は30秒以上を推奨します(1日3000サンプルまで)</p>\
 					<h3>送信設定の実行</h3>\
-					<input type=\"submit\" name=\"SENSORS\" value=\"設定\">\
+					<input type=\"submit\" name=\"SENSORS\" value=\"設定\">(送信の開始)\
+				</form>\
+				<hr>\
+				<form method=\"GET\" action=\"/\">\
+					<input type=\"submit\" name=\"SENSORS\" value=\"前の画面に戻る\">(設定しない)\
 				</form>\
 				<hr>\
 				<p>by bokunimo.net</p>\
@@ -917,6 +916,31 @@ void html_reboot(){
 		} else Serial.println("SPIFSS ERROR");
 	}
 //	*/
+	
+	uint32_t ip;
+	switch(WIFI_AP_MODE){
+		case 1:
+			ip = ip_num_ap;
+			break;
+		case 2:
+			ip = ip_num_sta;
+			break;
+		case 3:
+			ip = ip_num_ap;
+			break;
+	}
+	sprintf(html_ip_num_s,"%d.%d.%d.%d",
+		ip & 255,
+		ip>>8 & 255,
+		ip>>16 & 255,
+		ip>>24
+	);
+	if( MDNS_EN ){
+		strcpy(html_ip_ui_s,html_ip_mdns_s);
+	}else{
+		strcpy(html_ip_ui_s,html_ip_num_s);
+	}
+	
 	snprintf(s, HTML_MISC_LEN_MAX,
 		"<html>\
 			<head>\
@@ -930,9 +954,10 @@ void html_reboot(){
 				<p>しばらくおまちください(約15秒)</p>\
 				<p>STAモードに切り替えたときは,LAN側からアクセスしてください</p>\
 				<p>接続できないときはスマートフォンのWi-Fi接続先を確認してください</p>\
-				<p><a href=\"http://%s/\">http://%s/</a></p>\
+				<p>IP：<br><a href=\"http://%s/\">http://%s/</a></p>\
+				<p>mDNS：<br><a href=\"http://%s/\">http://%s/</a></p>\
 			</body>\
-		</html>", html_ip_s, html_ip_s, html_ip_s
+		</html>", html_ip_ui_s, html_ip_num_s, html_ip_num_s, html_ip_mdns_s, html_ip_mdns_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -1002,7 +1027,7 @@ void html_sleep(){
 				<p>本機に設定した内容は保持されます(電源OFFやENボタンで消えます)</p>\
 				<p>復帰後のアクセス先＝<a href=\"http://%s/\">http://%s/</a></p>\
 			</body>\
-		</html>", PIN_SW, html_ip_s, html_ip_s
+		</html>", PIN_SW, html_ip_ui_s, html_ip_ui_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -1011,6 +1036,7 @@ void html_sleep(){
 	sleep();
 }
 
+/*
 void html_test(){
 	char s[HTML_INDEX_LEN_MAX];
 	char res_s[HTML_S_LEN_MAX];
@@ -1039,6 +1065,7 @@ void html_test(){
 	Serial.println("Test Done");
 	server.send(200, "text/plain", "Test Done");
 }
+*/
 
 /*
 void html_text(){
@@ -1138,24 +1165,22 @@ String html_ipAdrToString(uint32_t ip){
 }
 
 void html_init(const char *domainName_local, uint32_t ip, int32_t ip_ap, int32_t ip_sta){
-	html_ip = ip;
-	html_ip_ap = ip_ap;
-	html_ip_sta = ip_sta;
-	if(MDNS_EN){
-		snprintf(html_ip_s,16,"%s.local",
-			domainName_local
-		);
-	}else{
-		sprintf(html_ip_s,"%d.%d.%d.%d",
-			ip & 255,
-			ip>>8 & 255,
-			ip>>16 & 255,
-			ip>>24
-		);
-	}
-	snprintf(html_ip_ap_s,16,"%s.local",
+	ip_num_ap = ip_ap;
+	ip_num_sta = ip_sta;
+	snprintf(html_ip_mdns_s,16,"%s.local",
 		domainName_local
 	);
+	sprintf(html_ip_num_s,"%d.%d.%d.%d",
+		ip & 255,
+		ip>>8 & 255,
+		ip>>16 & 255,
+		ip>>24
+	);
+	if(MDNS_EN && WIFI_AP_MODE == 3){
+		strcpy(html_ip_ui_s,html_ip_mdns_s);
+	}else{
+		strcpy(html_ip_ui_s,html_ip_num_s);
+	}
 	server.on("/", html_index);
 	server.on("/wifi", html_wifi);
 	server.on("/sensors", html_sensors);
@@ -1166,7 +1191,7 @@ void html_init(const char *domainName_local, uint32_t ip, int32_t ip_ap, int32_t
 	server.on("/gpio_init", html_gpio_init);
 	server.on("/sleep", html_sleep);
 	server.on("/format", html_format);
-	server.on("/test", html_test);
+//	server.on("/test", html_test);
 //	server.on("/text", html_text);
 //	server.on("/demo", html_demo);
 //	server.on("/test.svg", drawGraph);
@@ -1179,4 +1204,5 @@ void html_init(const char *domainName_local, uint32_t ip, int32_t ip_ap, int32_t
 
 void html_handleClient(){
 	server.handleClient();
+	yield();
 }
