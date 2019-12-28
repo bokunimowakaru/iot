@@ -1,7 +1,7 @@
 # ESP用 Ambient ライブラリについて
 
 本フォルダに含まれる以下のファイルは、アンビエントデーター株式会社が作成したものを当方がダウンロードしたものです。これらのファイルの権利はアンビエントデーター株式会社に帰属します。  
-詳細は[README_Ambient.md](README_Ambient.md)をご覧ください。
+詳細は[Ambient_README.md](Ambient_README.md)をご覧ください。
 
 - Ambient.cpp
 	- ambient.cpp - Library for sending data to Ambient
