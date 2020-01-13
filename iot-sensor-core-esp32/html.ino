@@ -181,10 +181,22 @@ void html_dataAttrSet(char *res_s){
 				}else{
 					S.toCharArray(SSID_AP,16);
 					P.toCharArray(PASS_AP,16);
-					snprintf(s, HTML_S_LEN_MAX,"本機SSIDを[%s]に設定しました(要Wi-Fi再起動)",SSID_AP);
+					char ss[6];
+					ss[0]='\0';
+					if(server.hasArg("SSID_MAC")){
+						i = server.arg("SSID_MAC").toInt();
+						if( i == 0 ) SSID_MAC = false;
+						if( i == 1 ){
+							SSID_MAC = true;
+							sprintf(ss,"-%02x%02x",MAC[4],MAC[5]);
+						}
+					}
+					snprintf(s, HTML_S_LEN_MAX,"本機SSIDを[%s%s]に設定しました(要Wi-Fi再起動)",SSID_AP,ss);
 					_html_cat_res_s(res_s, s);
 					Serial.print(" SSID_AP=");
 					Serial.print(SSID_AP);
+					Serial.print(" SSID_MAC=");
+					Serial.println(SSID_MAC);
 					Serial.print(" PASS_AP=");
 					Serial.println(PASS_AP);
 				}
@@ -450,7 +462,8 @@ void html_index(){
 				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
 			</head>\
 			<body>\
-				<h1>%s</h1>Ver.%s &emsp; mode=%s &emsp; IP=%s\
+				<h1>%s</h1><center>Ver.%s &emsp; mode=%s &emsp; IP=%s<br>\
+				MAC=%02x:%02x:%02x:%02x:%02x:%02x</center>\
 				<hr>\
 				<h3>状態</h3>\
 					<p>%s</p>\
@@ -477,7 +490,7 @@ void html_index(){
 				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
-		</html>", html_title, html_title,VERSION, mode_s[WIFI_AP_MODE], html_ip_num_s, res_s, sensors_res_s, sensors_s, html_ip_ui_s, html_ip_ui_s
+		</html>", html_title, html_title,VERSION, mode_s[WIFI_AP_MODE], html_ip_num_s, MAC[0],MAC[1],MAC[2],MAC[3],MAC[4],MAC[5],res_s, sensors_res_s, sensors_s, html_ip_ui_s, html_ip_ui_s
 	);
 	server.send(200, "text/html", s);
 	html_check_overrun(strlen(s));
@@ -528,6 +541,9 @@ void html_wifi(){
 					<p>本機 Wi-Fi AP(アクセスポイント)へ接続するための設定です</p>\
 					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"10\">\
 					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"10\">\
+					<p>下記をONにすると上記SSIDの末尾にMAC4桁を追加します</p>\
+					<input type=\"radio\" name=\"SSID_MAC\" value=\"0\" %s>OFF\
+					<input type=\"radio\" name=\"SSID_MAC\" value=\"1\" %s>ON\
 					<p><input type=\"submit\" value=\"設定\"></p>\
 					<p>変更すると,Wi-Fi を新しい設定で再接続する必要があります</p>\
 				</form>\
@@ -575,7 +591,7 @@ void html_wifi(){
 			html_title,  res_s,
 			html_checked[WIFI_AP_MODE==1], html_checked[WIFI_AP_MODE==2], html_checked[WIFI_AP_MODE==3],
 			html_checked[MDNS_EN==1], html_checked[MDNS_EN==0], 
-			SSID_AP, PASS_AP,
+			SSID_AP, PASS_AP, html_checked[SSID_MAC==0], html_checked[SSID_MAC==1],
 			html_checked[WPS_STA==true],html_checked[WPS_STA==false],SSID_STA,
 			html_checked[SLEEP_SEC==0], html_checked[SLEEP_SEC==25], html_checked[SLEEP_SEC==55], html_checked[SLEEP_SEC==175],
 			html_checked[SLEEP_SEC==595], html_checked[SLEEP_SEC==1795], html_checked[SLEEP_SEC==3595], html_checked[SLEEP_SEC==65535]
@@ -894,8 +910,8 @@ void html_reboot(){
 		if(SPIFFS.begin()){	// ファイルシステムSPIFFSの開始
 			File file = SPIFFS.open(FILENAME,"w");       // 保存のためにファイルを開く
 			if( file ){
-				int size = 1 + 16 + 16 + 17 + 65 + 1 + 1;
-				char d[(1 + 16 + 16 + 17 + 65 + 1) + 1 + 1];
+				int size = 1 + 16 + 16 + 17 + 65 + 1 + 1 + 1;
+				char d[(1 + 16 + 16 + 17 + 65 + 1 + 1 +1) + 1];
 				int end = 0;
 			//	memset(d,0,size + 1);
 				d[end] = '0' + BOARD_TYPE;
@@ -907,6 +923,8 @@ void html_reboot(){
 				d[end] = '0' + WIFI_AP_MODE;
 				end++;
 				d[end] = '0' + MDNS_EN;
+				end++;
+				d[end] = '0' + SSID_MAC;
 				end++;
 				// int sizeと char dでデータサイズを設定する
 				file.write((byte *)d,size);

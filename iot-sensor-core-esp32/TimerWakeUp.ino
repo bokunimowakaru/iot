@@ -55,7 +55,7 @@ void TimerWakeUp_setSleepTime(int time_sec){
     return;
   }
 */
-  esp_sleep_enable_timer_wakeup(time_sec * uS_TO_S_FACTOR);
+  esp_sleep_enable_timer_wakeup((uint32_t)time_sec * uS_TO_S_FACTOR);
   Serial.println("Setup ESP32 to sleep for every " + String(time_sec) +
   " Seconds");
 }

@@ -1,6 +1,8 @@
 /*******************************************************************************
 IoT Sensor Core for ESP32
 
+https://github.com/bokunimowakaru/sens
+
 										   Copyright (c) 2019 Wataru KUNINO
 *******************************************************************************/
 
@@ -16,7 +18,27 @@ IoT Sensor Core for ESP32
 	Core Debug Level: なし
 */
 
-#define  VERSION "1.03"							// バージョン表示
+#define  VERSION "1.05"							// バージョン表示
+
+/*******************************************************************************
+Ver. 1.06
+ - Windows版 インストール説明書の作成 (Espressif DOWNLOAD TOOL使用)
+ - デバイス発見用 ブロードキャスト ident_0 送信
+
+Ver. 1.05
+ - 湿度センサDHT11の個体ばらつきによって起動が不安定ものがあったので改善（エラーは無くならない）
+ - 30分を超えるスリープが設定できないバグを修正（uint変換に誤り）
+
+Ver. 1.04
+ - SSIDにMAC下4桁を追加する機能(教室などで複数のIoT SensorCoreを利用する場合を想定)
+
+ToDo
+ - 初期設定ウィザード
+ - ASONG HR202L 対応
+ - Language 設定
+ - ライセンス表示・バイナリによる再配布対応
+
+*******************************************************************************/
 
 #include <SPIFFS.h>
 #include <WiFi.h>								// ESP32用WiFiライブラリ
@@ -33,6 +55,7 @@ RTC_DATA_ATTR char SSID_AP[16]="iot-core-esp32";	// 本機のSSID 15文字まで
 RTC_DATA_ATTR char PASS_AP[16]="password";			// 本機のPASS 15文字まで
 RTC_DATA_ATTR char 		SSID_STA[17] = "";		// STAモードのSSID(お手持ちのAPのSSID)
 RTC_DATA_ATTR char 		PASS_STA[65] = "";		// STAモードのPASS(お手持ちのAPのPASS)
+RTC_DATA_ATTR boolean	SSID_MAC	= false;	// SSIDにMACを付与
 RTC_DATA_ATTR boolean	WPS_STA		= false;	// STAモードのWPS指示
 RTC_DATA_ATTR byte 		BOARD_TYPE	= 1;		// 0:AE-ESP, 1:DevKitC, 2:TTGO T-Koala
 RTC_DATA_ATTR boolean	MDNS_EN=true;			// MDNS responder
@@ -75,6 +98,7 @@ RTC_DATA_ATTR boolean	I2C_ACCEM_EN=false;
 RTC_DATA_ATTR boolean	TIMER_EN=false;
 
 IPAddress IP;									// 本機IPアドレス
+byte MAC[6];									// 本機MACアドレス
 const IPAddress IP_AP=IPAddress(192,168,254,1);	// AP用IPアドレス
 IPAddress IP_STA;								// STA用IPアドレス
 IPAddress IP_BC;								// ブロードキャストIPアドレス
@@ -105,7 +129,10 @@ boolean setupWifiAp(){
 			IPAddress(255,255,255,0)			// ネットマスク
 		);
 		for(int i=0;i<500;i++) delay(1);		// 待ち時間が必要(起動後HUP対策)
-		ret = WiFi.softAP(SSID_AP,PASS_AP);		// ソフトウェアAPの起動
+		char s[22];
+		if( SSID_MAC ) sprintf(s,"%s-%02x%02x",SSID_AP,MAC[4],MAC[5]);
+		else strcpy(s,SSID_AP);
+		ret = WiFi.softAP(s,PASS_AP);		// ソフトウェアAPの起動
 		if(ret){
 			IPAddress ip = WiFi.softAPIP();
 			Serial.print("SoftAP  IP = "); Serial.println(ip);
@@ -230,9 +257,9 @@ boolean setupWifiSta(){
 	return true;
 }
 
-String sendUdp(String &payload){
+String sendUdp(const char *device, String &payload){
 	if(UDP_PORT > 0 && payload.length() > 0){
-		String S = String(DEVICE) + "_" + String(DEVICE_NUM) + "," + payload;
+		String S = String(device) + "_" + String(DEVICE_NUM) + "," + payload;
 		WiFiUDP udp;								// UDP通信用のインスタンスを定義
 		udp.beginPacket(IP_BC, UDP_PORT);			// UDP送信先を設定
 		DEVICE[5]='\0';								// 終端
@@ -244,6 +271,10 @@ String sendUdp(String &payload){
 		delay(10);
 		return S;
 	} else return "";
+}
+
+String sendUdp(String &payload){
+	return sendUdp(DEVICE, payload);
 }
 
 boolean sentToAmbient(String &payload){
@@ -288,6 +319,7 @@ String sendSensorValues(){
 }
 
 void setup(){
+	esp_efuse_mac_get_default(MAC);
 	pinMode(0,INPUT_PULLUP);
 	sensors_init();
 	Serial.begin(115200);
@@ -296,11 +328,11 @@ void setup(){
 	int sw = 1;
 	if(BTN_EN > 0){
 		pinMode(PIN_SW,INPUT_PULLUP);
-		if(wake == 1 || wake == 2){
+		if(wake == 1 || wake == 2){		// RTC_IO, RTC_CNTL
 			sensors_btnPush(true);
 			sw = 0;
 		}
-		if(wake == 3 || wake == 4){
+		if(wake == 3 || wake == 4){		// timer, touchpad
 			sw = digitalRead(PIN_SW);
 		}
 	}
@@ -308,7 +340,7 @@ void setup(){
 		pinMode(PIN_IR_IN,INPUT_PULLUP);
 		pinMode(PIN_GND,OUTPUT);	digitalWrite(PIN_GND,LOW);
 		pinMode(PIN_VDD,OUTPUT);	digitalWrite(PIN_VDD,HIGH);
-		if(wake == 1 || wake == 2){
+		if(wake == 1 || wake == 2){		// RTC_IO, RTC_CNTL
 			if( sw ){
 				sw = digitalRead(PIN_IR_IN);
 				if( !sw ) sw = !sensors_irRead(true);
@@ -319,11 +351,11 @@ void setup(){
 		pinMode(PIN_PIR,INPUT_PULLUP);
 		pinMode(PIN_GND,OUTPUT);	digitalWrite(PIN_GND,LOW);
 		pinMode(PIN_VDD,OUTPUT);	digitalWrite(PIN_VDD,HIGH);
-		if(wake == 1 || wake == 2){
+		if(wake == 1 || wake == 2){		// RTC_IO, RTC_CNTL
 			sensors_pirPush(true);
 			sw = 0;
 		}
-		if(wake == 3 || wake == 4){
+		if(wake == 3 || wake == 4){		// timer, touchpad
 			if( sw ) sw = !digitalRead(PIN_PIR);
 		}
 	}
@@ -366,8 +398,8 @@ void setup(){
 
 		File file = SPIFFS.open(FILENAME,"r");	// ファイルを開く
 		if(file){
-			int size = 1 + 16 + 16 + 17 + 65 + 1 + 1;
-			char d[(1 + 16 + 16 + 17 + 65 + 1) + 1 + 1];
+			int size = 1 + 16 + 16 + 17 + 65 + 1 + 1 + 1;
+			char d[(1 + 16 + 16 + 17 + 65 + 1 + 1 + 1) + 1];
 			int end = 0;
 			memset(d,0,size + 1);
 			if(file.available()){
@@ -393,6 +425,8 @@ void setup(){
 					end++;
 					MDNS_EN = (byte)d[end] - '0';			// Serial.printf("MDNS_EN=%d\n",MDNS_EN);
 					end++;
+					SSID_MAC = (byte)d[end] - '0';			// Serial.printf("SSID_MAC=%d\n",SSID_MAC);
+					end++;
 					// int sizeと char dでデータサイズを設定する
 					// ファイルの書き込みは html.ino
 			//	}
@@ -411,13 +445,15 @@ void setup(){
 		strcpy(PASS_AP,"password");
 	}
 //	*/
+	Serial.printf("MAC Address= %02x:%02x:%02x:%02x:%02x:%02x\r\n", MAC[0], MAC[1], MAC[2], MAC[3], MAC[4], MAC[5]);
 	Serial.print("Wi-Fi Mode = ");
 	char mode_s[4][7]={"OFF","AP","STA","AP+STA"};
 	Serial.println( mode_s[WIFI_AP_MODE] );
 	
 	if( (WIFI_AP_MODE & 1) == 1){
-		Serial.println("SSID_AP    = " + String(SSID_AP) );
-		Serial.println("PASS_AP    = " + String(PASS_AP) );
+		Serial.print("SSID_AP    = " + String(SSID_AP) );
+		if(SSID_MAC) Serial.printf("-%02x%02x",MAC[4],MAC[5]);
+		Serial.println("\r\nPASS_AP    = " + String(PASS_AP) );
 	}
 	if( (WIFI_AP_MODE & 2) == 2){
 		if(strlen(SSID_STA)>0)Serial.println("SSID_STA   = " + String(SSID_STA) );
@@ -491,7 +527,14 @@ void setup(){
 	Serial.print("   URL(IP) = http://");
 	Serial.print(IP);
 	Serial.println("/");
-	sendSensorValues();
+	
+	// 起動時の送信
+	if( wake == 0 ){
+		String ip_S = String(IP[0])+","+String(IP[1])+","+String(IP[2])+","+String(IP[3]);
+		sendUdp("ident",ip_S);
+		sendSensorValues();
+	}
+	
 	TIME_NEXT = millis() + (unsigned long)SEND_INT_SEC * 1000;
 	// Wi-Fi スリープ間隔180秒超過(10分以上を設定)、または 起動回数 360回超過(30秒間隔で3時間)で即sleep
 	if(SLEEP_SEC > 180 || TimerWakeUp_bootCount() > 360) sleep();

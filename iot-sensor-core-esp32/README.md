@@ -9,6 +9,8 @@ ESP32-WROOM-32モジュール用の IoT センサ機器向けプログラムで�
 - 内蔵の温度センサ、AD変換器に接続したセンサなどの読み値を送信します。  
 - 単2型アルカリ乾電池2本で1年以上の動作が可能です(注意点参照)。  
 
+![スマートフォン画面例](iotcore.jpg)
+
 ## 対応デバイス(Ver. 1.03)
 
 * ESP32マイコン内蔵温度センサ(発熱による温度上昇の影響を受けます)  
@@ -35,11 +37,19 @@ ESP32-WROOM-32モジュール用の IoT センサ機器向けプログラムで�
 [^1]: IoT Sensor Core ファームウェアを書き込むために使用します。書き込み済の IoT Sensor Core をお持ちの場合は不要です。  
 [^2]: ESP32マイコンへの電源供給とファームウェアの書き込みに使用します。パソコンや Raspberry Pi をお持ちでない場合は、USB出力のACアダプタが必要です。  
 
-## インストール方法
+## インストール方法 【Windowsを使用する場合】
+
+ファームウェアの書き込みツール Flash Download Tools を使用して、ESP32-WROOM-32に書き込むことができます。  
+詳しくは、[インストール説明書](https://raw.githubusercontent.com/bokunimowakaru/sens/master/README.pdf)をご覧ください。  
+
+		インストール説明書(PDF)
+		https://raw.githubusercontent.com/bokunimowakaru/sens/master/README.pdf
+
+## インストール方法 【Rasberry Piを使用する場合】
 
 IoT Sensor Core を ESP32-WROOM-32に書き込むには、bash、gitツール、pythonが動作する環境（Raspberry Pi、Windows 10 + Cygwinで動作確認済み）が必要です。
 
-* 下記のコマンドでダウンロードしてください。  
+* 下記のコマンドで IoT Sensor Core をダウンロードしてください。  
 
 		git clone https://github.com/bokunimowakaru/iot
 
@@ -49,10 +59,10 @@ IoT Sensor Core を ESP32-WROOM-32に書き込むには、bash、gitツール、
 
 		ls -l /dev/serial/by-id/
 
-* 下記のコマンドを入力するとESP32へ書き込むことが出来ます。上記でUSB0しか無かったときは、/dev/ttyUSB0を省略できます。その他の場合は、/dev/ttyUSB0の数字部分を、上記で確認したUSBシリアルのデバイスPathに置き換えてください。  
+* 下記のコマンドを入力するとESP32へ書き込むことが出来ます 。複数のUSBシリアル変換器を使用している場合は、第1引数にシリアルポート（/dev/ttyUSB0や/dev/ttyS2など）を追加してください。  
 
 		cd ~/iot/iot-sensor-core-esp32/target  
-		./iot-sensor-core-esp32.sh /dev/ttyUSB0  
+		./iot-sensor-core-esp32.sh  
 
 ## 使い方[1] ブラウザでアクセスする
 
@@ -80,15 +90,15 @@ mDNS非対応のOS（Androidなど）を使用する場合、「[http://iot.loca
 
 	センサ設定  
 		http://iot.local/sensors  
-		または
-		http://192.168.254.1/sensors    
+		または  
+		http://192.168.254.1/sensors  
 
 ## 使い方[3] ピン配列表
 
 「ピン配列表」画面で、センサの接続先を確認してください。
 
-	ピン配列の確認
-		http://iot.local/pinout
+	ピン配列の確認  
+		http://iot.local/pinout  
 		または  
 		http://192.168.254.1/pinout  
 
@@ -102,7 +112,7 @@ Wi-Fi設定の「Wi-Fi再起動」の[保存]にタッチすると、現在のWi
 
 ## コンパイル方法（通常はコンパイル不要）
 
-Arduino IDEを使って、開発途上版を自分でコンパイルすることが出来ます。[ファイル]メニューの[環境設定]を選択し、「追加のボードマネージャのURL」に下記を追加してください。すでに他のURLが書かれている場合は、末尾にカンマ区切りで追加してください。  
+Arduino IDEを使って、開発途上版を自分でコンパイルして使用することが出来ます。[ファイル]メニューの[環境設定]を選択し、「追加のボードマネージャのURL」に下記を追加してください。すでに他のURLが書かれている場合は、末尾にカンマ区切りで追加してください。  
 
 	Arduino開発環境（通常は不要）  
 		https://dl.espressif.com/dl/package_esp32_index.json  
@@ -135,7 +145,7 @@ Arduino IDEを使って、開発途上版を自分でコンパイルすること
 * 長期間の駆動を行うには、[Wi-Fi 設定]の[動作モード]をSTAモードに設定し、[スリープ設定]を[15分]～[60分]にする必要があります。また、条件によって動作期間が大きく変化します。  
 
 ### センサデバイス接続時の注意点
-* デバイスを接続するときは、電源を切ってください。
+* デバイスを接続するときは、(なるべく)電源を切るか、スリープ状態にしてください。
 
 ### 人感センサの電源に関する注意点
 * 間欠動作させるときは、人感センサの電源を3.3Vに接続してください。スリープ時はGPIOからの電源供給が途絶えます。
@@ -167,6 +177,8 @@ Arduino IDEを使って、開発途上版を自分でコンパイルすること
 		2019/06/25 β版の公開（書籍投稿用）  
 		2019/11/25 Ver. 1.00 正式版リリース（エレキジャックIoT用）  
 		2019/12/06 Ver. 1.03 湿度センサ3種追加、バグ修正 
+		2020/01/13 Ver. 1.05 SSIDにMAC下4桁を追加する機能  
+		(教室などで複数のIoT SensorCoreを利用する場合を想定)  
 
 ## サポートサイト
 
@@ -189,4 +201,4 @@ Arduino IDEを使って、開発途上版を自分でコンパイルすること
 * 当方が作成した（もしくは追加した）ソフトウェア以外については、作成者の権利を優先します。  
 * 提供情報や配布ソフトによって、被害が生じた場合であっても、当方は、一切、補償いたしません。  
 
-	Copyright (c) 2016-2019 Wataru KUNINO <https://bokunimo.net/>  
+	Copyright (c) 2016-2020 Wataru KUNINO <https://bokunimo.net/>  

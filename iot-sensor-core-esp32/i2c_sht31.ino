@@ -4,7 +4,7 @@
 
 I2C接続の温湿度センサの値を読み取る
 SENSIRION社 SHT31
-							   Copyright (c) 2017-2019 Wataru KUNINO
+							   Copyright (c) 2017-2020 Wataru KUNINO
 							   https://bokunimo.net/bokunimowakaru/
 *********************************************************************/
 
@@ -55,6 +55,40 @@ float i2c_sht31_getHum(){
 	ret = _i2c_sht31_hum;
 	_i2c_sht31_hum = -999;
 	return ret;
+}
+
+uint16_t i2c_sht31_getStat(){
+	uint16_t stat=0x00;
+	Wire.beginTransmission(I2C_sht);
+	Wire.write(0xF3);
+	Wire.write(0x2D);
+	if( Wire.endTransmission() == 0){
+		Wire.requestFrom(I2C_sht,3);
+		if(Wire.available()==0) return 0xFFFF;
+		stat = (uint16_t)Wire.read();
+		stat <<= 8;
+		if(Wire.available()==0) return 0xFFFF;
+		stat += (uint16_t)Wire.read();
+		Wire.read();
+	}
+	delay(18);
+	Wire.beginTransmission(I2C_sht);
+	Wire.write(0x30);
+	Wire.write(0x41);
+	Wire.endTransmission();
+	return stat;
+}
+
+void i2c_sht31_printStat(){
+	uint16_t stat=i2c_sht31_getStat();
+	Serial.printf("i2c_sht31_printStat = 0x%04x\n", stat );
+	Serial.printf("Alert pending status  : %01d\n", (stat>>15) & 0x1 );
+	Serial.printf("Heater status         : %01d\n", (stat>>13) & 0x1 );
+	Serial.printf("RH tracking alert     : %01d\n", (stat>>11) & 0x1 );
+	Serial.printf("T tracking alert      : %01d\n", (stat>>10) & 0x1 );
+	Serial.printf("System reset detected : %01d\n", (stat>>4) & 0x1 );
+	Serial.printf("Command status        : %01d\n", (stat>>1) & 0x1 );
+	Serial.printf("Write data checksum   : %01d\n", stat & 0x1 );
 }
 
 boolean i2c_sht31_Setup(int PIN_SDA = 21, int PIN_SCL = 22);
