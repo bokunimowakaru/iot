@@ -9,7 +9,7 @@
 
 * 下記のコマンドを入力するとESP32へ書き込むことが出来ます(/dev/ttyUSB0の数字部分を、上記で確認したUSBシリアルのデバイスPathに置き換える)。  
 		cd ~/iot/iot-sensor-core-esp32/target  
-		./iot-sensor-core-esp32.sh /dev/ttyUSB0  
+		./iot-sensor-core-esp32.sh  
 
 ## ライセンス esptool.py
 
@@ -26,6 +26,6 @@
 * また、提供情報や配布ソフトによって生じたいかなる被害についても，一切，補償いたしません。  
 * ライセンスが明記されていないファイルについても、同様です。  
 
-	Copyright (c) 2016-2019 Wataru KUNINO <https://bokunimo.net/>
+	Copyright (c) 2016-2020 Wataru KUNINO <https://bokunimo.net/>
 
 
