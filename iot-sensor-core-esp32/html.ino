@@ -488,6 +488,10 @@ void html_index(){
 				<h4><a href=\"gpio_init\">GPIO 再起動</a>(GPIO のみ再設定)</h4>\
 				<h4><a href=\"sleep\">ESP32 OFF</a>(設定を保持したままスリープ)</h4>\
 				<hr>\
+				<h3>その他の情報</h3>\
+				<h4><a href=\"https://bokunimo.net/ambient/\">ボクにもわかる IoT Sensor Core</a></h4>\
+				<h4><a href=\"license\">ソフトウェア・ライセンスについて</a></h4>\
+				<hr>\
 				<p>by bokunimo.net</p>\
 			</body>\
 		</html>", html_title, html_title,VERSION, mode_s[WIFI_AP_MODE], html_ip_num_s, MAC[0],MAC[1],MAC[2],MAC[3],MAC[4],MAC[5],res_s, sensors_res_s, sensors_s, html_ip_ui_s, html_ip_ui_s
@@ -542,7 +546,7 @@ void html_wifi(){
 					SSID=<input type=\"text\" name=\"SSID_AP\" value=\"%s\" size=\"10\">\
 					PASS=<input type=\"password\" name=\"PASS_AP\" value=\"%s\" size=\"10\">\
 					<p>下記をONにすると上記SSIDの末尾にMAC4桁を追加します</p>\
-					<input type=\"radio\" name=\"SSID_MAC\" value=\"0\" %s>OFF\
+					MAC付SSID: <input type=\"radio\" name=\"SSID_MAC\" value=\"0\" %s>OFF\
 					<input type=\"radio\" name=\"SSID_MAC\" value=\"1\" %s>ON\
 					<p><input type=\"submit\" value=\"設定\"></p>\
 					<p>変更すると,Wi-Fi を新しい設定で再接続する必要があります</p>\
@@ -1024,6 +1028,53 @@ void html_format(){
 	Serial.print("done html");
 }
 
+void html_license(){
+	/////////////// ----------------------
+	Serial.println("LICENSE ---------");
+	server.send(200, "text/html",
+		"<html>\
+			<head>\
+				<title>LICENSE ソフトウェア・ライセンス</title>\
+				<meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\">\
+				<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
+			</head>\
+			<body>\
+<h1>ライセンスについて</h1><br>\
+本ソフトウェアのライセンスは、GitHubのレポジトリ<a href=\"https://github.com/bokunimowakaru/sens\">bokunimowakaru/sens</a>上の\
+各ソースリストならびに各フォルダ内のファイルに記載の通りです。<br>\
+原則として、使用・変更・配布は可能ですが、権利表示を残してください。\
+ライセンスが明記されていないファイルについても、同様です。<br>\
+当方が作成した（もしくは追加した）ソフトウェア以外については、作成者の権利を優先します。<br>\
+提供情報や配布ソフトによって、被害が生じた場合であっても、当方は、一切、補償いたしません。<br><br>\
+Copyright \(c) 2016-2020 Wataru KUNINO <a href=\"https://bokunimo.net/\">https://bokunimo.net/</a><br>\
+<hr>\
+本ソフトウェアは、下記のライブラリを使用しています。<br>\
+<hr>\
+<h2>Arduino Library</h2>\
+GNU Lesser General Public License Version 2.1, February 1999 (LGPL)<br>\
+権利者　＝Arduino（https://www.arduino.cc/ ほか）<br>\
+権利情報＝https://github.com/arduino/Arduino/blob/master/license.txt<br>\
+<hr>\
+<h2>espressif arduino-esp32</h2>\
+GNU Lesser General Public License Version 2.1, February 1999 (LGPL)<br>\
+権利者　＝Espressif Systems (https://www.espressif.com/)<br>\
+権利情報＝https://github.com/espressif/arduino-esp32/blob/master/LICENSE.md<br>\
+<hr>\
+<h2>ESP用 Ambient ライブラリ</h2>\
+<h4>Ambient.cpp</h4>\
+	- ambient.cpp - Library for sending data to Ambient<br>\
+	- Created by Takehiko Shimojima, April 21, 2016<br>\
+<h4>Ambient.h</h4>\
+	- ambient.h - Library for sending data to Ambient<br>\
+	- Created by Takehiko Shimojima, April 21, 2016<br>\
+権利者　＝アンビエントデーター株式会社（https://ambidata.io/）<br>\
+<br>\
+<a href=\"/\">戻る</a><br>\
+			</body>\
+		</html>");
+	Serial.print("done html");
+}
+
 void html_sleep(){
 	char s[HTML_INDEX_LEN_MAX];
 	
@@ -1207,8 +1258,9 @@ void html_init(const char *domainName_local, uint32_t ip, int32_t ip_ap, int32_t
 	server.on("/sendto", html_sendto);
 	server.on("/reboot", html_reboot);
 	server.on("/gpio_init", html_gpio_init);
-	server.on("/sleep", html_sleep);
 	server.on("/format", html_format);
+	server.on("/license", html_license);
+	server.on("/sleep", html_sleep);
 //	server.on("/test", html_test);
 //	server.on("/text", html_text);
 //	server.on("/demo", html_demo);

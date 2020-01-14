@@ -18,15 +18,19 @@ https://github.com/bokunimowakaru/sens
 	Core Debug Level: なし
 */
 
-#define  VERSION "1.05"							// バージョン表示
+#define  VERSION "1.07"							// バージョン表示
 
 /*******************************************************************************
+Ver. 1.07
+ - Ver1.05および1.06でDeepSleep復帰後にUDP送信しないデグレードを解消
+ - 権利情報表示および bokunimo.net へのリンクの追加
+
 Ver. 1.06
  - Windows版 インストール説明書の作成 (Espressif DOWNLOAD TOOL使用)
  - デバイス発見用 ブロードキャスト ident_0 送信
 
 Ver. 1.05
- - 湿度センサDHT11の個体ばらつきによって起動が不安定ものがあったので改善（エラーは無くならない）
+ - 湿度センサDHT11の個体ばらつきによって起動が不安定ものがあったので改善
  - 30分を超えるスリープが設定できないバグを修正（uint変換に誤り）
 
 Ver. 1.04
@@ -36,7 +40,6 @@ ToDo
  - 初期設定ウィザード
  - ASONG HR202L 対応
  - Language 設定
- - ライセンス表示・バイナリによる再配布対応
 
 *******************************************************************************/
 
@@ -227,10 +230,10 @@ boolean setupWifiSta(){
 			start_ms=millis();
 			while(c == '#'){
 				if(millis()-start_ms > TIMEOUT) break;
-			//	WiFi.disconnect();				// WiFiアクセスポイントを切断する
-				delay(500); 					// 待ち時間処理
+			//	WiFi.disconnect();					// WiFiアクセスポイントを切断する
+				for(int i=0;i<500;i++)delay(1);		// 待ち時間処理
 				WiFi.begin(SSID_STA,PASS_STA);
-				delay(1000); 					// 待ち時間処理
+				for(int i=0;i<1000;i++)delay(1);	// 待ち時間処理
 				digitalWrite(PIN_LED,!digitalRead(PIN_LED));	// LEDの点滅
 				c = debug_wl_status(WiFi.status());
 				Serial.print(c);
@@ -253,7 +256,7 @@ boolean setupWifiSta(){
 	Serial.print("   Gateway = ");
 	Serial.println(WiFi.gatewayIP());			// ゲートウェイをシリアル表示
 	Serial.println("Station started");
-	delay(10);
+	for(int i=0;i<10;i++) delay(1);
 	return true;
 }
 
@@ -262,18 +265,18 @@ String sendUdp(const char *device, String &payload){
 		String S = String(device) + "_" + String(DEVICE_NUM) + "," + payload;
 		WiFiUDP udp;								// UDP通信用のインスタンスを定義
 		udp.beginPacket(IP_BC, UDP_PORT);			// UDP送信先を設定
-		DEVICE[5]='\0';								// 終端
 		udp.println(S);						 		// 送信
 		udp.endPacket();							// UDP送信の終了(実際に送信する)
 		udp.flush();
 		udp.stop();
 		Serial.println("udp://" + html_ipAdrToString(IP_BC) +":" + String(UDP_PORT) + " \"" + S + "\"");
-		delay(10);
+		for(int i=0;i<10;i++) delay(1);
 		return S;
 	} else return "";
 }
 
 String sendUdp(String &payload){
+	DEVICE[5]='\0';									// 終端
 	return sendUdp(DEVICE, payload);
 }
 
@@ -438,7 +441,7 @@ void setup(){
 	if(BOARD_TYPE > 2 || strlen(SSID_AP) == 0 || WIFI_AP_MODE > 3){
 		Serial.println("ERROR Invalid value, configs revoked");
 		SPIFFS.format();
-		delay(100);
+		for(int i=0;i<100;i++)delay(1);	// 待ち時間処理
 		BOARD_TYPE = 1;
 		WIFI_AP_MODE = 1;
 		strcpy(SSID_AP,"iot-core-esp32");
@@ -465,7 +468,7 @@ void setup(){
 	}
 	
 //	IP_AP = IPAddress(192,168,254,1);
-	delay(10);									// ESP32に必要な待ち時間
+	for(int i=0;i<10;i++) delay(1);				// ESP32に必要な待ち時間
 	switch(WIFI_AP_MODE){
 		case 1:	// WIFI_AP
 			WiFi.mode(WIFI_AP); 				// 無線LANを[AP]モードに設定
@@ -528,12 +531,14 @@ void setup(){
 	Serial.print(IP);
 	Serial.println("/");
 	
+	Serial.println("Finished Setting Up ----" + Line + "\r\n");
 	// 起動時の送信
 	if( wake == 0 ){
 		String ip_S = String(IP[0])+","+String(IP[1])+","+String(IP[2])+","+String(IP[3]);
 		sendUdp("ident",ip_S);
-		sendSensorValues();
+		for(int i=0;i<100;i++)delay(1);	// 待ち時間処理
 	}
+	sendSensorValues();
 	
 	TIME_NEXT = millis() + (unsigned long)SEND_INT_SEC * 1000;
 	// Wi-Fi スリープ間隔180秒超過(10分以上を設定)、または 起動回数 360回超過(30秒間隔で3時間)で即sleep
@@ -546,9 +551,9 @@ void loop(){
 	
 	html_handleClient();
 	yield();
-	sensors_btnRead("Trigged by Button ------" + Line);
-	sensors_pirRead("Trigged by PIR Sensor --" + Line);
-	sensors_irRead("Trigged by IR Sensor ---" + Line);
+	sensors_btnRead("Triggered by Button ----" + Line);
+	sensors_pirRead("Triggered by PIR Sensor " + Line);
+	sensors_irRead( "Triggered by IR Sensor -" + Line);
 	
 	if( ((WIFI_AP_MODE & 2) == 2) && (SLEEP_SEC > 0) ){		// WiFi_STA 動作時
 		if( time > TIMEOUT ) sleep();
@@ -561,10 +566,10 @@ void loop(){
 			TIME=getNtp();					// NTP時刻を取得
 			TIME-=millis()/1000;			// カウント済み内部タイマー事前考慮
 		}
-		while( millis() < 100 ) delay(10);	// 待ち時間処理(最大100ms)
+		while( millis() < 100 ) delay(1);	// 待ち時間処理(最大100ms)
 	}
 	if(time > TIME_NEXT && !TIME_NEXT_b){
-		Serial.println("Trigged by Timer -------" + Line);
+		Serial.println("Triggered by Timer -----" + Line);
 		Serial.println("MCU Clock_s= " + String(time/1000));
 		sendSensorValues();
 		if(SEND_INT_SEC){
@@ -587,13 +592,13 @@ void sleep(){
 	if(I2C_ENV_EN > 0) i2c_bme280_stop();
 	while(!digitalRead(PIN_SW)){
 		digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-		delay(50);
+		for(int i=0;i<50;i++)delay(1);	// 待ち時間処理
 	}
 	digitalWrite(PIN_LED,LOW);
 	
 	if(!PIR_EN && !IR_IN_EN && SLEEP_SEC > 0){
 		Serial.println("Deep Sleep Mode --------" + Line);
-		delay(10);
+		for(int i=0;i<10;i++) delay(1);
 		esp_deep_sleep(SLEEP_SEC * 1000000u);	// 間欠動作用(タイマー割り込みのみ)
 	}
 	
@@ -603,7 +608,7 @@ void sleep(){
 		pinMode(PIN_PIR,INPUT);
 		while(digitalRead(PIN_PIR)){
 			digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-			delay(50);
+			for(int i=0;i<50;i++)delay(1);	// 待ち時間処理
 		}
 		TimerWakeUp_setExternalInput((gpio_num_t)PIN_PIR, HIGH);
 	}
@@ -611,7 +616,7 @@ void sleep(){
 		pinMode(PIN_IR_IN,INPUT);
 		while(!digitalRead(PIN_IR_IN)){
 			digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-			delay(50);
+			for(int i=0;i<50;i++)delay(1);	// 待ち時間処理
 		}
 		TimerWakeUp_setExternalInput((gpio_num_t)PIN_IR_IN, LOW);
 	}

@@ -199,7 +199,7 @@ boolean sensors_btnRead(const String &S){
 		if( sensors_btnPrev_b != btn){
 			if(S.length()>0) Serial.println(S);
 			sensors_get();
-			delay(10);
+			for(int i=0;i<10;i++)delay(1);	// 待ち時間処理
 			return true;
 		}
 	}
@@ -220,7 +220,7 @@ boolean sensors_pirRead(const String &S){
 		if( sensors_pirPrev_b != pir){
 			if(S.length()>0) Serial.println(S);
 			sensors_get();
-			delay(10);
+			for(int i=0;i<10;i++)delay(1);	// 待ち時間処理
 			return true;
 		}
 	}
