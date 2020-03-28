@@ -102,7 +102,7 @@ def process_event(assistant, led, event):
         elif (text =='testing' or text == 'テスト'):
             assistant.stop_conversation()
             say('This is test')
-        elif (text =='good bye' or text == '終了'):
+        elif (text =='goodbye' or text == '終了'):
             assistant.stop_conversation()
             say('I will come back to life, when you will restart this example script. See you.')
             return 1
