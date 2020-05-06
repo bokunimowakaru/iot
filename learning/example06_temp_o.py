@@ -2,7 +2,7 @@
 # coding: utf-8
 # Example 06 コンピュータの体温を測って表示してみよう 【オブジェクト指向型】
 
-class TempSensor():                                     # クラスTempSensorの定義
+class TempSensor:                                       # クラスTempSensorの定義
     _filename = '/sys/class/thermal/thermal_zone0/temp' # デバイスのファイル名
     try:                                                # 例外処理の監視を開始
         fp = open(_filename)                            # ファイルを開く

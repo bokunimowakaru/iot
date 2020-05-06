@@ -104,3 +104,7 @@ venv.bak/
 .mypy_cache/
 
 *.BAK
+*.csv
+*.tgz
+nohup.out
+voice/aquestalkpi/
