@@ -335,6 +335,7 @@ while True:
         res = urllib.request.urlopen(post)          # HTTPアクセスを実行
     except Exception as e:                          # 例外処理発生時
         print(e,url_s)                              # エラー内容と変数url_sを表示
+        continue
     res_str = res.read().decode()                   # 受信テキストを変数res_strへ
     res.close()                                     # HTTPアクセスの終了
     if len(res_str):                                # 受信テキストがあれば
