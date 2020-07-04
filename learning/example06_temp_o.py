@@ -14,6 +14,7 @@ class TempSensor:                                       # クラスTempSensorの
         self.value = float()                            # 測定結果の保持用
 
     def get(self):                                      # 温度値取得用メソッド
+        self.fp.seek(0)                                 # 温度ファイルの先頭へ
         val = float(self.fp.read()) / 1000              # 温度センサから取得
         val -= self.offset                              # 温度を補正
         val = round(val,1)                              # 丸め演算
