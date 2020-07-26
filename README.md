@@ -1,4 +1,4 @@
-#### Learn Python Programming with Bokunimo wakaru IoT by bokunimo.net		
+#### Learn Python Programming with bokunimo.net IoT by bokunimo.net		
 # ボクにもわかる IoT by [bokunimo.net](https://bokunimo.net/)		
 
 100 本以上にわたる Python サンプル・プログラム集で IoT 向けプログラムを学びましょう。
