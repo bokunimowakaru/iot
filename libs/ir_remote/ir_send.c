@@ -19,11 +19,20 @@ extern int IR_OUT;
 #define IR_OUT_ON	1				// 赤外線LED発光時の出力値
 //	#define DATA_SIZE   32      	// 送信最大データサイズ（バイト）
 
+// Raspberry Pi 4向けのパラメータ（処理遅延の考慮無し）
 #define FLASH_AEHA_TIMES	18	// シンボルの搬送波点滅回数（ＡＥＨＡ 470 us）
 #define FLASH_NEC_TIMES		21	// シンボルの搬送波点滅回数（ＮＥＣ 560 us）
 #define FLASH_SIRC_TIMES	23	// シンボルの搬送波点滅回数（ＳＩＲＣ 600 us）
 #define FLASH_ON			13	// LED ON 期間 us (規格上 ON+OFFで 26 us)
 #define FLASH_OFF			13	// LED ON 期間 us (規格上 ON+OFFで 26 us)
+
+/* 処理速度が遅い場合のパラメータ
+#define FLASH_AEHA_TIMES	16	// シンボルの搬送波点滅回数（ＡＥＨＡ）
+#define FLASH_NEC_TIMES		22	// シンボルの搬送波点滅回数（ＮＥＣ）
+#define FLASH_SIRC_TIMES	24	// シンボルの搬送波点滅回数（ＳＩＲＣ）
+#define FLASH_ON			11	// LED ON 期間 us (規格上 ON+OFFで 23 us)
+#define FLASH_OFF			11	// LED ON 期間 us (規格上 ON+OFFで 23 us)
+*/
 
 // enum IR_TYPE{ AEHA=0, NEC=1, SIRC=2 };		// 家製協AEHA、NEC、SONY SIRC切り換え
 #define AEHA		0
