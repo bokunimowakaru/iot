@@ -2,7 +2,7 @@
 # coding: utf-8
 # Example 11 Lチカ BASIC
 
-port = 4                                # GPIO ポート番号
+port = 27                               # GPIO ポート番号 = 27 (13番ピン)
 b = 0                                   # GPIO 出力値
 
 from RPi import GPIO                    # ライブラリRPi内のGPIOモジュールの取得

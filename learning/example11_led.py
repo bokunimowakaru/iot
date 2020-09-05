@@ -2,7 +2,7 @@
 # coding: utf-8
 # Example 11 Lチカ
 
-port = 4                                # GPIO ポート番号
+port = 27                               # GPIO ポート番号 = 27 (13番ピン)
 
 from RPi import GPIO                    # ライブラリRPi内のGPIOモジュールの取得
 from time import sleep                  # スリープ実行モジュールの取得
