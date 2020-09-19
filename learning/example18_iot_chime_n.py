@@ -13,8 +13,6 @@ from sys import argv                            # 本プログラムの引数arg
 import threading                                # スレッド用ライブラリの取得
 
 def chime():                                    # チャイム（スレッド用）
-    global pwm                                  # グローバル変数pwmを取得
-    global mutex                                # グローバル変数mutexを取得
     mutex.acquire()                             # mutex状態に設定(排他処理開始)
     pwm.ChangeFrequency(ping_f)                 # PWM周波数の変更
     pwm.start(50)                               # PWM出力を開始。デューティ50％
