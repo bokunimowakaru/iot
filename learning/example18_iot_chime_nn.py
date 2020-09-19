@@ -15,8 +15,6 @@ from sys import argv                            # 本プログラムの引数arg
 import threading                                # スレッド用ライブラリの取得
 
 def chime(level):                               # チャイム（スレッド用）
-    global pwm                                  # グローバル変数pwmを取得
-    global mutex                                # グローバル変数mutexを取得
     if level is None or level <= 0 or level > 3:    # 範囲外の値の時に
         mutex.acquire()                         # mutex状態に設定(排他処理開始)
         pwm.ChangeFrequency(ping_f)             # PWM周波数の変更
