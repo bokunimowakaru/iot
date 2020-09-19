@@ -10,7 +10,7 @@ ports = [17, 27, 22, port_chime]                # 赤,緑,青色のLEDとスピ�
 colors= ['消灯','赤色','緑色','黄色','青色','赤紫色','藍緑色','白色']
 
 from RPi import GPIO                            # GPIOモジュールの取得
-from RPi time import sleep, time                # sleepとtimeモジュールの取得
+from time import sleep, time                    # sleepとtimeモジュールの取得
 
 def led3(color):
     if color > 0:                               # 色番号が0以上のとき
