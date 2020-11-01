@@ -34,7 +34,7 @@ temp = float(fp.read()) / 1000                  # ファイルを読み込み100
 fp.close()                                      # ファイルを閉じる
 print('Temperature =',temp)                     # 温度を表示する
 
-# Ambientへ送信
+# LINEへ送信
 body = 'message=温度の測定値は ' + '{:.1f}'.format(temp) + '℃ です。'
                                                 # 送信メッセージ
 print(head_dict)                                # 送信ヘッダhead_dictを表示
