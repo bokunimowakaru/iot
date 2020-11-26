@@ -3,9 +3,15 @@
 
 100 本以上にわたる Python サンプル・プログラム集で IoT 向けプログラムを学びましょう。
 
+## ダウンロード方法
+
+Raspberry Pi で下記のコマンドを実行してください。
+
+	git clone https://bokunimo.net/git/iot	
+
 --------------------------------------------------------------------------------
+## IoT Systems		
 ### Python 学習用 サンプルプログラム集		
-## Learn Python Programming for IoT Systems		
 
 Raspberry Pi を使って IoT 向けプログラミングを Python で学習するためのコンテンツです。
 - サンプル数 39個（Example 01～39）＋ 改造例 18個 を収録
@@ -13,16 +19,16 @@ Raspberry Pi を使って IoT 向けプログラミングを Python で学習す
 	[learning](learning)
 
 --------------------------------------------------------------------------------
+## IoT Devices		
 ### MicroPython 学習用 サンプルプログラム集		
-## Learn MicroPython Programming for IoT Devices		
 
 BBC micro:bit、STM32 マイコン搭載 NUCLEO-F767Z、ESP32 マイコンで MicroPython を学習するためのコンテンツです。
 - 学習用コンテンツ：
 	[micropython](micropython)
 
 --------------------------------------------------------------------------------
-### ESP32マイコンで製作する かんたん! IoT センサ用ソフトウェア		
 ## IoT Sensor Core		
+### ESP32マイコンで製作する かんたん! IoT センサ用ソフトウェア		
 
 ESP32-WROOM-32 モジュールに対応した汎用の IoT センサ機器向けソフトウェアです。  
 - スマートフォンやパソコンから設定を行うことが出来ます。  
@@ -35,16 +41,16 @@ ESP32-WROOM-32 モジュールに対応した汎用の IoT センサ機器向け
 	[iot-sensor-core-esp32](iot-sensor-core-esp32)
 
 --------------------------------------------------------------------------------
+## Voice Recognition		
 ### 音声認識用 Python サンプルプログラム集		
-## Voice Recognition Programming with Python 		
 
 Google AIY Kit や、Julius を使って、 IoT に音声認識機能をプラスします。
 - 学習用コンテンツ：
 	[voice](voice)
 
 --------------------------------------------------------------------------------
+## IoT Servers		
 ### IoTサーバ用 Python サンプルプログラム集		
-## Python Code Examples for IoT Servers		
 
 Raspberry Pi を IoT サーバとして使用するための基本プログラム集です。
 - 学習用コンテンツ：
@@ -66,4 +72,4 @@ Raspberry Pi を IoT サーバとして使用するための基本プログラ�
 * 提供情報や配布ソフトによって、被害が生じた場合であっても、当方は、一切、補償いたしません。  
 * ライセンスが明記されていないファイルについても、同様です。  
 
-	Copyright (c) 2019 Wataru KUNINO <https://bokunimo.net/>  
+	Copyright (c) 2019-2020 Wataru KUNINO <https://bokunimo.net/>  
