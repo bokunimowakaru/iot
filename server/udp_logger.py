@@ -26,7 +26,11 @@ except Exception as e:                                  # 例外処理発生時
     exit()                                              # プログラムの終了
 while sock:                                             # 永遠に繰り返す
     udp, udp_from = sock.recvfrom(buf_n)                # UDPパケットを取得
-    udp = udp.decode()                                  # UDPデータを文字列に変換
+    try:
+        udp = udp.decode()                              # UDPデータを文字列に変換
+    except Exception as e:                              # 例外処理発生時
+        print(e)                                        # エラー内容を表示
+        continue                                        # whileの先頭に戻る
     s=''                                                # 表示用の文字列変数s
     for c in udp:                                       # UDPパケット内
         if ord(c) >= ord(' ') and ord(c) <= ord('~'):   # 表示可能文字
