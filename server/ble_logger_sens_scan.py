@@ -10,11 +10,12 @@
 #   iot_exp_sensorShield_ble
 #   iot_exp_sensorShield_ble_rh
 #   iot_exp_sensorShield_udp_ble
+#   example03_rn4020.py (Rapberry Pi Pico + RN4020)
 #
 # iot_exp_press_ble や iot_exp_sensorShield_ble が送信するビーコンを受信し
 # ビーコンに含まれる、温度センサ値と気圧センサ値を表示します。
 #
-#                                               Copyright (c) 2019 Wataru KUNINO
+#                                          Copyright (c) 2019-2021 Wataru KUNINO
 ################################################################################
 
 #【インストール方法】
@@ -100,6 +101,9 @@ time = 999
 if ambient_interval < 30:
     ambient_interval = 30
 
+rn4020mac = list()
+rn4020dev = dict()
+
 while True:
     # BLE受信処理
     try:
@@ -138,8 +142,16 @@ while True:
             # Lapis MK715用 IoTセンサ
             if (adtype == 8 or adtype == 9) and (value  == 'nRF5x'):
                 isRohmMedal = 'Nordic nRF5'
+            # RN4020
+            if adtype == 9 and value[0:6] == 'RN4020' and dev.addrType == 'public':
+                isRohmMedal = value
+                if dev.addr not in rn4020mac:
+                    rn4020mac.append(dev.addr)
+                    rn4020dev[dev.addr] = value
             if desc == 'Manufacturer':
                 val = value
+                if dev.addr in rn4020mac and val[0:4] == 'cd00':
+                    isRohmMedal = rn4020dev[dev.addr]
             if isRohmMedal == '' or val == '':
                 continue
             # print("\nDevice %s (%s), RSSI=%d dB, Connectable=%s" % (dev.addr, dev.addrType, dev.rssi, dev.connectable))
@@ -251,6 +263,13 @@ while True:
                 sensors['Temperature'] = -45 + 175 * payval(4,2) / 65536
                 sensors['Humidity'] = payval(7,2) / 65536 * 100
                 sensors['SEQ'] = payval(9)
+                sensors['RSSI'] = dev.rssi
+
+            if isRohmMedal == 'RN4020_TEMP':
+                # センサ値を辞書型変数sensorsへ代入
+                sensors['ID'] = hex(payval(2,2))
+                sensors['Temperature']\
+                    = 27 - (3300 * (payval(4) * 256 + payval(5)) / 65535 - 706) / 1.721
                 sensors['RSSI'] = dev.rssi
 
             if sensors:
