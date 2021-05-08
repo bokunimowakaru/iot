@@ -10,7 +10,7 @@
 #   iot_exp_sensorShield_ble
 #   iot_exp_sensorShield_ble_rh
 #   iot_exp_sensorShield_udp_ble
-#   example03_rn4020.py (Rapberry Pi Pico + RN4020)
+#   Rapberry Pi Pico + RN4020 (example03_rn4020.py)
 #
 # iot_exp_press_ble や iot_exp_sensorShield_ble が送信するビーコンを受信し
 # ビーコンに含まれる、温度センサ値と気圧センサ値を表示します。
