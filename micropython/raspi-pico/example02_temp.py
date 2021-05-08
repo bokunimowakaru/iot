@@ -1,9 +1,8 @@
-# coding: utf-8
 # Raspberry Pi の動作確認 温度を測定し表示する
 # Copyright (c) 2021 Wataru KUNINO
 
 from machine import ADC,Pin             # ライブラリmachineのADCを組み込む
-from time import sleep                  # ライブラリtimeからsleepを組み込む
+from utime import sleep                 # μtimeからsleepを組み込む
 
 led = Pin(25, Pin.OUT)                  # GPIO出力用インスタンスledを生成
 adc = ADC(4)
