@@ -1,4 +1,4 @@
-# Raspberry Pi の動作確認 温度を測定し、BluetoothモジュールRN4020で送信する
+# Raspberry Pi Pico 内蔵の温度センサの値をBluetoothモジュールRN4020で送信する
 # Copyright (c) 2021 Wataru KUNINO
 
 ble_ad_id = 'CD00'                      # BLEビーコン用ID(先頭2バイト)

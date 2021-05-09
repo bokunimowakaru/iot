@@ -1,4 +1,4 @@
-# Raspberry Pi の動作確認 温度を測定し表示する
+# Raspberry Pi Pico 内蔵の温度センサの値を取得し、表示する
 # Copyright (c) 2021 Wataru KUNINO
 
 from machine import ADC,Pin             # ライブラリmachineのADCを組み込む

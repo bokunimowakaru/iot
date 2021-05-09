@@ -1,4 +1,4 @@
-# Raspberry Pi の動作確認 Lチカ＋ログ出力表示
+# Raspberry Pi Pico の動作確認 Lチカ＋ログ出力表示
 # 0.5秒おきにLEDの点灯と消灯を反転する
 # Copyright (c) 2021 Wataru KUNINO
 
