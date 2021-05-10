@@ -54,9 +54,10 @@ def check_dev_name(s):                                  # デバイス名を取�
 
 def get_val(s):                                         # データを数値に変換
     s = s.replace(' ','')                               # 空白文字を削除
-    if s.replace('.','').replace('-','').isnumeric():   # 文字列が数値を示す
-        return float(s)                                 # 小数値を応答
-    return None                                         # Noneを応答
+    try:                                                # 小数変換の例外監視
+        return float(s)                                 # 小数に変換して応答
+    except ValueError:                                  # 小数変換失敗時
+        return None                                     # Noneを応答
 
 GPIO.setmode(GPIO.BCM)                          # ポート番号の指定方法の設定
 GPIO.setup(port, GPIO.OUT)                      # ポート番号portのGPIOを出力に
