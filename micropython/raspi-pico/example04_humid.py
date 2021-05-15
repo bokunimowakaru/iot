@@ -69,7 +69,7 @@ while True:                             # 繰り返し処理
     print('Temperature =',s)            # 温度値を表示
     s = str(round(hum,1))               # 小数点第1位で丸めた結果を文字列に
     print('Humidity =',s)               # 湿度値を表示
-    s = ble_ad_id + '{:08X}'.format(d8by)   # BLE送信データの生成(16進数に変換)
+    s = ble_ad_id + '{:08X}'.format(d8by)   # BLE送信データ生成(16進数に変換)
     led.value(1)                        # LEDをONにする
     rn4020('N,' + s)                    # データをブロードキャスト情報に設定
     rn4020('A,0064,00C8')               # 0.1秒間隔で0.2秒間のアドバタイズ
