@@ -56,7 +56,7 @@ rn4020('Y')                             # アドバタイジング停止
 
 temp = 0                                # 温度値を保持する変数tempを生成
 hum  = 0                                # 湿度値を保持する変数humを生成
-d8by = 0x00000000                       # 送信データを保持する変数d8byを生成
+payload = 0x00000000                    # 送信データを保持する変数を生成
 while True:                             # 繰り返し処理
     i2c.writeto_mem(sht31,0x2C,b'\x06') # SHT31のレジスタ2Cに0x06を書き込む
     sleep(0.018)                        # SHT31の測定待ち時間
@@ -64,12 +64,12 @@ while True:                             # 繰り返し処理
     if len(data) >= 5:                  # 受信データが5バイト以上の時
         temp = float(word2uint(data[0],data[1])) / 65535. * 175. - 45.
         hum  = float(word2uint(data[3],data[4])) / 65535. * 100.
-        d8by = (data[1]<<24) + (data[0]<<16) + (data[4]<<8) + data[3]
+        payload = (data[1]<<24) + (data[0]<<16) + (data[4]<<8) + data[3]
     s = str(round(temp,1))              # 小数点第1位で丸めた結果を文字列に
     print('Temperature =',s)            # 温度値を表示
     s = str(round(hum,1))               # 小数点第1位で丸めた結果を文字列に
     print('Humidity =',s)               # 湿度値を表示
-    s = ble_ad_id + '{:08X}'.format(d8by)   # BLE送信データ生成(16進数に変換)
+    s = ble_ad_id + '{:08X}'.format(payload)  # BLE送信データ(16進数に変換)
     led.value(1)                        # LEDをONにする
     rn4020('N,' + s)                    # データをブロードキャスト情報に設定
     rn4020('A,0064,00C8')               # 0.1秒間隔で0.2秒間のアドバタイズ
