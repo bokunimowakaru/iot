@@ -200,5 +200,21 @@ Device 00:1e:c0:xx:xx:xx (public), RSSI=-63 dB, Connectable=False
     ID            = 0xcd 
     Temperature   = 20.49 ℃
     RSSI          = -63 dB
+^C
+KeyboardInterrupt
+-------------------------------------------------------------------------
+pi@raspberrypi:~/iot/micropython/raspi-pico $ sudo ./ble_logger_rn4020.py 
 
+Device 00:1e:c0:xx:xx:xx (public), RSSI=-62 dB, Connectable=True
+    1 Flags = 06
+    9 Complete Local Name = RN4020_HUMID
+
+Device 00:1e:c0:xx:xx:xx (public), RSSI=-64 dB, Connectable=False
+    1 Flags = 04
+  255 Manufacturer = cd00826a0da5
+    isRohmMedal   = RN4020_HUMID
+    ID            = 0xcd 
+    Temperature   = 27.81 ℃
+    Humidity      = 64.47 %
+    RSSI          = -63 dB
 '''
