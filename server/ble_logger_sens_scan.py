@@ -10,7 +10,7 @@
 #   iot_exp_sensorShield_ble
 #   iot_exp_sensorShield_ble_rh
 #   iot_exp_sensorShield_udp_ble
-#   Rapberry Pi Pico + RN4020 (example03_rn4020.py)
+#   Rapberry Pi Pico + RN4020 (example03_rn4020.py, example04_humid.py)
 #
 # iot_exp_press_ble や iot_exp_sensorShield_ble が送信するビーコンを受信し
 # ビーコンに含まれる、温度センサ値と気圧センサ値を表示します。
@@ -270,6 +270,13 @@ while True:
                 sensors['ID'] = hex(payval(2,2))
                 sensors['Temperature']\
                     = 27 - (3300 * (payval(4) * 256 + payval(5)) / 65535 - 706) / 1.721
+                sensors['RSSI'] = dev.rssi
+
+            if isTargetDev == 'RN4020_HUMID':
+                # センサ値を辞書型変数sensorsへ代入
+                sensors['ID'] = hex(payval(2,2))
+                sensors['Temperature'] = payval(4,2) / 65535. * 175. - 45.
+                sensors['Humidity'] = payval(6,2) / 65535. * 100.
                 sensors['RSSI'] = dev.rssi
 
             if sensors:

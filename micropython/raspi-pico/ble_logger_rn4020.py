@@ -6,6 +6,7 @@
 #
 # for:
 #   example03_rn4020.py
+#   example04_humid.py
 #
 # Rapberry Pi Pico + RN4020 が送信するビーコンを受信し
 # ビーコンに含まれる、温度センサ値を表示します。
