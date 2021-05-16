@@ -54,7 +54,7 @@ hum  = 0.                               # 湿度値を保持する変数humを�
 payload = 0x00000000                    # 送信データを保持する変数を生成
 while True:                             # 繰り返し処理
     i2c.writeto_mem(sht31,0x24,b'\x00') # SHT31にコマンド0x2400を送信する
-    # i2c.writeto(sht31,b'\x24\x00’)   # [要確認]2バイト送信が出来るはず
+    # i2c.writeto(sht31,b'\x24\x00')    # SHT31仕様に合わせた2バイト送信表記
     sleep(0.018)                        # SHT31の測定待ち時間
     data = i2c.readfrom_mem(sht31,0x00,6)   # SHT31から測定値6バイトを受信
     if len(data) >= 5:                  # 受信データが5バイト以上の時
