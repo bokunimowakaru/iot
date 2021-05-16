@@ -27,7 +27,7 @@
 #   https://www.rohm.co.jp/documents/11401/3946483/sensormedal-evk-002_ug-j.pdf
 
 interval = 1.01                     # 動作間隔
-savedata = True                     # ファイル保存の要否
+savedata = False                    # ファイル保存の要否
 username = 'pi'                     # ファイル保存時の所有者名
 
 from bluepy import btle
@@ -98,34 +98,34 @@ while True:
     # 受信データについてBLEデバイス毎の処理
     for dev in devices:
         print("\nDevice %s (%s), RSSI=%d dB, Connectable=%s" % (dev.addr, dev.addrType, dev.rssi, dev.connectable))
-        isRohmMedal = ''
+        isTargetDev = ''
         val = ''
         for (adtype, desc, value) in dev.getScanData():
             print("  %3d %s = %s" % (adtype, desc, value))  # ad_t=[{8:'Short Local Name'},{9:'Complete Local Name'}]
             # RN4020
             if adtype == 9 and value[0:6] == 'RN4020' and dev.addrType == 'public':
-                isRohmMedal = value
+                isTargetDev = value
                 if dev.addr not in rn4020mac:
                     rn4020mac.append(dev.addr)
                     rn4020dev[dev.addr] = value
             if desc == 'Manufacturer':
                 val = value
                 if dev.addr in rn4020mac and val[0:4] == 'cd00':
-                    isRohmMedal = rn4020dev[dev.addr]
-            if isRohmMedal == '' or val == '':
+                    isTargetDev = rn4020dev[dev.addr]
+            if isTargetDev == '' or val == '':
                 continue
 
             sensors = dict()
-            print('    isRohmMedal   =',isRohmMedal)
+            print('    isTargetDev   =',isTargetDev)
 
-            if isRohmMedal == 'RN4020_TEMP':
+            if isTargetDev == 'RN4020_TEMP':
                 # センサ値を辞書型変数sensorsへ代入
                 sensors['ID'] = hex(payval(2,2))
                 sensors['Temperature']\
                     = 27 - (3300 * (payval(4) * 256 + payval(5)) / 65535 - 706) / 1.721
                 sensors['RSSI'] = dev.rssi
 
-            if isRohmMedal == 'RN4020_HUMID':
+            if isTargetDev == 'RN4020_HUMID':
                 # センサ値を辞書型変数sensorsへ代入
                 sensors['ID'] = hex(payval(2,2))
                 sensors['Temperature'] = payval(4,2) / 65535. * 175. - 45.
@@ -152,7 +152,7 @@ while True:
                 printval(sensors, 'Steps', 0, '歩')
                 printval(sensors, 'Battery Level', 0, '%')
                 printval(sensors, 'RSSI', 0, 'dB')
-            isRohmMedal = ''
+            isTargetDev = ''
 
             # センサ個別値のファイルを保存
             date=datetime.datetime.today()
@@ -196,7 +196,7 @@ Device 00:1e:c0:xx:xx:xx (public), RSSI=-60 dB, Connectable=True
 Device 00:1e:c0:xx:xx:xx (public), RSSI=-63 dB, Connectable=False
     1 Flags = 04
   255 Manufacturer = cd0037a3
-    isRohmMedal   = RN4020_TEMP
+    isTargetDev   = RN4020_TEMP
     ID            = 0xcd 
     Temperature   = 20.49 ℃
     RSSI          = -63 dB
@@ -212,7 +212,7 @@ Device 00:1e:c0:xx:xx:xx (public), RSSI=-62 dB, Connectable=True
 Device 00:1e:c0:xx:xx:xx (public), RSSI=-64 dB, Connectable=False
     1 Flags = 04
   255 Manufacturer = cd00826a0da5
-    isRohmMedal   = RN4020_HUMID
+    isTargetDev   = RN4020_HUMID
     ID            = 0xcd 
     Temperature   = 27.81 ℃
     Humidity      = 64.47 %
