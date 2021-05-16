@@ -27,7 +27,7 @@
 #   https://www.rohm.co.jp/documents/11401/3946483/sensormedal-evk-002_ug-j.pdf
 
 interval = 1.01                     # 動作間隔
-savedata = False                    # ファイル保存の要否
+savedata = True                     # ファイル保存の要否
 username = 'pi'                     # ファイル保存時の所有者名
 
 from bluepy import btle
