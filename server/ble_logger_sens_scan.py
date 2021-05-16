@@ -272,7 +272,7 @@ while True:
                     = 27 - (3300 * (payval(4) * 256 + payval(5)) / 65535 - 706) / 1.721
                 sensors['RSSI'] = dev.rssi
 
-            if isTargetDev == 'RN4020_HUMID':
+            if isRohmMedal == 'RN4020_HUMID':
                 # センサ値を辞書型変数sensorsへ代入
                 sensors['ID'] = hex(payval(2,2))
                 sensors['Temperature'] = payval(4,2) / 65535. * 175. - 45.
