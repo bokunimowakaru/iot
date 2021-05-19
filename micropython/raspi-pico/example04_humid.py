@@ -1,4 +1,4 @@
-# Raspberry Pi Pico 内蔵の温度センサの値をBluetoothモジュールRN4020で送信する
+# Raspberry Pi Pico + 湿度センサ SHT31 BluetoothモジュールRN4020で送信する
 # Copyright (c) 2021 Wataru KUNINO
 
 # 温湿度センサ AE-SHT31 ピン接続図
