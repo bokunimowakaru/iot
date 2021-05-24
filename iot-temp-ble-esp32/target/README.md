@@ -19,7 +19,7 @@
 		<https://github.com/espressif/esptool>
 
 * boot_app0.bin bootloader_qio_80m.bin のライセンスについては、下記および esp32_LICENSE.md をご覧ください。  
-		Espressif Systems (Shanghai, China) http://www.espressif.com
+		Espressif Systems (Shanghai, China) http://www.espressif.com  
 		<https://github.com/espressif/arduino-esp32>
 
 ## ライセンス(全般)
