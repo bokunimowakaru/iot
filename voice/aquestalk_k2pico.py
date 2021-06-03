@@ -88,17 +88,17 @@ else:
 if mode == 0:                                               # 直接、起動した場合
     for word in talk:
         aques_com = ['aquestalkpi/AquesTalkPi -t ' + word + '|./aquestalk_k2pico.py SUBPROCESS']
-        print('MAINPRO, 開始')                                  # 通常起動処理の開始表示
-        print('subprocess =',aques_com[0])                     # スクリプト名を表示
-        subprocess.run(aques_com,shell=True,stdin=subprocess.PIPE) # Juliusを開始する
-        print('MAINPRO, 終了')                                  # 通常起動処理の終了表示
+        print('MAINPRO, 開始')                              # 通常起動処理の開始表示
+        print('subprocess =',aques_com[0])                  # スクリプト名を表示
+        subprocess.run(aques_com,shell=True,stdin=subprocess.PIPE)
+        print('MAINPRO, 終了')                              # 通常起動処理の終了表示
     sys.exit()                                              # プログラムを終了する
 
-else:                                                 # modeが1の時に繰返し処理
+else:                                                       # modeが1の時に繰返し処理
     com = serial.Serial(tty,9600,timeout=None)
     com.write('\r$'.encode())
     sleep(0.1)
-    com.write("$?kon\'nnichi/wa.\r".encode())
+    #com.write("$?kon\'nnichi/wa.\r".encode())
     for line in sys.stdin:                                  # 標準入力から変数lineへ
         line = line.strip()
         print(line)
