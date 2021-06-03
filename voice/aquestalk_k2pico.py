@@ -23,7 +23,7 @@ import requests                                 # HTTP通信ライブラリを�
 import serial
 from time import sleep
 
-aques_ip = ['192.168.1.255']
+aques_ip = ['192.168.1.2']
 tty = '/dev/ttyAMA0'
 
 romanV = ["a", "i", "u", "e", "o"]
