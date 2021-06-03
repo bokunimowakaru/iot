@@ -19,6 +19,12 @@
 
 import sys
 import subprocess
+import requests                                 # HTTP通信ライブラリを組み込む
+import serial
+from time import sleep
+
+aques_ip = ['192.168.1.255']
+tty = '/dev/ttyAMA0'
 
 romanV = ["a", "i", "u", "e", "o"]
 romanC = ["k", "s", "t", "n", "h", "m", "y", "r", "w"]
@@ -89,6 +95,10 @@ if mode == 0:                                               # 直接、起動し
     sys.exit()                                              # プログラムを終了する
 
 else:                                                 # modeが1の時に繰返し処理
+    com = serial.Serial(tty,9600,timeout=None)
+    com.write('\r$'.encode())
+    sleep(0.1)
+    com.write("$?kon\'nnichi/wa.\r".encode())
     for line in sys.stdin:                                  # 標準入力から変数lineへ
         line = line.strip()
         print(line)
@@ -126,4 +136,11 @@ else:                                                 # modeが1の時に繰返�
                 continue
             roman += c
         print(roman)
+        for ip in aques_ip:
+            url_s = 'http://' + ip + '/?TEXT=' + roman
+            res = requests.get(url_s)               # HTTPアクセスを実行
+            print(res.status_code)                  # 受信テキストを変数res_sへ
+            res.close()                             # HTTPアクセスの終了
+        com.write((roman + '\r').encode())
+com.close()
 sys.exit()
