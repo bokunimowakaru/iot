@@ -23,8 +23,14 @@ import requests                                 # HTTP通信ライブラリを�
 import serial
 from time import sleep
 
-aques_ip = ['192.168.1.2']
-tty = '/dev/ttyAMA0'
+# AquesTalk Pico を接続したシリアル・ポートを下記に設定して下さい。
+tty = ''                                        # AquesTalk Picoのシリアルポート
+# tty = '/dev/ttyUSB0'                          # 設定例
+
+# IP接続に対応した AquesTalk Pico があれば、下記に設定して下さい。
+aques_ip = list()                               # AquesTalk Pico のIPアドレス
+# aques_ip = ['192.168.1.2']                    # 設定例（1台）
+# aques_ip = ['192.168.1.2','192.168.1.3']      # 設定例（2台）
 
 romanV = ["a", "i", "u", "e", "o"]
 romanC = ["k", "s", "t", "n", "h", "m", "y", "r", "w"]
@@ -87,18 +93,26 @@ else:
 
 if mode == 0:                                               # 直接、起動した場合
     for word in talk:
-        aques_com = ['aquestalkpi/AquesTalkPi -t ' + word + '|./aquestalk_k2pico.py SUBPROCESS']
-        print('MAINPRO, 開始')                              # 通常起動処理の開始表示
-        print('subprocess =',aques_com[0])                  # スクリプト名を表示
-        subprocess.run(aques_com,shell=True,stdin=subprocess.PIPE)
-        print('MAINPRO, 終了')                              # 通常起動処理の終了表示
+        # AquesTalkPi で再生
+        aques_com = 'aquestalkpi/AquesTalkPi ' + word + ' | /usr/bin/aplay'
+        print('MAINPRO1, 開始')                             # 通常起動処理の開始表示
+        print('subprocess =',aques_com)                     # スクリプト名を表示
+        subprocess.run(aques_com,shell=True)
+        print('MAINPRO1, 終了')                             # 通常起動処理の終了表示
+        # AquesTalkPi で音声記号列（ローマ字）に変換してから AquesTalk Pico に送信
+        aques_com = 'aquestalkpi/AquesTalkPi -t ' + word + '|./aquestalk_k2pico.py SUBPROCESS'
+        print('MAINPRO2, 開始')                             # 通常起動処理の開始表示
+        print('subprocess =',aques_com)                     # スクリプト名を表示
+        subprocess.run(aques_com,shell=True)
+        print('MAINPRO2, 終了')                             # 通常起動処理の終了表示
     sys.exit()                                              # プログラムを終了する
 
 else:                                                       # modeが1の時に繰返し処理
-    com = serial.Serial(tty,9600,timeout=None)
-    com.write('\r$'.encode())
-    sleep(0.1)
-    #com.write("$?kon\'nnichi/wa.\r".encode())
+    com = None
+    if len(tty) > 0:
+        com = serial.Serial(tty,9600,timeout=None)
+        com.write('\r$'.encode())
+        sleep(0.11)
     for line in sys.stdin:                                  # 標準入力から変数lineへ
         line = line.strip()
         print(line)
@@ -141,6 +155,8 @@ else:                                                       # modeが1の時に�
             res = requests.get(url_s)               # HTTPアクセスを実行
             print(res.status_code)                  # 受信テキストを変数res_sへ
             res.close()                             # HTTPアクセスの終了
-        com.write((roman + '\r').encode())
-com.close()
+            if com:
+                com.write((roman + '\r').encode())
+if com:
+    com.close()
 sys.exit()
