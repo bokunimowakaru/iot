@@ -29,7 +29,7 @@ tty = ''                                        # AquesTalk Picoのシリアル�
 
 # IP接続に対応した AquesTalk Pico があれば、下記に設定して下さい。
 aques_ip = list()                               # AquesTalk Pico のIPアドレス
-# aques_ip = ['192.168.1.2']                    # 設定例（1台）
+# aques_ip = ['192.168.1.1']                    # 設定例（1台）
 # aques_ip = ['192.168.1.2','192.168.1.3']      # 設定例（2台）
 
 romanV = ["a", "i", "u", "e", "o"]
@@ -38,20 +38,20 @@ romanN = ["nn", "-", "xtu", ",", "."]
 romanCD = ["g", "z", "d", "b", "p"]
 romanC2 = ["ky", "gy", "sy", "gy", "ty", "zy", "ny", "hy", "by", "py", "ts", "tw", "f", "th", "dh", "my", "ry", "sw", "zw", "dw"]
 
-kana1 = ["ア", "イ", "ウ", "エ", "オ", 
-         "カ", "キ", "ク", "ケ", "コ", 
-         "サ", "シ", "ス", "セ", "ソ", 
-         "タ", "チ", "ツ", "テ", "ト", 
-         "ナ", "ニ", "ヌ", "ネ", "ノ", 
-         "ハ", "ヒ", "フ", "ヘ", "ホ", 
-         "マ", "ミ", "ム", "メ", "モ", 
-         "ヤ", "×", "ユ", "×", "ヨ", 
+kana1 = ["ア", "イ", "ウ", "エ", "オ",
+         "カ", "キ", "ク", "ケ", "コ",
+         "サ", "シ", "ス", "セ", "ソ",
+         "タ", "チ", "ツ", "テ", "ト",
+         "ナ", "ニ", "ヌ", "ネ", "ノ",
+         "ハ", "ヒ", "フ", "ヘ", "ホ",
+         "マ", "ミ", "ム", "メ", "モ",
+         "ヤ", "×", "ユ", "×", "ヨ",
          "ラ", "リ", "ル", "レ", "ロ",
          "ワ", "ヰ", "×", "ヱ", "ヲ"]
 kanaN = ["ン", "ー", "ッ", "、", "。"]
-kanaD = ["ガ", "ギ", "グ", "ゲ", "ゴ", 
-         "ザ", "ジ", "ズ", "ゼ", "ゾ", 
-         "ダ", "ヂ", "ヅ", "デ", "ド", 
+kanaD = ["ガ", "ギ", "グ", "ゲ", "ゴ",
+         "ザ", "ジ", "ズ", "ゼ", "ゾ",
+         "ダ", "ヂ", "ヅ", "デ", "ド",
          "バ", "ビ", "ブ", "ベ", "ボ",
          "パ", "ピ", "プ", "ペ", "ポ"]
 kana2 = ["キャ","キィ","キュ","キェ","キョ",
@@ -94,7 +94,7 @@ else:
 if mode == 0:                                               # 直接、起動した場合
     for word in talk:
         # AquesTalkPi で再生
-        aques_com = 'aquestalkpi/AquesTalkPi ' + word + ' | /usr/bin/aplay'
+        aques_com = 'aquestalkpi/AquesTalkPi ' + word + ' | /usr/bin/aplay &'
         print('MAINPRO1, 開始')                             # 通常起動処理の開始表示
         print('subprocess =',aques_com)                     # スクリプト名を表示
         subprocess.run(aques_com,shell=True)
@@ -118,15 +118,19 @@ else:                                                       # modeが1の時に�
         print(line)
         num = len(line)
         roman = ''
+        kana2_en = None
         for i in range(num):
+            if kana2_en is not None:
+                kana2_en = None
+                continue
             if i < num - 1:
-                c = line[i:i+1]
+                c = line[i:i+2]
                 if c in kana2:
                     index_n = kana2.index(c)
                     Cindex = int(index_n / 5)
                     Vindex = index_n % 5
                     roman += romanC2[Cindex] + romanV[Vindex]
-                    i += 1
+                    kana2_en = True
                     continue
             c = line[i]
             if c in kana1:
@@ -160,3 +164,20 @@ else:                                                       # modeが1の時に�
 if com:
     com.close()
 sys.exit()
+
+'''
+pi@raspberrypi:~/iot/voice $ ./aquestalk_k2pico.py 日本語を入力すると話します
+Usage: ./aquestalk_k2pico.py 日本語を入力
+MAINPRO1, 開始
+subprocess = aquestalkpi/AquesTalkPi 日本語を入力すると話します | /usr/bin/aplay
+再生中 WAVE 'stdin' : Signed 16 bit Little Endian, レート 8000 Hz, モノラル
+MAINPRO1, 終了
+MAINPRO2, 開始
+subprocess = aquestalkpi/AquesTalkPi -t 日本語を入力すると話します|./aquestalk_k2pico.py SUBPROCESS
+Usage: ./aquestalk_k2pico.py 日本語を入力
+SUBPRO, this subprocess is called by a script
+ニホンゴオ/ニューリョ_クスル'ト/ハナシマ'_ス。
+nihonngoo/nyu-ryo_kusuru'to/hanasima'_su.
+200
+MAINPRO2, 終了
+'''
