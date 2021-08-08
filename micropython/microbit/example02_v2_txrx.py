@@ -10,7 +10,7 @@ while True:
 		tx = 'A'
 	if button_b.was_pressed():
 		tx = 'B'
-	if pin_logo.is_touched():
+	while pin_logo.is_touched():
 		tx = 'C'
 		sleep(200)
 	if tx:
