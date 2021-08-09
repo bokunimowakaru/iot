@@ -2,7 +2,20 @@
 # coding: utf-8
 # Example 08 IoT連携の基本 HTTP GET 天気情報の取得
 
-# 参考文献：http://weather.livedoor.com/weather_hacks/webservice
+# 参考文献
+#
+# ・livedoor 天気（サービス終了）：
+# 	http://weather.livedoor.com/weather_hacks/webservice
+#
+# ・天気予報 API（livedoor 天気互換）：
+# 	https://weather.tsukumijima.net/
+
+# ご注意
+# livedoor 天気 のサービス終了に伴い、互換サービスを利用します。
+# 参考文献「天気予報 API（livedoor 天気互換）」の注意事項などをよく読んで
+# ください。
+# これらのサービスの利用に関して、何らかの損失が生じたとしても、
+# 筆者(国野 亘)は、一切の責任を負いません。
 
 import urllib.request                           # HTTP通信ライブラリを組み込む
 import json                                     # JSON変換ライブラリを組み込む
@@ -12,7 +25,8 @@ city_id = 270000                                # 大阪の city ID=270000
                                                 # 横浜=140010 千葉=120010
                                                 # 名古屋=230010 福岡=400010
 
-url_s = 'http://weather.livedoor.com/forecast/webservice/json/v1?city='
+# url_s = 'http://weather.livedoor.com/forecast/webservice/json/v1?city='
+url_s = 'https://weather.tsukumijima.net/api/forecast?city='
 url_s += str(city_id)
 
 try:                                            # 例外処理の監視を開始

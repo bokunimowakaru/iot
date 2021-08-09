@@ -1,8 +1,21 @@
 # coding: utf-8
 # IoT連携の基本 HTTP GET Weather for MicroPython
-# Copyright (c) 2019 Wataru KUNINO
+# Copyright (c) 2019-2021 Wataru KUNINO
 
-# 参考文献：http://weather.livedoor.com/weather_hacks/webservice
+# 参考文献
+#
+# ・livedoor 天気（サービス終了）：
+# 	http://weather.livedoor.com/weather_hacks/webservice
+#
+# ・天気予報 API（livedoor 天気互換）：
+# 	https://weather.tsukumijima.net/
+
+# ご注意
+# livedoor 天気 のサービス終了に伴い、互換サービスを利用します。
+# 参考文献「天気予報 API（livedoor 天気互換）」の注意事項などをよく読んで
+# ください。
+# これらのサービスの利用に関して、何らかの損失が生じたとしても、
+# 筆者(国野 亘)は、一切の責任を負いません。
 
 import network                              # ネットワーク通信ライブラリ
 import socket                               # ソケット通信ライブラリ
@@ -14,9 +27,13 @@ city_id = 270000                            # 大阪の city ID=270000
                                             # 横浜=140010 千葉=120010
                                             # 名古屋=230010 福岡=400010
 
-host_s = 'weather.livedoor.com'             # アクセス先のホスト名
-path_s = '/forecast/webservice/json/'       # アクセスするパス
-path_s += 'v1?city=' + str(city_id)         # 地域を追加
+# (停止) host_s = 'weather.livedoor.com'           # アクセス先のホスト名
+# (停止) path_s = '/forecast/webservice/json/'     # アクセスするパス
+# (停止) path_s += 'v1?city=' + str(city_id)       # 地域を追加
+
+host_s = 'weather.tsukumijima.net'          # アクセス先のホスト名
+path_s = '/api/forecast/'                   # アクセスするパス
+path_s += 'city=' + str(city_id)            # 地域を追加
 
 pyb.LED(1).on()                             # LED(緑色)を点灯
 eth = network.Ethernet()                    # Ethernetのインスタンスethを生成
