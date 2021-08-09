@@ -3,7 +3,7 @@
 # Example 35 インターネット照る照る坊主 【IoT カラーLEDを制御】
 
 # 接続図
-#           [天気予報] (インターネット)
+#           [天気情報] (インターネット)
 #             ↓
 #           [本機] ------> [IoTカラーLED] or [IoTフルカラーLED]
 #
@@ -43,7 +43,7 @@ import urllib.request                               # HTTP通信ライブラリ�
 import json                                         # JSON変換ライブラリを組込む
 from time import sleep                              # スリープ実行モジュール
 
-def getWeather():                                   # 天気予報情報取得関数を定義
+def getWeather():                                   # 天気情報取得関数を定義
     try:                                            # 例外処理の監視を開始
         res = urllib.request.urlopen(url_wea_s)     # HTTPアクセスを実行
         res_s = res.read().decode()                 # 受信テキストを変数res_sへ
@@ -52,7 +52,7 @@ def getWeather():                                   # 天気予報情報取得�
     except Exception as e:
         print(e)                                    # エラー内容を表示
         return None                                 # Noneを応答
-    return res_dict['forecasts'][0]['telop']        # 天候の予報情報を応答
+    return res_dict['forecasts'][0]['telop']        # 天候の情報を応答
 
 def led3(ip,color):                                 # IoTカラーLED
     if color is None or color < 0 or color > 7:     # 範囲外の値の時に

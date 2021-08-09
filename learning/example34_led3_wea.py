@@ -29,7 +29,7 @@ GPIO.setwarnings(False)                         # ポート警告表示を無効
 for port in ports:                              # 各ポート番号を変数portへ代入
     GPIO.setup(port, GPIO.OUT)                  # ポート番号portのGPIOを出力に
 
-# 天気予報情報の取得
+# 天気情報の取得
 try:                                            # 例外処理の監視を開始
     res = urllib.request.urlopen(url_wea_s)     # HTTPアクセスを実行
     res_s = res.read().decode()                 # 受信テキストを変数res_sへ
@@ -45,7 +45,7 @@ pref = location.get('prefecture')               # location内のprefectureを取
 city = location.get('city')                     # location内のcityを取得
 print('city =', pref, city)                     # prefとcityの内容を表示
 
-# 取得した情報から天候の予報情報を抽出
+# 取得した情報から天候情報を抽出
 forecasts = res_dict.get('forecasts')           # res_dict内のforecastsを取得
 telop = forecasts[0].get('telop')               # forecasts内のtelopを取得
 print('telop =', telop)                         # telopの内容を表示
