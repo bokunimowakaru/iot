@@ -29,7 +29,7 @@ while True:
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)   # ソケット設定
 
     udp_s = device_s + ', ' + str(temp_i)               # 表示用の文字列変数udp
-    print('send :', udp_s)                              # 受信データを出力
+    print('send :', udp_s)                              # 送信データを出力
     udp_bytes = (udp_s + '\n').encode()                 # バイト列に変換
 
     try:                                                # 作成部
