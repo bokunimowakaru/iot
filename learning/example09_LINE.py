@@ -23,7 +23,7 @@ import json                                     # JSON変換ライブラリを�
 filename='/sys/class/thermal/thermal_zone0/temp'# 温度ファイル
 url_s = 'https://notify-api.line.me/api/notify' # アクセス先
 head_dict = {'Authorization':'Bearer ' + line_token,
-             'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'};
+             'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'}
                                                 # ヘッダを変数head_dictへ
 
 # 温度を取得する
