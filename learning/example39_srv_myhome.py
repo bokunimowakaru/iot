@@ -252,7 +252,7 @@ while sock:                                             # 永遠に繰り返す
 
     ### 制御 ### 赤外線リモコン
     if acrc > 0:                                        # エアコン制御有効時
-        time_temp = TIME_TEMP + datetime.timedelta(minutes = 5 ** (3 - level))
+        time_temp = TIME_TEMP + datetime.timedelta(minutes = 5 ** (3 - acrc))
         if time_temp < now:
             msg = '室温が' + str(val) + '℃になりました'
             mail(MAILTO,'i.myMimamoriHome 警告レベル=' + str(level), msg)
