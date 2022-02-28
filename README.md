@@ -76,9 +76,6 @@ https://shop.cqpub.co.jp/hanbai/books/MTR/MTRZ202112.html
 - 目次などが紹介されています。  
 - クレジットカード支払いの場合、送料無料です。  
 
-### Amazonの販売サイト：  
-https://www.amazon.co.jp/dp/B09KFCRKPD  
-
 ### 筆者サポートサイト：  
 https://bokunimo.net/iot/cq/  
 
