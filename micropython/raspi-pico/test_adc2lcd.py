@@ -25,7 +25,7 @@ freq = 40000
 window = 1024
 display = 'AC'
 dispAcMaxMv = 1000
-dispAcRangeDb = 32
+dispAcRangeDb = 40
 sample_wait = 1 / freq
 
 vdd = Pin(3, Pin.OUT)                   # GP3をAQM1602のV+ピンに接続
