@@ -106,5 +106,3 @@ while True:                             # 繰り返し処理
         i2c.writeto_mem(aqm1602, 0x00, b'\xC0')
         i2c.writeto_mem(aqm1602, 0x40, bytearray('AC = ' + str(int(peakLv)) + ' mV    '))
         led.duty_u16(valAc)                   # LEDを点灯する
-dispAcMaxMv = 1000
-dispAcRangeDb = 32
