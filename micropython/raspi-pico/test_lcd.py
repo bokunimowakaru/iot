@@ -16,12 +16,11 @@
 # Copyright (c) 2014-2017 Wataru KUNINO https://bokunimo.net/raspi/
 
 aqm1602 = 0x3E                          # LCD AQM1602のI2Cアドレス
-lcd_size_x = 16
 
 from machine import Pin,I2C             # ライブラリmachineのI2Cを組み込む
 from utime import sleep                 # μtimeからsleepを組み込む
 
-vdd = Pin(3, Pin.OUT)                   # GP3をSHT31のV+ピンに接続
+vdd = Pin(3, Pin.OUT)                   # GP3をAQM1602のV+ピンに接続
 vdd.value(1)                            # V+用に3.3Vを出力
 i2c = I2C(0, scl=Pin(5), sda=Pin(4))    # GP5をAQM1602のSCL,GP4をSDAに接続
 i2c.writeto_mem(aqm1602, 0x00, b'\x39')    # IS=1

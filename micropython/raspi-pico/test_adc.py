@@ -6,7 +6,7 @@ from utime import sleep                 # μtimeからsleepを組み込む
 
 freq = 40000
 window = 1024
-display = 'AC'
+display = 'DC'
 sample_wait = 1 / freq
 
 led = PWM(Pin(25, Pin.OUT))             # PWM出力用インスタンスledを生成
