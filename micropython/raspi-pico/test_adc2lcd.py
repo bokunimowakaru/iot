@@ -86,6 +86,8 @@ while True:                             # 繰り返し処理
             i2c.writeto_mem(aqm1602, 0x00, b'\x80')
             i2c.writeto_mem(aqm1602, 0x40, text)
         print('Voltage DC =', voltDc, 'Level =', level)
+        i2c.writeto_mem(aqm1602, 0x00, b'\xC0')
+        i2c.writeto_mem(aqm1602, 0x40, bytearray('DC = ' + str(int(voltDc)) + ' mV    '))
         led.duty_u16(valDc)                   # LEDを点灯する
     if display == 'AC':
         level = int((20 * log10(voltAc/dispAcMaxMv) + dispAcRangeDb)/dispAcRangeDb * 17)
@@ -101,6 +103,8 @@ while True:                             # 繰り返し処理
             i2c.writeto_mem(aqm1602, 0x00, b'\x80')
             i2c.writeto_mem(aqm1602, 0x40, text)
         print('Voltage AC =', voltAc, 'Peak =', peakLv, 'Level =', level)
+        i2c.writeto_mem(aqm1602, 0x00, b'\xC0')
+        i2c.writeto_mem(aqm1602, 0x40, bytearray('AC = ' + str(int(peakLv)) + ' mV    '))
         led.duty_u16(valAc)                   # LEDを点灯する
 dispAcMaxMv = 1000
 dispAcRangeDb = 32
