@@ -1,10 +1,10 @@
-# IoT Temp �������x�Z���T / Si7021�����x�Z���T BLE  
+# IoT Temp 内蔵温度センサ / Si7021温湿度センサ BLE  
 
-���d�r�Ȃǂœ��삷�� IoT���x�Z���T or IoT�����x�Z���T �ł��B  
+乾電池などで動作する IoT温度センサ or IoT温湿度センサ です。  
 
-* ESP32�}�C�R���J���{�[�h�P�̂̏ꍇ��BLE���x�Z���T�Ƃ��ē��삵�܂��B  
-	�iESP32�����̉��x�Z���T���g�p�����Ƃ��́A���x�͗ǂ�����܂���B�j  
-* Si7021���ȉ��̃s���ɐڑ�����ƁABLE�����x�Z���T�Ƃ��ē��삵�܂��B  
+* ESP32マイコン開発ボード単体の場合はBLE温度センサとして動作します。  
+	（ESP32内蔵の温度センサを使用したときの、精度は良くありません。）  
+* Si7021を以下のピンに接続すると、BLE温湿度センサとして動作します。  
 	ESP32 IO26 <-> Si7021 VIN  
 	ESP32 IO27 <-> Si7021 GND  
 	ESP32 IO14 <-> Si7021 SCL  
