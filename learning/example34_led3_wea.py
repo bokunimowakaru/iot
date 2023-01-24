@@ -2,7 +2,9 @@
 # coding: utf-8
 # Example 34 インターネット照る照る坊主
 
-# 参考文献：http://weather.livedoor.com/weather_hacks/webservice
+# 天気情報・参考文献：
+# https://weather.tsukumijima.net/ (互換サービス)
+# http://weather.livedoor.com/weather_hacks/webservice (サービス終了)
 
 # 初期設定
 port_R = 17                                     # 赤色LED用 GPIO ポート番号
@@ -15,7 +17,7 @@ city_id = 270000                                # 大阪の city ID=270000
                                                 # 東京=130010 京都=260010
                                                 # 横浜=140010 千葉=120010
                                                 # 名古屋=230010 福岡=400010
-url_wea_s = 'http://weather.livedoor.com/forecast/webservice/json/v1?city='
+url_wea_s = 'https://weather.tsukumijima.net/api/forecast?city='
 url_wea_s += str(city_id)
 
 # ライブラリの組み込み
@@ -31,7 +33,9 @@ for port in ports:                              # 各ポート番号を変数por
 
 # 天気情報の取得
 try:                                            # 例外処理の監視を開始
-    res = urllib.request.urlopen(url_wea_s)     # HTTPアクセスを実行
+    print(url_wea_s)
+    req = urllib.request.Request(url_wea_s,headers={"User-Agent": "led3_wea"})
+    res = urllib.request.urlopen(req)           # HTTPアクセスを実行
     res_s = res.read().decode()                 # 受信テキストを変数res_sへ
     res.close()                                 # HTTPアクセスの終了
     res_dict = json.loads(res_s)                # 辞書型の変数res_dictへ代入

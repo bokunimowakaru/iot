@@ -19,9 +19,8 @@
 # https://github.com/bokunimowakaru/esp/blob/master/2_example/example48f_led/example48f_led.ino
 #
 # 天気情報・参考文献：
-# http://weather.livedoor.com/weather_hacks/webservice
-
-
+# https://weather.tsukumijima.net/ (互換サービス)
+# http://weather.livedoor.com/weather_hacks/webservice (サービス終了)
 
 # 初期設定
 ip_leds = ['127.0.0.1']                             # IoTカラーLEDのIPアドレス
@@ -34,7 +33,7 @@ city_id = 270000                                    # 大阪の city ID=270000
                                                     # 東京=130010 京都=260010
                                                     # 横浜=140010 千葉=120010
                                                     # 名古屋=230010 福岡=400010
-url_wea_s = 'http://weather.livedoor.com/forecast/webservice/json/v1?city='
+url_wea_s = 'https://weather.tsukumijima.net/api/forecast?city='
 url_wea_s += str(city_id)
 interval = 10 * 60                                  # 動作間隔10分（単位＝秒）
 
@@ -45,7 +44,8 @@ from time import sleep                              # スリープ実行モジ�
 
 def getWeather():                                   # 天気情報取得関数を定義
     try:                                            # 例外処理の監視を開始
-        res = urllib.request.urlopen(url_wea_s)     # HTTPアクセスを実行
+        req = urllib.request.Request(url_wea_s,headers={"User-Agent": "led3_wea"})
+        res = urllib.request.urlopen(req)           # HTTPアクセスを実行
         res_s = res.read().decode()                 # 受信テキストを変数res_sへ
         res.close()                                 # HTTPアクセスの終了
         res_dict = json.loads(res_s)                # 辞書型の変数res_dictへ代入
