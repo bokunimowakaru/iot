@@ -17,10 +17,14 @@
 #
 # ESP32用：
 # https://github.com/bokunimowakaru/esp/blob/master/2_example/example48f_led/example48f_led.ino
+
+# 参考文献 天気予報 API（livedoor 天気互換サービス）：
+# https://weather.tsukumijima.net/
 #
-# 天気情報・参考文献：
-# https://weather.tsukumijima.net/ (互換サービス)
-# http://weather.livedoor.com/weather_hacks/webservice (サービス終了)
+# ご注意
+# livedoor 天気 のサービス終了に伴い、互換サービスを利用します。
+#「天気予報 API（livedoor 天気互換）」の注意事項を読んでから利用ください。
+# 同サービスの利用に関して、筆者(国野 亘)は、責任を負いません。
 
 # 初期設定
 ip_leds = ['127.0.0.1']                             # IoTカラーLEDのIPアドレス

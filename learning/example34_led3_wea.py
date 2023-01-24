@@ -2,9 +2,13 @@
 # coding: utf-8
 # Example 34 インターネット照る照る坊主
 
-# 天気情報・参考文献：
-# https://weather.tsukumijima.net/ (互換サービス)
-# http://weather.livedoor.com/weather_hacks/webservice (サービス終了)
+# 参考文献 天気予報 API（livedoor 天気互換サービス）：
+# https://weather.tsukumijima.net/
+#
+# ご注意
+# livedoor 天気 のサービス終了に伴い、互換サービスを利用します。
+#「天気予報 API（livedoor 天気互換）」の注意事項を読んでから利用ください。
+# 同サービスの利用に関して、筆者(国野 亘)は、責任を負いません。
 
 # 初期設定
 port_R = 17                                     # 赤色LED用 GPIO ポート番号
@@ -33,7 +37,6 @@ for port in ports:                              # 各ポート番号を変数por
 
 # 天気情報の取得
 try:                                            # 例外処理の監視を開始
-    print(url_wea_s)
     req = urllib.request.Request(url_wea_s,headers={"User-Agent": "led3_wea"})
     res = urllib.request.urlopen(req)           # HTTPアクセスを実行
     res_s = res.read().decode()                 # 受信テキストを変数res_sへ

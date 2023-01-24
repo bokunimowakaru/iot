@@ -2,20 +2,13 @@
 # coding: utf-8
 # Example 08 IoT連携の基本 HTTP GET 天気情報の取得
 
-# 参考文献
+# 参考文献 天気予報 API（livedoor 天気互換サービス）：
+# https://weather.tsukumijima.net/
 #
-# ・livedoor 天気（サービス終了）：
-# 	http://weather.livedoor.com/weather_hacks/webservice
-#
-# ・天気予報 API（livedoor 天気互換）：
-# 	https://weather.tsukumijima.net/
-
 # ご注意
 # livedoor 天気 のサービス終了に伴い、互換サービスを利用します。
-# 参考文献「天気予報 API（livedoor 天気互換）」の注意事項などをよく読んで
-# ください。
-# これらのサービスの利用に関して、何らかの損失が生じたとしても、
-# 筆者(国野 亘)は、一切の責任を負いません。
+#「天気予報 API（livedoor 天気互換）」の注意事項を読んでから利用ください。
+# 同サービスの利用に関して、筆者(国野 亘)は、責任を負いません。
 
 import urllib.request                           # HTTP通信ライブラリを組み込む
 import json                                     # JSON変換ライブラリを組み込む
@@ -30,7 +23,8 @@ url_s = 'https://weather.tsukumijima.net/api/forecast?city='
 url_s += str(city_id)
 
 try:                                            # 例外処理の監視を開始
-    res = urllib.request.urlopen(url_s)         # HTTPアクセスを実行
+    req = urllib.request.Request(url_s, headers={"User-Agent": "htget_wea"})
+    res = urllib.request.urlopen(req)           # HTTPアクセスを実行
     res_s = res.read().decode()                 # 受信テキストを変数res_sへ
     res.close()                                 # HTTPアクセスの終了
     res_dict = json.loads(res_s)                # 辞書型の変数res_dictへ代入

@@ -2,20 +2,13 @@
 # IoT連携の基本 HTTP GET Weather for MicroPython
 # Copyright (c) 2019-2021 Wataru KUNINO
 
-# 参考文献
+# 参考文献 天気予報 API（livedoor 天気互換サービス）：
+# https://weather.tsukumijima.net/
 #
-# ・livedoor 天気（サービス終了）：
-# 	http://weather.livedoor.com/weather_hacks/webservice
-#
-# ・天気予報 API（livedoor 天気互換）：
-# 	https://weather.tsukumijima.net/
-
 # ご注意
 # livedoor 天気 のサービス終了に伴い、互換サービスを利用します。
-# 参考文献「天気予報 API（livedoor 天気互換）」の注意事項などをよく読んで
-# ください。
-# これらのサービスの利用に関して、何らかの損失が生じたとしても、
-# 筆者(国野 亘)は、一切の責任を負いません。
+#「天気予報 API（livedoor 天気互換）」の注意事項を読んでから利用ください。
+# 同サービスの利用に関して、筆者(国野 亘)は、責任を負いません。
 
 import network                              # ネットワーク通信ライブラリ
 import socket                               # ソケット通信ライブラリ
