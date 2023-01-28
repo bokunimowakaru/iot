@@ -87,4 +87,16 @@ https://bokunimo.net/iot/cq/
 * 提供情報や配布ソフトによって、被害が生じた場合であっても、当方は、一切、補償いたしません。  
 * ライセンスが明記されていないファイルについても、同様です。  
 
-	Copyright (c) 2019-2021 Wataru KUNINO <https://bokunimo.net/>  
+	Copyright (c) 2019-2023 Wataru KUNINO <https://bokunimo.net/>  
+
+----------------------------------------------------------------
+
+## GitHub Pages (This Document)
+* [https://git.bokunimo.com/iot/](https://git.bokunimo.com/iot/)  
+
+----------------------------------------------------------------
+
+# git.bokunimo.com GitHub Pages site
+[http://git.bokunimo.com/](http://git.bokunimo.com/)  
+
+----------------------------------------------------------------
