@@ -20,13 +20,9 @@ city_id = 270000                            # 大阪の city ID=270000
                                             # 横浜=140010 千葉=120010
                                             # 名古屋=230010 福岡=400010
 
-# (停止) host_s = 'weather.livedoor.com'           # アクセス先のホスト名
-# (停止) path_s = '/forecast/webservice/json/'     # アクセスするパス
-# (停止) path_s += 'v1?city=' + str(city_id)       # 地域を追加
-
 host_s = 'weather.tsukumijima.net'          # アクセス先のホスト名
-path_s = '/api/forecast/'                   # アクセスするパス
-path_s += 'city=' + str(city_id)            # 地域を追加
+path_s = '/api/forecast'                    # アクセスするパス
+path_s += '?city=' + str(city_id)           # 地域を追加
 
 pyb.LED(1).on()                             # LED(緑色)を点灯
 eth = network.Ethernet()                    # Ethernetのインスタンスethを生成
@@ -40,8 +36,10 @@ except Exception as e:                      # 例外処理発生時
 addr = socket.getaddrinfo(host_s,80)[0][-1] # ホストのIPアドレスとポートを取得
 sock = socket.socket()                      # ソケットのインスタンスを生成
 sock.connect(addr)                          # ホストへのTCP接続を実行
-req = 'GET ' + path_s + ' HTTP/1.0\r\n'     # HTTP GET命令を文字列変数reqへ代入
-req += 'Host: ' + host_s + '\r\n\r\n'       # ホスト名を追記
+req = 'GET ' + path_s + ' HTTP/1.1\r\n'     # HTTP GET命令を文字列変数reqへ代入
+req += 'Host: ' + host_s + '\r\n'           # ホスト名を追記
+req += 'User-Agent: Nucleo\r\n\r\n'         # ブラウザ名を追記
+print(req)
 sock.send(req.encode())                     # 変数reqをバイト列に変換してTCP送信
 
 while True:                                 # HTTPヘッダ受信の繰り返し処理
@@ -57,15 +55,17 @@ while True:                                 # HTTPコンテンツ部の受信処
         break                               # 　　　　　　　whileループを抜ける
     body += res                             # コンテンツを変数bodyへ追記
 
-print(body)                                 # 受信コンテンツを表示
-res_dict = json.loads(body)                 # JSON形式のデータを辞書型に変換
 sock.close()                                # ソケットの終了
+# res_dict = json.loads(body)               # JSON形式のデータを辞書型に変換
 pyb.LED(1).off()                            # LED(緑色)を消灯
 pyb.LED(2).off()                            # LED(青色)を消灯
 pyb.LED(3).off()                            # LED(赤色)を消灯
 
-forecasts = res_dict.get('forecasts')       # res_dict内のforecastsを取得
-telop = forecasts[0].get('telop')           # forecasts内のtelopを取得
+# forecasts = res_dict.get('forecasts')     # res_dict内のforecastsを取得
+# telop = forecasts[0].get('telop')         # forecasts内のtelopを取得
+i = body.find('telop')  + 9
+j = body[i:].find('"')  + i
+telop = body[i:j]
 print('telop =', telop)                     # telopの内容を表示
 
 if telop.find('晴') >= 0:
