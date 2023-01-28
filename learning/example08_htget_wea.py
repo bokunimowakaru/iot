@@ -5,10 +5,13 @@
 # 参考文献 天気予報 API（livedoor 天気互換サービス）：
 # https://weather.tsukumijima.net/
 #
-# ご注意
-# livedoor 天気 のサービス終了に伴い、互換サービスを利用します。
-#「天気予報 API（livedoor 天気互換）」の注意事項を読んでから利用ください。
-# 同サービスの利用に関して、筆者(国野 亘)は、責任を負いません。
+# 【重要なご注意】
+# livedoor 天気 のサービス終了に伴い、上記の互換サービスを利用します。
+# 同サービスや本ソフトウェアの利用に関して、筆者(国野 亘)は、責任を負いません。
+# 気象業務法や、下記の予報業務許可に関する情報、上記参考文献の注意事項を
+# 良く読んでから利用ください。
+# 気象業務法   https://www.jma.go.jp/jma/kishou/info/ml-17.html
+# 予報業務許可 https://www.jma.go.jp/jma/kishou/minkan/q_a_m.html
 
 import urllib.request                           # HTTP通信ライブラリを組み込む
 import json                                     # JSON変換ライブラリを組み込む
