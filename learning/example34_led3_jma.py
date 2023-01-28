@@ -2,6 +2,9 @@
 # coding: utf-8
 # Example 34 インターネット照る照る坊主
 
+# 参考文献 天気予報 API（livedoor 天気互換サービス）：
+# https://weather.tsukumijima.net/
+#
 # 参考文献 同サービスのソースコード
 # https://github.com/tsukumijima/weather-api
 # https://github.com/tsukumijima/weather-api/blob/master/app/Models/Weather.php
@@ -63,7 +66,7 @@ office = res_dict[0].get('publishingOffice')    # res_dict内のpublishingOffice
 timeSeries = res_dict[0].get('timeSeries')      # res_dict内のtimeSeriesを取得
 areas = timeSeries[0].get('areas')              # timeSeries内のareasを取得
 area = areas[0].get('area').get('name')         # areas内のarea.nameを取得
-print('地域[0] =', office, area)                # officeとareaの内容を表示
+print('地域 =', office, area)                # officeとareaの内容を表示
 
 # 取得した情報から天気予報を抽出して表示する（予報対象時刻と、予報内容）
 weathers = areas[0].get('weathers')             # areas内のweathersを取得
@@ -93,11 +96,11 @@ for i in range( len(ports) ):                   # 各ポート番号のindexを�
     GPIO.output(port, b)                        # ポート番号portのGPIOを出力に
 
 '''
-pi@raspberrypi:~/iot/learning $ ./example34_weather_led3.py
-city = 大阪府 大阪
-telop = 曇り
-Color = 2 緑色
-GPIO17 = 0
+pi@raspberrypi:~/iot/learning $ ./example34_led3_jma.py
+地域 = 大阪管区気象台 大阪府
+予報 = くもり　時々　晴れ
+Color = 3 黄色
+GPIO17 = 1
 GPIO27 = 1
 GPIO22 = 0
 '''
