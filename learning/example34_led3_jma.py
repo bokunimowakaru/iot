@@ -2,14 +2,18 @@
 # coding: utf-8
 # Example 34 インターネット照る照る坊主
 
-# 参考文献 天気予報 API（livedoor 天気互換サービス）：
-# https://weather.tsukumijima.net/
+# 参考文献 同サービスのソースコード
+# https://github.com/tsukumijima/weather-api
+# https://github.com/tsukumijima/weather-api/blob/master/app/Models/Weather.php
+#
+#   予報情報の取得：
+#   jma_api_forecast = "https://www.jma.go.jp/bosai/forecast/data/forecast/{$prefecture_id}.json";
+#
+#   概要テキスト(テロップ)の取得：
+#   jma_api_overview = "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/{$prefecture_id}.json";
 #
 # 【重要なご注意】
-# livedoor 天気 のサービス終了に伴い、上記の互換サービスを利用します。
-# 同サービスや本ソフトウェアの利用に関して、筆者(国野 亘)は、責任を負いません。
-# 同サービスは、気象庁による気象予報をlivedoor天気の互換形式に変換して配信します。
-# (2023年1月28日現在、気象予報そのものは行っていない)
+# 本ソフトウェアの利用に関して、筆者(国野 亘)は、責任を負いません。
 # 気象業務法や、下記の予報業務許可に関する情報、上記参考文献の注意事項を
 # 良く読んでから利用ください。
 # 気象業務法   https://www.jma.go.jp/jma/kishou/info/ml-17.html
@@ -22,12 +26,16 @@ port_B = 22                                     # 青色LED用 GPIO ポート番
 ports = [port_R, port_G, port_B]
 colors= ['消灯','赤色','緑色','黄色','青色','赤紫色','藍緑色','白色']
 
-city_id = 270000                                # 大阪の city ID=270000
-                                                # 東京=130010 京都=260010
-                                                # 横浜=140010 千葉=120010
-                                                # 名古屋=230010 福岡=400010
-url_wea_s = 'https://weather.tsukumijima.net/api/forecast?city='
-url_wea_s += str(city_id)
+city_id = 270000                                # 気象庁=130000(東京地方など)
+                                                # 大阪管区気象台=270000(大阪府など)
+                                                # 京都地方気象台=260000(南部など)
+                                                # 横浜地方気象台=140000(東部など)
+                                                # 銚子地方気象台=120000(北西部など)
+                                                # 名古屋地方気象台=230000(西部など)
+                                                # 福岡管区気象台=400000(福岡地方など)
+
+url_s = 'https://www.jma.go.jp/bosai/forecast/data/forecast/'
+url_s += str(city_id) + '.json'
 
 # ライブラリの組み込み
 from RPi import GPIO                            # GPIOライブラリを組み込む
@@ -42,8 +50,7 @@ for port in ports:                              # 各ポート番号を変数por
 
 # 天気情報の取得
 try:                                            # 例外処理の監視を開始
-    req = urllib.request.Request(url_wea_s,headers={"User-Agent": "led3_wea"})
-    res = urllib.request.urlopen(req)           # HTTPアクセスを実行
+    res = urllib.request.urlopen(url_wea_s)     # HTTPアクセスを実行
     res_s = res.read().decode()                 # 受信テキストを変数res_sへ
     res.close()                                 # HTTPアクセスの終了
     res_dict = json.loads(res_s)                # 辞書型の変数res_dictへ代入
@@ -51,16 +58,18 @@ except Exception as e:
     print(e)                                    # エラー内容を表示
     exit()                                      # プログラムの終了
 
-# 取得した情報から都道府県名と市町村名を抽出
-location = res_dict.get('location')             # res_dict内のlocationを取得
-pref = location.get('prefecture')               # location内のprefectureを取得
-city = location.get('city')                     # location内のcityを取得
-print('city =', pref, city)                     # prefとcityの内容を表示
+# 取得した情報から予報機関(気象庁、気象台)と地域名を抽出して表示する
+office = res_dict[0].get('publishingOffice')    # res_dict内のpublishingOffice
+timeSeries = res_dict[0].get('timeSeries')      # res_dict内のtimeSeriesを取得
+areas = timeSeries[0].get('areas')              # timeSeries内のareasを取得
+area = areas[0].get('area').get('name')         # areas内のarea.nameを取得
+print('地域[0] =', office, area)                # officeとareaの内容を表示
 
-# 取得した情報から天候情報を抽出
-forecasts = res_dict.get('forecasts')           # res_dict内のforecastsを取得
-telop = forecasts[0].get('telop')               # forecasts内のtelopを取得
-print('telop =', telop)                         # telopの内容を表示
+# 取得した情報から天気予報を抽出して表示する（予報対象時刻と、予報内容）
+weathers = areas[0].get('weathers')             # areas内のweathersを取得
+weather = weathers[0]                              # 先頭の天気情報を取得
+telop = weather[0:8]                        # 先頭の天気情報を取得
+print('予報 =', weather, telop)  # timeとweatherの内容を表示
 
 # 天候の内容に応じた色を変数colorへ合成
 color = colors.index('消灯')                    # 初期カラー番号を白色（7）に
