@@ -50,7 +50,7 @@ for port in ports:                              # 各ポート番号を変数por
 
 # 天気情報の取得
 try:                                            # 例外処理の監視を開始
-    res = urllib.request.urlopen(url_wea_s)     # HTTPアクセスを実行
+    res = urllib.request.urlopen(url_s)         # HTTPアクセスを実行
     res_s = res.read().decode()                 # 受信テキストを変数res_sへ
     res.close()                                 # HTTPアクセスの終了
     res_dict = json.loads(res_s)                # 辞書型の変数res_dictへ代入
@@ -67,15 +67,18 @@ print('地域[0] =', office, area)                # officeとareaの内容を表
 
 # 取得した情報から天気予報を抽出して表示する（予報対象時刻と、予報内容）
 weathers = areas[0].get('weathers')             # areas内のweathersを取得
-weather = weathers[0]                              # 先頭の天気情報を取得
-telop = weather[0:8]                        # 先頭の天気情報を取得
-print('予報 =', weather, telop)  # timeとweatherの内容を表示
+weather = weathers[0]                           # 先頭の天気情報を取得
+i = weather.find('　')                          # 3語中1語目の終わり位置を取得
+i += weather[i+1:].find('　') + 1               # 3語中2語目の終わり位置を取得
+i += weather[i+1:].find('　') + 1               # 3語中3語目の終わり位置を取得
+telop = weather[0:i]                            # 3語をtelopに代入
+print('予報 =', telop)                          # timeとweatherの内容を表示
 
 # 天候の内容に応じた色を変数colorへ合成
 color = colors.index('消灯')                    # 初期カラー番号を白色（7）に
 if telop.find('晴') >= 0:                       # 晴れが含まれているとき
     color |= colors.index('赤色')               # 赤色を混合
-if telop.find('曇') >= 0:                       # 曇りが含まれているとき
+if telop.find('くもり') >= 0:                   # くもりが含まれているとき
     color |= colors.index('緑色')               # 緑色を混合
 if telop.find('雨') >= 0 or telop.find('雪') >= 0:  # 雨or雪が含まれているとき
     color |= colors.index('青色')               # 青色を混合
