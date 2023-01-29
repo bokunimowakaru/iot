@@ -42,7 +42,7 @@
 
 MAIL_ID   = '************@gmail.com'    ## 要変更 ##    # GMailのアカウント
 MAIL_PASS = '************'              ## 要変更 ##    # パスワード
-MAILTO    = 'watt@bokunimo.net'         ## 要変更 ##    # メールの宛先
+MAILTO    = '************@gmail.com'    ## 要変更 ##    # メールの宛先
 RC_CODE   = '48,aa,5a,8f'               ## 要変更 ##    # テレビのリモコン信号
 
 MONITOR_START =  9  #(時)                               # 監視開始時刻
