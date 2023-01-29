@@ -22,7 +22,7 @@ ip_chimes = ['127.0.0.1']               ## 要設定 ##    # IoTチャイム,IP�
 
 MAIL_ID   = '************@gmail.com'    ## 要変更 ##    # GMailのアカウント
 MAIL_PASS = '************'              ## 要変更 ##    # パスワード
-MAILTO    = 'watt@bokunimo.net'         ## 要変更 ##    # メールの宛先
+MAILTO    = '************@gmail.com'    ## 要変更 ##    # メールの宛先
 
 import socket                                           # IP通信用モジュール
 import urllib.request                                   # HTTP通信ライブラリ
