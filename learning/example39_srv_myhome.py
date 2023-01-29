@@ -61,7 +61,7 @@
 
 MAIL_ID   = '************@gmail.com'    ## 要変更 ##    # GMailのアカウント
 MAIL_PASS = '************'              ## 要変更 ##    # パスワード
-MAILTO    = 'watt@bokunimo.net'         ## 要変更 ##    # メールの宛先
+MAILTO    = '************@gmail.com'    ## 要変更 ##    # メールの宛先
 
 ip_chime  = '192.168.0.5'               ## 要変更 ##    # IoTチャイム,IPアドレス
 
