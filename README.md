@@ -8,6 +8,8 @@
 Raspberry Pi で下記のコマンドを実行してください。
 
 	git clone https://bokunimo.net/git/iot	
+	または	
+	git clone https://github.com/bokunimowakaru/iot	
 
 --------------------------------------------------------------------------------
 ## IoT Systems		
@@ -16,7 +18,7 @@ Raspberry Pi で下記のコマンドを実行してください。
 Raspberry Pi を使って IoT 向けプログラミングを Python で学習するためのコンテンツです。
 - サンプル数 39個（Example 01～39）＋ 改造例 18個 を収録
 - 学習用コンテンツ：
-	[learning](learning)
+	[learning](https://github.com/bokunimowakaru/iot/tree/master/learning)
 
 --------------------------------------------------------------------------------
 ## IoT Devices		
@@ -24,7 +26,7 @@ Raspberry Pi を使って IoT 向けプログラミングを Python で学習す
 
 BBC micro:bit、STM32 マイコン搭載 NUCLEO-F767Z、ESP32 マイコンで MicroPython を学習するためのコンテンツです。
 - 学習用コンテンツ：
-	[micropython](micropython)
+	[micropython](https://github.com/bokunimowakaru/iot/tree/master/micropython)
 
 --------------------------------------------------------------------------------
 ## IoT Sensor Core		
@@ -36,9 +38,9 @@ ESP32-WROOM-32 モジュールに対応した汎用の IoT センサ機器向け
 - 内蔵の温度センサ、AD変換器に接続したセンサなどの読み値を送信します。  
 - かんたん! インストール用スクリプトも準備済みです。  
 - 詳しい使用方法：
-	[iot-sensor-core-esp32/README.md](iot-sensor-core-esp32/README.md)
+	[iot-sensor-core-esp32/README.md](https://github.com/bokunimowakaru/iot/tree/master/iot-sensor-core-esp32/README.md)
 - 学習用コンテンツ：
-	[iot-sensor-core-esp32](iot-sensor-core-esp32)
+	[iot-sensor-core-esp32](https://github.com/bokunimowakaru/iot/tree/master/iot-sensor-core-esp32)
 
 --------------------------------------------------------------------------------
 ## Voice Recognition		
@@ -46,7 +48,7 @@ ESP32-WROOM-32 モジュールに対応した汎用の IoT センサ機器向け
 
 Google AIY Kit や、Julius を使って、 IoT に音声認識機能をプラスします。
 - 学習用コンテンツ：
-	[voice](voice)
+	[voice](https://github.com/bokunimowakaru/iot/tree/master/voice)
 
 --------------------------------------------------------------------------------
 ## IoT Servers		
@@ -54,7 +56,7 @@ Google AIY Kit や、Julius を使って、 IoT に音声認識機能をプラ�
 
 Raspberry Pi を IoT サーバとして使用するための基本プログラム集です。
 - 学習用コンテンツ：
-	[server](server)
+	[server](https://github.com/bokunimowakaru/iot/tree/master/server)
 
 --------------------------------------------------------------------------------
 ## リリース履歴
