@@ -22,3 +22,19 @@ while True:                             # 繰り返し処理
     voltDc = valDc * 3300 / 65535      # ADC値を電圧(mV)に変換
     print(voltDc)
     led.duty_u16(valDc)                # LEDを点灯する
+
+'''
+Raspberry Pi Picoに本プログラムを書き込み、Raspberry Piでシリアル受信すると
+Picoで読み取った電圧をRaspberry Piで表示できます。
+
+接続図
+
+  電圧 ----32番ピン----> Raspberry Pi Pico ----USB----> Rasberry Pi
+
+シリアル受信用プログラムを実行した時のようす
+
+pi@raspberry:~/iot/micropython/raspi-pico $ ./serial_logger.py
+Serial Logger (usage: ./serial_logger.py /dev/ttyACMx)
+53.17464
+53.225
+'''
