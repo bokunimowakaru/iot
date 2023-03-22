@@ -17,6 +17,9 @@
 #【インストール方法】
 #   bluepy (Bluetooth LE interface for Python)をインストールしてください
 #       sudo pip3 install bluepy
+#   エラーが出る場合は、下記を実行してください。
+#       sudo apt install python3-pip libglib2.0-dev
+#       (参考文献：https://forums.raspberrypi.com/viewtopic.php?t=229746)
 #
 #【実行方法】
 #   実行するときは sudoを付与してください
