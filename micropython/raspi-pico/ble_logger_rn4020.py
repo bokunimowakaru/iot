@@ -133,6 +133,12 @@ while True:
                 sensors['Humidity'] = payval(6,2) / 65535. * 100.
                 sensors['RSSI'] = dev.rssi
 
+            if isTargetDev == 'RN4020_ADC':
+                # センサ値を辞書型変数sensorsへ代入
+                sensors['ID'] = hex(payval(2,2))
+                sensors['Voltage'] = payval(4,2) * 3300. / 65535.
+                sensors['RSSI'] = dev.rssi
+
             if sensors:
                 printval(sensors, 'ID', 0, '')
                 printval(sensors, 'SEQ', 0, '')
@@ -141,6 +147,7 @@ while True:
                 printval(sensors, 'Humidity', 2, '%')
                 printval(sensors, 'Pressure', 3, 'hPa')
                 printval(sensors, 'Illuminance', 1, 'lx')
+                printval(sensors, 'Voltage', 2, 'mV')
                 printval(sensors, 'Proximity', 0, 'count')
                 if(sensors.get('Color R')):
                     print('    Color RGB     =',round(sensors['Color R']),\
