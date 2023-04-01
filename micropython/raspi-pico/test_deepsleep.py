@@ -6,7 +6,7 @@ from machine import Pin                 # ライブラリmachineのPinを組み�
 from machine import deepsleep,lightsleep
 from utime import sleep
 
-sleep_duration = 1                      # スリープ時間（秒）
+sleep_duration = 10                     # スリープ時間（秒）
 
 class sleepmode:
     mode_sleep = 0
