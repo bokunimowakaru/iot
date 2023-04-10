@@ -21,10 +21,10 @@ if [ ! -e "./esptool.py" ]; then
 	\mv -f LICENSE esptool_LICENSE.txt
 fi
 
-filename="esp32-20190529-v1.11.bin"
+filename="esp32-20220618-v1.19.1.bin"
 if [ ! -e ${filename} ]; then
 	echo ${filename} "をダウンロードします"
-	wget http://micropython.org/resources/firmware/esp32-20190529-v1.11.bin
+	wget https://micropython.org/resources/firmware/${filename}
 	wget https://github.com/micropython/micropython/blob/master/LICENSE
 	\mv -f LICENSE micropython_LICENSE.txt
 fi
