@@ -28,7 +28,7 @@ BBC micro:bit、STM32 マイコン搭載 NUCLEO-F767Z、ESP32 マイコンで Mi
 - 学習用コンテンツ：
 	[micropython](https://github.com/bokunimowakaru/iot/tree/master/micropython)
 - 解説書(PDF)：
-	[https://github.com/bokunimowakaru/iot/tree/master/micropython](https://bokunimo.net/iot/cq/esp32.pdf)
+	[https://bokunimo.net/iot/cq/esp32.pdf](https://bokunimo.net/iot/cq/esp32.pdf)
 --------------------------------------------------------------------------------
 ## IoT Sensor Core		
 ### ESP32マイコンで製作する かんたん! IoT センサ用ソフトウェア		
