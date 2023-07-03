@@ -163,7 +163,7 @@ boolean setupWifiSta(){
 	if(WPS_STA){
 		Serial.println("WPS Commission Started");
 		esp_wps_config_t config;
-		config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;
+	//	config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;
 		config.wps_type = WPS_TYPE_PBC;			// WPS_TYPE_PBC または WPS_TYPE_PIN
 		strcpy(config.factory_info.manufacturer, "BOKUNIMO.NET");
 		strcpy(config.factory_info.model_number, "EG.66");
