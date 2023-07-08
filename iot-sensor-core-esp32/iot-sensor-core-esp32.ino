@@ -18,9 +18,12 @@ https://github.com/bokunimowakaru/sens
 	Core Debug Level: なし
 */
 
-#define  VERSION "1.07"							// バージョン表示
+#define  VERSION "1.08"							// バージョン表示
 
 /*******************************************************************************
+Ver. 1.08
+ - Si7021 のドライバで HTU21 が読めない点を暫定修正
+
 Ver. 1.07
  - Ver1.05および1.06でDeepSleep復帰後にUDP送信しないデグレードを解消
  - 権利情報表示および bokunimo.net へのリンクの追加
