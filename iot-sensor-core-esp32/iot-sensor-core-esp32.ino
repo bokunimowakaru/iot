@@ -166,6 +166,7 @@ boolean setupWifiSta(){
 	if(WPS_STA){
 		Serial.println("WPS Commission Started");
 		esp_wps_config_t config;
+	//	下記の行は ESP32 Ver 1.0.4用。
 	//	config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;
 		config.wps_type = WPS_TYPE_PBC;			// WPS_TYPE_PBC または WPS_TYPE_PIN
 		strcpy(config.factory_info.manufacturer, "BOKUNIMO.NET");

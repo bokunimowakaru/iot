@@ -4,3 +4,6 @@ C:\Users\bokun\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.0/esp
  0x1000 C:\Users\bokun\AppData\Local\Arduino15\packages\esp32\hardware\esp32\1.0.4/tools/sdk/bin/bootloader_qio_80m.bin
  0x10000 C:\Users\bokun\AppData\Local\Temp\arduino_build_XXXXX/iot-sensor-core-esp32.ino.bin
  0x8000 C:\Users\bokun\AppData\Local\Temp\arduino_build_XXXXX/iot-sensor-core-esp32.ino.partitions.bin 
+
+iot-sensor-core-esp32.ino の下記の行は ESP32 Ver 1.0.4用。
+config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;	// ESP32 Ver 1.0.4用

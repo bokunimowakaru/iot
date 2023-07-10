@@ -360,7 +360,7 @@ boolean sensors_init_LCD(int mode){
 			){	pinMode(13,OUTPUT);	digitalWrite(13,LOW);
 				pinMode(27,OUTPUT);	digitalWrite(27,LOW);
 				pinMode(26,OUTPUT);	digitalWrite(26,HIGH);
-				delay(100);
+				for(int i=0;i<100;i++)delay(1);	// 待ち時間処理
 				digitalWrite(27,HIGH);
 				if( i2c_lcd_Setup(12, 14, mode * 8, 2) ) LCD_EN=mode;
 			}else{
@@ -383,7 +383,7 @@ boolean sensors_init_LCD(int mode){
 			){	pinMode(16,OUTPUT);	digitalWrite(16,LOW);
 				pinMode(18,OUTPUT);	digitalWrite(18,LOW);
 				pinMode(19,OUTPUT);	digitalWrite(19,HIGH);
-				delay(100);
+				for(int i=0;i<100;i++)delay(1);	// 待ち時間処理
 				digitalWrite(18,HIGH);
 				if( i2c_lcd_Setup(17, 5, mode * 8, 2) ) LCD_EN=mode;
 			}else{
@@ -1098,7 +1098,7 @@ String sensors_sendUdp(const char *device, String payload){		// main/sendUdp
 		udp.flush();
 		udp.stop();
 		Serial.println("udp://" + html_ipAdrToString(IP_BC) +":" + String(UDP_PORT) + " \"" + S + "\"");
-		delay(10);
+		for(int i=0;i<10;i++)delay(1);	// 待ち時間処理
 		return S;
 	}
 	return "";
