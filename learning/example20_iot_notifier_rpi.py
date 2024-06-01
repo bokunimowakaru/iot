@@ -116,5 +116,4 @@ except KeyboardInterrupt:                       # キー割り込み発生時
         GPIO.cleanup(ports[i])                  # LED用GPIOを未使用状態に戻す
     GPIO.cleanup(port_bell)                     # チャイム用GPIOを未使用状態に
     GPIO.cleanup(port_btn)                      # ボタン用GPIOを未使用状態に戻す
-    udp_run = False                             # スレッドudp_appの起動
     exit()                                      # プログラムの終了

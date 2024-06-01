@@ -19,8 +19,7 @@ sensors = ['temp.','temp0','humid','press','envir'] # 対応センサのデバ�
 temp_lv = [ 28 , 30 , 32 ]                      # 警告レベル 3段階
 
 import socket                                   # IP通信用モジュールの組み込み
-# from RPi import GPIO                          # RPi内のGPIOモジュールの取得
-from gpiozero import TonalBuzzer                ## GPIO Zero のTonalBuzzerを取得
+from RPi import GPIO                            # GPIOモジュールの取得
 from time import sleep                          # スリープ実行モジュールの取得
 import threading                                # スレッド用ライブラリの取得
 
@@ -29,15 +28,13 @@ def chime(level):                                       # チャイム（スレ�
         return                                          # 何もせずに戻る
     global pwm                                          # グローバル変数pwm取得
     if level >= 1:                                      # 警告レベル1以上のとき
-        # pwm.ChangeFrequency(ping_f)                   # PWM周波数の変更
-        # pwm.start(50)                                 # PWM出力を開始。50％
-        pwm.play(ping_f)                                ## ↑
+        pwm.ChangeFrequency(ping_f)                     # PWM周波数の変更
+        pwm.start(50)                                   # PWM出力を開始。50％
         sleep(0.1)                                      # 0.1秒の待ち時間処理
         pwm.stop()                                      # PWM出力停止取得
     if level >= 2:                                      # 警告レベル2以上のとき
-        # pwm.ChangeFrequency(pong_f)                   # PWM周波数の変更
-        # pwm.start(50)                                 # PWM出力を開始。50％
-        pwm.play(pong_f)                                ## ↑
+        pwm.ChangeFrequency(pong_f)                     # PWM周波数の変更
+        pwm.start(50)                                   # PWM出力を開始。50％
         sleep(0.2)                                      # 0.2秒の待ち時間処理
         pwm.stop()                                      # PWM出力停止
     if level >= 3:                                      # 警告レベル3のとき
@@ -62,10 +59,9 @@ def get_val(s):                                         # データを数値に�
     except ValueError:                                  # 小数変換失敗時
         return None                                     # Noneを応答
 
-# GPIO.setmode(GPIO.BCM)                        # ポート番号の指定方法の設定
-# GPIO.setup(port, GPIO.OUT)                    # ポート番号portのGPIOを出力に
-# pwm = GPIO.PWM(port, ping_f)                  # PWM出力用のインスタンスを生成
-pwm = TonalBuzzer(port)                         ## ↑
+GPIO.setmode(GPIO.BCM)                          # ポート番号の指定方法の設定
+GPIO.setup(port, GPIO.OUT)                      # ポート番号portのGPIOを出力に
+pwm = GPIO.PWM(port, ping_f)                    # PWM出力用のインスタンスを生成
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
 try:
@@ -81,8 +77,7 @@ while sock:                                             # 永遠に繰り返す
         udp, udp_from = sock.recvfrom(64)               # UDPパケットを取得
     except KeyboardInterrupt:                           # キー割り込み発生時
         print('\nKeyboardInterrupt')                    # キーボード割り込み表示
-        # GPIO.cleanup(port)                            # GPIOを未使用状態に戻す
-        pwm.close()                                     ## ↑
+        GPIO.cleanup(port)                              # GPIOを未使用状態に戻す
         exit()                                          # プログラムの終了
     vals = udp.decode().strip().split(',')              # 「,」で分割
     dev = check_dev_name(vals[0])                       # デバイス名を取得

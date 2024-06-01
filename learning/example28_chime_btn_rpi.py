@@ -17,30 +17,26 @@ ping_f = 554                                    # チャイム音の周波数1
 pong_f = 440                                    # チャイム音の周波数2
 
 import socket                                   # IP通信用モジュールの組み込み
-# from RPi import GPIO                          # RPi内のGPIOモジュールの取得
-from gpiozero import TonalBuzzer                ## GPIO Zero のTonalBuzzerを取得
+from RPi import GPIO                            # GPIOモジュールの取得
 from time import sleep                          # スリープ実行モジュールの取得
 import threading                                # スレッド用ライブラリの取得
 
 def chime(key):                                 # チャイム（スレッド用）
     global pwm                                  # グローバル変数pwmを取得
     if key == "Ping":
-        # pwm.ChangeFrequency(ping_f)           # PWM周波数の変更
-        # pwm.start(50)                         # PWM出力を開始。50％
-        pwm.play(ping_f)                        ## ↑
+        pwm.ChangeFrequency(ping_f)             # PWM周波数の変更
+        pwm.start(50)                           # PWM出力を開始。デューティ50％
         sleep(1)                                # 1秒の待ち時間処理
         pwm.stop()                              # PWM出力停止
     if key == "Pong":
-        # pwm.ChangeFrequency(pong_f)           # PWM周波数の変更
-        # pwm.start(50)                         # PWM出力を開始。50％
-        pwm.play(pong_f)                        ## ↑
+        pwm.ChangeFrequency(pong_f)             # PWM周波数の変更
+        pwm.start(50)                           # PWM出力を開始。デューティ50％
         sleep(0.3)                              # 0.3秒の待ち時間処理
         pwm.stop()                              # PWM出力停止
 
-# GPIO.setmode(GPIO.BCM)                        # ポート番号の指定方法の設定
-# GPIO.setup(port, GPIO.OUT)                    # ポート番号portのGPIOを出力に
-# pwm = GPIO.PWM(port, ping_f)                  # PWM出力用のインスタンスを生成
-pwm = TonalBuzzer(port)                         ## ↑
+GPIO.setmode(GPIO.BCM)                          # ポート番号の指定方法の設定
+GPIO.setup(port, GPIO.OUT)                      # ポート番号portのGPIOを出力に
+pwm = GPIO.PWM(port, ping_f)                    # PWM出力用のインスタンスを生成
 
 print('Listening UDP port', 1024, '...', flush=True)    # ポート番号1024表示
 try:
@@ -56,8 +52,7 @@ while sock:                                             # 永遠に繰り返す
         udp, udp_from = sock.recvfrom(64)               # UDPパケットを取得
     except KeyboardInterrupt:                           # キー割り込み発生時
         print('\nKeyboardInterrupt')                    # キーボード割り込み表示
-        # GPIO.cleanup(port)                            # GPIOを未使用状態に戻す
-        pwm.close()                                     ## ↑
+        GPIO.cleanup(port)                              # GPIOを未使用状態に戻す
         exit()                                          # プログラムの終了
     udp = udp.decode().strip()                          # データを文字列へ変換
     if not udp.isprintable() or len(udp) != 4:          # 4文字以下で表示可能

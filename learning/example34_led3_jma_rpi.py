@@ -41,19 +41,15 @@ url_s = 'https://www.jma.go.jp/bosai/forecast/data/forecast/'
 url_s += str(city_id) + '.json'
 
 # ライブラリの組み込み
-# from RPi import GPIO                          # GPIOライブラリを組み込む
-from gpiozero import LED                        ## GPIO ZeroのI/Oモジュール取得
-from signal import pause                        # シグナル待ち受けの取得
+from RPi import GPIO                            # GPIOライブラリを組み込む
 import urllib.request                           # HTTP通信ライブラリを組み込む
 import json                                     # JSON変換ライブラリを組み込む
 
 # GPIO初期化
-# GPIO.setmode(GPIO.BCM)                        # ポート番号の指定方法の設定
-# GPIO.setwarnings(False)                       # ポート警告表示を無効に
-leds = list()                                   ## LEDインスタンス用
+GPIO.setmode(GPIO.BCM)                          # ポート番号の指定方法の設定
+GPIO.setwarnings(False)                         # ポート警告表示を無効に
 for port in ports:                              # 各ポート番号を変数portへ代入
-    # GPIO.setup(port, GPIO.OUT)                # ポート番号portのGPIOを出力に
-    leds.append(LED(port))                      ## GPIO ZeroのLEDを実体化
+    GPIO.setup(port, GPIO.OUT)                  # ポート番号portのGPIOを出力に
 
 # 天気情報の取得
 try:                                            # 例外処理の監視を開始
@@ -97,10 +93,7 @@ for i in range( len(ports) ):                   # 各ポート番号のindexを�
     port = ports[i]                             # ポート番号をportsから取得
     b = (color >> i) & 1                        # 該当LEDへの出力値を変数bへ
     print('GPIO'+str(port),'=',b)               # ポート番号と変数bの値を表示
-    # GPIO.output(port, b)                      # ポート番号portのGPIOを出力に
-    leds[i].value = b                           ## ↑
-print('[Ctrl]+[C]で終了します')
-pause()                                         ## 待ち受け待機する(永久ループ)
+    GPIO.output(port, b)                        # ポート番号portのGPIOを出力に
 
 '''
 pi@raspberrypi:~/iot/learning $ ./example34_led3_jma.py

@@ -137,5 +137,4 @@ except KeyboardInterrupt:                       # キー割り込み発生時
     pwm_bell.close()                            ## ↑
     # GPIO.cleanup(port_btn)                    # ボタン用GPIOを未使用状態に戻す
     btn.close()                                 ## ↑
-    udp_run = False                             # スレッドudp_appの起動
     exit()                                      # プログラムの終了
