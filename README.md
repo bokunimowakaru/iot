@@ -70,7 +70,7 @@ Raspberry Pi を IoT サーバとして使用するための基本プログラ�
 	[server](https://github.com/bokunimowakaru/iot/tree/master/server)
 
 --------------------------------------------------------------------------------
-## リリース履歴
+## 主な更新履歴
 
 		2019/01/26 α版の公開  
 		2019/04/14 α２版の公開  
@@ -101,7 +101,7 @@ https://bokunimo.net/iot/cq/
 * 提供情報や配布ソフトによって、被害が生じた場合であっても、当方は、一切、補償いたしません。  
 * ライセンスが明記されていないファイルについても、同様です。  
 
-	Copyright (c) 2019-2023 Wataru KUNINO <https://bokunimo.net/>  
+	Copyright (c) 2019-2024 Wataru KUNINO <https://bokunimo.net/>  
 
 ----------------------------------------------------------------
 
