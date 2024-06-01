@@ -15,10 +15,20 @@ Raspberry Pi で下記のコマンドを実行してください。
 ## IoT Systems		
 ### Python 学習用 サンプルプログラム集		
 
-Raspberry Pi を使って IoT 向けプログラミングを Python で学習するためのコンテンツです。
+Raspberry Pi を使って IoT 向けプログラミングを Python で学習するためのコンテンツです。  
+Raspberry Pi 5 に必要な GPIO Zero にも対応しました。  
 - サンプル数 39個（Example 01～39）＋ 改造例 18個 を収録
 - 学習用コンテンツ：
 	[learning](https://github.com/bokunimowakaru/iot/tree/master/learning)
+- GPIO Zero にも対応(2024/6/1)
+
+最新版では Raspberry Pi 5 に対応するために、GPIO用ライブラリにGPIO Zeroを使用しています。  
+- Raspberry Pi 4 以前でも動作します
+- 書籍「Pythonで作るIoTシステム プログラム・サンプル集」のリストから変更があります
+- 変更前を各行の先頭の#で示し、変更後を各行のコメントの##で示します
+- 書籍と同じプログラムは、プログラム名に「_rpi」を付与して収録してあります
+- 本リポジトリとは別に、GPIO Zero 用のサンプル集も公開しています。
+	[https://git.bokunimo.com/gpiozero/](https://git.bokunimo.com/gpiozero/)
 
 --------------------------------------------------------------------------------
 ## IoT Devices		
