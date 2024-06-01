@@ -6,43 +6,35 @@ port_chime = 4                                  # 圧電スピーカ用 GPIO ポ
 port_btn = 26                                   # ボタン用 GPIO ポート番号
 ping_f = 554                                    # 圧電スピーカ用 周波数1
 pong_f = 440                                    # 圧電スピーカ用 周波数2
-# ports = [17, 27, 22, port_chime]              # 赤,緑,青色のLEDとスピーカ GPIO
-ports = [17, 27, 22]                            # 赤,緑,青色のLED用 GPIO
+ports = [17, 27, 22, port_chime]                # 赤,緑,青色のLEDとスピーカ GPIO
 colors= ['消灯','赤色','緑色','黄色','青色','赤紫色','藍緑色','白色']
 
-# from RPi import GPIO                          # GPIOモジュールの取得
-from gpiozero import TonalBuzzer,Button,LED     ## TonalBuzzerとButton,LEDを取得
+from RPi import GPIO                            # GPIOモジュールの取得
 from time import sleep, time                    # sleepとtimeモジュールの取得
-leds = list()                                   ## LEDインスタンス用
 
 def led3(color):
     if color > 0:                               # 色番号が0以上のとき
         print('Timer =', color, 'min. ',end='') # 色番号の指示値を表示
-        chime(ping_f ,0.1)                      # クリック音
+        chime(ping_f ,0.01)                     # クリック音
         if color > 7 or color < 0:              # 色番号の範囲外のとき
             color = 7                           # 白色(7)に設定
         print('Color =', color, colors[color])  # 色番号を表示
     for i in range(3):                          # LED用ポート番号を変数iへ
-        # port = ports[i]                       # ポート番号をportsから取得
+        port = ports[i]                         # ポート番号をportsから取得
         b = (color >> i) & 1                    # 該当LEDへの出力値を変数bへ
-        # GPIO.output(port, b)                  # ポート番号portのGPIOを出力に
-        leds[i].value = b                       ## ↑
+        GPIO.output(port, b)                    # ポート番号portのGPIOを出力に
 
 def chime(freq ,t):
-    # pwm.ChangeFrequency(freq)                 # PWM周波数の変更
-    # pwm.start(50)                             # PWM出力を開始。デューティ50％
-    pwm.play(freq)                              ## ↑
+    pwm.ChangeFrequency(freq)                   # PWM周波数の変更
+    pwm.start(50)                               # PWM出力を開始。デューティ50％
     sleep(t)                                    # t秒の待ち時間処理
     pwm.stop()                                  # PWM出力停止
 
-# GPIO.setmode(GPIO.BCM)                        # ポート番号の指定方法の設定
+GPIO.setmode(GPIO.BCM)                          # ポート番号の指定方法の設定
 for port in ports:                              # 各ポート番号を変数portへ代入
-    # GPIO.setup(port, GPIO.OUT)                # ポート番号portのGPIOを出力に
-    leds.append(LED(port))                      ## GPIO ZeroのLEDを実体化
-# GPIO.setup(port_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # GPIO 26 を入力に
-# pwm = GPIO.PWM(port_chime, ping_f)            # PWM出力用のインスタンスを生成
-pwm = TonalBuzzer(port_chime)                   ## ↑
-btn = Button(port_btn)                          ## ポートport_btnをボタン入力に
+    GPIO.setup(port, GPIO.OUT)                  # ポート番号portのGPIOを出力に
+GPIO.setup(port_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # GPIO 26 を入力に
+pwm = GPIO.PWM(port_chime, ping_f)              # PWM出力用のインスタンスを生成
 
 try:                                            # キー割込(Ctrl+C)の監視を開始
     while True:                                 # 繰り返し処理
@@ -51,14 +43,12 @@ try:                                            # キー割込(Ctrl+C)の監視�
         color = 0                               # 色番号0（消灯）を設定
         t = time() + 1.0                        # タイムアウト変数tを1秒後に設定
         while color == 0 or time() < t:         # 色番号が0または時間t以内のとき
-            # b = GPIO.input(port_btn)          # ボタン入力値を変数bへ代入
-            b = int(not btn.value)              ## ↑
+            b = GPIO.input(port_btn)            # ボタン入力値を変数bへ代入
             if b == 0:                          # ボタンが押されていた時
                 color += 1                      # 色番号に1を追加
                 led3(color)                     # LEDを色番号で点灯
                 while b == 0:                   # ボタンが押されたままのとき
-                    # b = GPIO.input(port_btn)  # 押されている間は待機する
-                    b = int(not btn.value)      ## ↑
+                    b = GPIO.input(port_btn)    # 押されている間は待機する
                 sleep(0.1)                      # チャタリング防止
                 t = time() + 1.0                # タイムアウト変数tを1秒後に設定
         # タイマー開始
@@ -75,11 +65,6 @@ try:                                            # キー割込(Ctrl+C)の監視�
         chime(pong_f, 0.5)                      # ブザー「Pong」音
 except KeyboardInterrupt:                       # キー割り込み発生時
     print('\nKeyboardInterrupt')                # キーボード割り込み表示
-    # for port in ports:                        # 各ポート番号を変数portへ代入
-    for i in range(len(leds)):                  ## ↑
-        # GPIO.cleanup(port)                    # GPIOを未使用状態に戻す
-        leds[i].close()                         ## ↑
-    # GPIO.cleanup(port_btn)                    # GPIOを未使用状態に戻す
-    btn.close()                                 ## ↑
-    pwm.close()                                 ## ↑
-    exit()                                      # プログラムの終了
+    for port in ports:                          # 各ポート番号を変数portへ代入
+        GPIO.cleanup(port)                      # GPIOを未使用状態に戻す
+    GPIO.cleanup(port_btn)                      # GPIOを未使用状態に戻す
