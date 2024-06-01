@@ -27,3 +27,4 @@ pwm.play(pong_f)                        ## ↑
 sleep(0.3)                              # 0.3秒の待ち時間処理
 pwm.stop()                              # PWM出力停止
 #GPIO.cleanup(port)                     # GPIOを未使用状態に戻す
+pwm.close()                             ## ↑

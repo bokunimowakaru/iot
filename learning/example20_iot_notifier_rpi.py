@@ -12,13 +12,12 @@ port_btn = 26                                   # ボタンのGPIO ポート番�
 
 ports = [port_R, port_G, port_B]                # 各色のポート番号を配列変数へ
 color = [9,9,9]                                 # 初期カラー番号の取得
-# pwm = []
+pwm = []
 mutex = False
 
 from wsgiref.simple_server import make_server   # HTTPサーバ用モジュールの取得
 import socket                                   # ソケット通信ライブラリ
-# from RPi import GPIO                          # GPIOモジュールの取得
-from gpiozero import TonalBuzzer,Button,RGBLED  # 各種GPIOモジュールの取得
+from RPi import GPIO                            # GPIOモジュールの取得
 from time import sleep                          # スリープ実行モジュールの取得
 import threading                                # スレッド用ライブラリの取得
 
@@ -26,12 +25,10 @@ def chime():                                    # チャイム（スレッド用
     global pwm_bell                             # グローバル変数pwmを取得
     global mutex                                # グローバル変数mutexを取得
     mutex.acquire()                             # mutex状態に設定(排他処理開始)
-    # pwm_bell.ChangeFrequency(ping_f)          # PWM周波数の変更
-    # pwm_bell.start(50)                        # PWM出力を開始。デューティ50％
-    pwm_bell.play(ping_f)                       ## ↑
+    pwm_bell.ChangeFrequency(ping_f)            # PWM周波数の変更
+    pwm_bell.start(50)                          # PWM出力を開始。デューティ50％
     sleep(0.5)                                  # 0.5秒の待ち時間処理
-    # pwm_bell.ChangeFrequency(pong_f)          # PWM周波数の変更
-    pwm_bell.play(pong_f)                       ## ↑
+    pwm_bell.ChangeFrequency(pong_f)            # PWM周波数の変更
     sleep(0.5)                                  # 0.5秒の待ち時間処理
     pwm_bell.stop()                             # PWM出力停止
     mutex.release()                             # mutex状態の開放(排他処理終了)
@@ -47,7 +44,7 @@ def wsgi_app(environ, start_response):          # HTTPアクセス受信時の�
         thread.start()                          # スレッドchimeの起動
     global pwm                                  # グローバル変数pwmを取得
     global color                                # グローバル変数colorの取得
-    # color = [9,9,9]                           # 白色を代入
+    color = [9,9,9]                             # 白色を代入
     query = environ.get('QUERY_STRING')         # 変数queryにHTTPクエリを代入
     keys = ['R=','G=','B=']                     # Query内の検索キーをkeysへ代入
     for i in range( len(keys) ):                # 検索キーのindexを変数iへ
@@ -57,22 +54,14 @@ def wsgi_app(environ, start_response):          # HTTPアクセス受信時の�
                 color[i] = int( query[sp+2] )   # 取得値(数値)を変数colorへ
                 color[i] %= 10                  # 輝度数(10段階)の0～9に正規化
     print('Color =',color)                      # 配列変数colorの内容を表示
-    w = list()                                  ## パルス幅のリストを定義
     for i in range( len(ports) ):               # 各ポート番号のindexを変数iへ
         port = ports[i]                         # ポート番号をportsから取得
         if color[i] > 0:                        # 輝度が0以外の時
-            # w = int(10 ** (color[i] / 4.5))   # パルス幅wを設定(1～9⇒1～100)
-            w.append(int(10 ** (color[i] / 4.5))) ## ↑
+            w = int(10 ** (color[i] / 4.5))     # パルス幅wを設定(1～9⇒1～100)
         else:                                   # 輝度が0の時
-            # w = 0                             # パルス幅を0％へ
-            w.append = 0                        ## ↑
-        # print('GPIO'+str(port),'=',w)         # ポート番号と変数wの値を表示
-        print('GPIO'+str(port),'=',w[i])        ## ↑
-        # pwm[i].ChangeDutyCycle(w)
-        w[i] = w[i] / 100                       ## RGBLED用に範囲調整(0.0～1.0)
-        if w[i] > 1:                            ## パルス幅が1.0を超えるとき
-            w[i] = 1.0                          ## RGBLEDの最大値は1.0
-    pwm.color = w                               ## RGBLEDにパルス幅を設定
+            w = 0                               # パルス幅を0％へ
+        print('GPIO'+str(port),'=',w)           # ポート番号と変数wの値を表示
+        pwm[i].ChangeDutyCycle(w)
     ok = 'Color=' + str(color) + '\r\n'         # 応答文を作成
     ok = ok.encode('utf-8')                     # バイト列へ変換
     start_response('200 OK', [('Content-type', 'text/plain; charset=utf-8')])
@@ -97,23 +86,16 @@ def udp_app():
                 thread.start()                              # chimeの起動
     sock.close()
 
-# GPIO.setmode(GPIO.BCM)                        # ポート番号の指定方法の設定
-# for i in range( len(ports) ):                 # 各ポート番号のindexを変数iへ
-#   GPIO.setup(ports[i], GPIO.OUT)              # ports[i]のGPIOポートを出力に
-#   pwm.append( GPIO.PWM(ports[i], 1000) )      # PWM出力用のインスタンスを生成
-#   pwm[i].start(0)                             # PWM出力を開始。デューティ0％
-pwm = RGBLED(red=ports[0], green=ports[1], blue=ports[2]) # RGB LEDからpwmを生成
-
-# GPIO.setup(port_bell, GPIO.OUT)               # ポートport_bellのGPIOを出力に
-# pwm_bell = GPIO.PWM(port_bell, ping_f)        # PWM出力用のインスタンスを生成
-pwm_bell = TonalBuzzer(port_bell)               ## ↑
-
-# GPIO.setup(port_btn, GPIO.OUT)                # ポートport_btnのGPIOを入力に
-# GPIO.setup(port_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # port_btnを入力に設定
-# btn = GPIO.add_event_detect(port_btn, GPIO.FALLING, chime_cb, bouncetime=600)
-btn = Button(port_btn, bounce_time=0.1)         ## ポート番号portをボタン入力に
-btn.when_pressed = chime_cb                     # ボタン押下時にchime_cbを呼出す
-
+GPIO.setmode(GPIO.BCM)                          # ポート番号の指定方法の設定
+for i in range( len(ports) ):                   # 各ポート番号のindexを変数iへ
+    GPIO.setup(ports[i], GPIO.OUT)              # ports[i]のGPIOポートを出力に
+    pwm.append( GPIO.PWM(ports[i], 1000) )      # PWM出力用のインスタンスを生成
+    pwm[i].start(0)                             # PWM出力を開始。デューティ0％
+GPIO.setup(port_bell, GPIO.OUT)                 # ポートport_bellのGPIOを出力に
+pwm_bell = GPIO.PWM(port_bell, ping_f)          # PWM出力用のインスタンスを生成
+GPIO.setup(port_btn, GPIO.OUT)                  # ポートport_btnのGPIOを入力に
+GPIO.setup(port_btn, GPIO.IN, pull_up_down=GPIO.PUD_UP) # port_btnを入力に設定
+btn = GPIO.add_event_detect(port_btn, GPIO.FALLING, chime_cb, bouncetime=600)
 udp_th = threading.Thread(target=udp_app)       # 関数udp_appをスレッド化
 udp_run = True
 udp_th.start()                                  # スレッドudp_thの起動
@@ -129,13 +111,10 @@ try:
     httpd.serve_forever()                       # HTTPサーバを起動
 except KeyboardInterrupt:                       # キー割り込み発生時
     print('\nKeyboardInterrupt')                # キーボード割り込み表示
-    # for i in range( len(ports) ):             # 各ポート番号のindexを変数iへ
-    #   pwm[i].stop()                           # PWM出力停止
-    #   GPIO.cleanup(ports[i])                  # LED用GPIOを未使用状態に戻す
-    pwm.close()                                 ## ↑
-    # GPIO.cleanup(port_bell)                   # チャイム用GPIOを未使用状態に
-    pwm_bell.close()                            ## ↑
-    # GPIO.cleanup(port_btn)                    # ボタン用GPIOを未使用状態に戻す
-    btn.close()                                 ## ↑
+    for i in range( len(ports) ):               # 各ポート番号のindexを変数iへ
+        pwm[i].stop()                           # PWM出力停止
+        GPIO.cleanup(ports[i])                  # LED用GPIOを未使用状態に戻す
+    GPIO.cleanup(port_bell)                     # チャイム用GPIOを未使用状態に
+    GPIO.cleanup(port_btn)                      # ボタン用GPIOを未使用状態に戻す
     udp_run = False                             # スレッドudp_appの起動
     exit()                                      # プログラムの終了

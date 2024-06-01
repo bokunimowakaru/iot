@@ -11,13 +11,11 @@ colors= ['消灯','赤色','緑色','黄色','青色','赤紫色','藍緑色','�
 color = colors.index('白色')                    # 初期カラー番号の取得（白色=7）
 
 from wsgiref.simple_server import make_server   # HTTPサーバ用モジュールの取得
-# from RPi import GPIO                          # GPIOモジュールの取得
-from gpiozero import LED                        ## GPIO ZeroのI/Oモジュール取得
-leds = list()                                   ## LEDインスタンス用
+from RPi import GPIO                            # GPIOモジュールの取得
 
 def wsgi_app(environ, start_response):          # HTTPアクセス受信時の処理
     global color                                # グローバル変数colorの取得
-    # color = colors.index('白色')              # 白色を代入
+    color = colors.index('白色')                # 白色を代入
     query = environ.get('QUERY_STRING')         # 変数queryにHTTPクエリを代入
     sp = query.find('=')                        # 変数query内の「=」を探す
     if sp >= 0 and sp + 1 < len(query):         # 「=」の発見位置が有効範囲内
@@ -29,17 +27,15 @@ def wsgi_app(environ, start_response):          # HTTPアクセス受信時の�
         port = ports[i]                         # ポート番号をportsから取得
         b = (color >> i) & 1                    # 該当LEDへの出力値を変数bへ
         print('GPIO'+str(port),'=',b)           # ポート番号と変数bの値を表示
-        #GPIO.output(port, b)                   # ポート番号portのGPIOを出力に
-        leds[i].value = b                       ## ↑
+        GPIO.output(port, b)                    # ポート番号portのGPIOを出力に
     ok = 'Color=' + str(color) + ' (' + colors[color] + ')\r\n' # 応答文を作成
     ok = ok.encode('utf-8')                     # バイト列へ変換
     start_response('200 OK', [('Content-type', 'text/plain; charset=utf-8')])
     return [ok]                                 # 応答メッセージを返却
 
-# GPIO.setmode(GPIO.BCM)                        # ポート番号の指定方法の設定
+GPIO.setmode(GPIO.BCM)                          # ポート番号の指定方法の設定
 for port in ports:                              # 各ポート番号を変数portへ代入
-    # GPIO.setup(port, GPIO.OUT)                # ポート番号portのGPIOを出力に設定
-    leds.append(LED(port))                      ## GPIO ZeroのLEDを実体化
+    GPIO.setup(port, GPIO.OUT)                  # ポート番号portのGPIOを出力に
 
 try:
     httpd = make_server('', 80, wsgi_app)       # TCPポート80でHTTPサーバ実体化
@@ -51,8 +47,6 @@ try:
     httpd.serve_forever()                       # HTTPサーバを起動
 except KeyboardInterrupt:                       # キー割り込み発生時
     print('\nKeyboardInterrupt')                # キーボード割り込み表示
-    #for port in ports:                         # 各ポート番号を変数portへ代入
-    for i in range(len(leds)):                  ## ↑
-        # GPIO.cleanup(port)                    # GPIOを未使用状態に戻す
-        leds[i].close()                         ## ↑
+    for port in ports:                          # 各ポート番号を変数portへ代入
+        GPIO.cleanup(port)                      # GPIOを未使用状態に戻す
     exit()                                      # プログラムの終了
