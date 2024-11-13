@@ -81,3 +81,9 @@ if len(res_str):                                # 受信テキストがあれば
     print('Response:', res_str)                 # 変数res_strの内容を表示
 else:
     print('Done')                               # Doneを表示
+
+###############################################################################
+# 参考文献：下記のcurl文の一部を引用しました
+# LINE DevelopersLINE Developers, Messaging APIリファレンス
+# https://developers.line.biz/ja/reference/messaging-api/
+###############################################################################
